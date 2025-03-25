@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Fredoka } from "next/font/google";
 import "./globals.css";
-import Script from "next/script";
 
 const fredoka = Fredoka({
   subsets: ["latin"],
@@ -35,12 +34,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicons/favicon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/favicons/apple-touch-icon.png" />
         <link rel="manifest" href="/favicons/site.webmanifest" />
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7832787432797508"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
+        <meta name="google-adsense-account" content="ca-pub-7832787432797508" />        
       </head>
       <body className="antialiased min-h-screen font-fredoka">
         {children}
