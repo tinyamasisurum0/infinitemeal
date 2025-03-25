@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Infinite Meal - Recipe Crafting Game
 
-## Getting Started
+A culinary adventure where you discover and create delicious recipes by combining ingredients and applying cooking methods.
 
-First, run the development server:
+## Recipe Combinations Guide
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+This guide lists all possible recipe combinations in the Infinite Meal game.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Basic Combinations (Difficulty: ⭐⭐)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Ingredients | Result | Description |
+|-------------|--------|-------------|
+| Flour + Water | Dough | Mix flour and water to create basic dough |
+| Flour + Egg | Raw Pasta | Combine flour and egg to make raw pasta dough |
+| Tomato + Onion | Tomato Sauce | Tomatoes and onions make the base for a simple sauce |
+| Diced Tomato + Diced Onion | Salad | Mix diced vegetables to create a simple salad |
+| Cucumber + Tomato | Salad | Slice cucumber and tomato for a refreshing salad |
+| Bread + Cucumber | Cucumber Sandwich | A light and refreshing cucumber sandwich |
+| Bread + Salt | Croutons | Season and toast bread pieces to make crunchy croutons |
+| Diced Cucumber + Diced Tomato | Salad | Combine diced cucumber and tomato for a fresh garden salad |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Intermediate Combinations (Difficulty: ⭐⭐⭐)
 
-## Learn More
+| Ingredients | Result | Description |
+|-------------|--------|-------------|
+| Dough + Tomato Sauce | Pizza Base | Spread tomato sauce on dough for a pizza base |
+| Flour + Egg + Fruit | Cake Batter | Mix flour, eggs and fruit for a simple cake batter |
+| Bread + Cheese | Sandwich | Place cheese between slices of bread for a simple sandwich |
+| Cucumber + Lettuce + Tomato | Greek Salad | Mix fresh vegetables for a traditional Greek salad base |
+| Egg + Salt + Cheese | Caesar Dressing | Whip eggs with salt and cheese to create a rich Caesar dressing |
+| Shredded Lettuce + Diced Cucumber + Cheese | Greek Salad | Mix shredded lettuce, cucumber and cheese for a simple Greek salad |
+| Cucumber Juice + Fruit | Fruit Smoothie | Blend cucumber juice with fruit for a refreshing smoothie |
+| Pickled Cucumber + Bread + Cheese | Sandwich | Layer pickled cucumber and cheese between bread for a tangy sandwich |
 
-To learn more about Next.js, take a look at the following resources:
+### Advanced Combinations (Difficulty: ⭐⭐⭐⭐)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Ingredients | Result | Description |
+|-------------|--------|-------------|
+| Pizza Base + Cheese | Pizza | Add cheese to pizza base for a complete pizza |
+| Pasta + Tomato Sauce | Spaghetti | Combine pasta with tomato sauce to make spaghetti |
+| Lettuce + Croutons + Caesar Dressing | Caesar Salad | Toss lettuce and croutons in Caesar dressing for a classic Caesar salad |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Cooking Method Transformations
 
-## Deploy on Vercel
+### Boil (♨️)
+- Potato → Boiled Potato
+- Egg → Boiled Egg
+- Raw Pasta → Pasta
+- Cucumber → Pickled Cucumber
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Fry (🍳)
+- Egg → Fried Egg
+- Potato → French Fries
+- Dough → Fried Dough
+- Cucumber → Fried Cucumber
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Bake (🔥)
+- Dough → Bread
+- Pizza Base → Pizza
+- Cake Batter → Cake
+- Bread → Croutons
+
+### Chop (🔪)
+- Tomato → Diced Tomato
+- Onion → Diced Onion
+- Meat → Diced Meat
+- Cucumber → Diced Cucumber
+- Lettuce → Shredded Lettuce
+
+### Blend (🧂)
+- Tomato → Tomato Puree
+- Fruit → Fruit Smoothie
+- Vegetable → Vegetable Soup
+- Cucumber → Cucumber Juice
+
+## Achievements
+
+- **First Combination**: Create your first new ingredient
+- **Master Chef**: Create a dish with difficulty level 4
+- **Culinary Explorer**: Discover 5 new ingredients
+- **Gourmet**: Create items from 5 different categories
+
+## How to Play
+
+1. Drag ingredients from the right panel to the cooking area on the left
+2. Combine up to 3 ingredients to discover new recipes
+3. Use cooking methods to transform single ingredients
+4. Filter ingredients by category using the dropdown menu
+5. Check recipe hints if you need help discovering new combinations
+
+Enjoy your culinary adventure!
