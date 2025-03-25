@@ -846,7 +846,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                 <div className="text-5xl mb-4">✅</div>
                 <h3 className={`text-xl font-bold ${darkMode ? 'text-green-300' : 'text-green-600'}`}>Request Sent!</h3>
                 <p className={`mt-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Thank you for your feedback. We'll review your request soon.
+                  Thank you for your feedback. We&apos;ll review your request soon.
                 </p>
               </div>
             ) : (
