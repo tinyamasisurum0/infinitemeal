@@ -20,12 +20,6 @@ export const metadata: Metadata = {
       { url: '/favicons/favicon.svg' }
     ],
     apple: { url: '/favicons/apple-touch-icon.png' },
-    other: [
-      {
-        rel: 'mask-icon',
-        url: '/favicons/safari-pinned-tab.svg',
-      },
-    ],
   },
 };
 
