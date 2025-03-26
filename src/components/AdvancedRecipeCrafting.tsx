@@ -1,16 +1,22 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
+import { withClientTranslations } from './withClientTranslations';
+import LanguageSwitcher from './LanguageSwitcher';
 import { 
   Ingredient, 
   CookingMethod, 
-  Achievement, 
-  RecipeHint, 
-  DiscoveryItem, 
-  AdvancedRecipeCraftingProps, 
-  categories 
+  RecipeHint,
+  Achievement,
+  DiscoveryItem,
+  AdvancedRecipeCraftingProps,
+  categories
 } from '../types/RecipeTypes';
-import { initialIngredients, BASIC_STARTER_INGREDIENTS } from '../data/ingredients';
+import { 
+  initialIngredients,
+  BASIC_STARTER_INGREDIENTS 
+} from '../data/ingredients';
 import { cookingMethods } from '../data/cookingMethods';
 import { recipes } from '../data/recipes';
 import { initialAchievements } from '../data/achievements';
@@ -22,7 +28,9 @@ const setCookie = (name: string, value: string, days: number = 365) => {
   const date = new Date();
   date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
   const expires = `expires=${date.toUTCString()}`;
-  document.cookie = `${name}=${encodeURIComponent(value)};${expires};path=/`;
+  // Use root path and domain-level cookies to ensure they work across language paths
+  document.cookie = `${name}=${encodeURIComponent(value)};${expires};path=/;SameSite=Lax`;
+  console.log(`[Cookie Debug] Set cookie: ${name} at root path (/)`);
 };
 
 const getCookie = (name: string): string | null => {
@@ -32,32 +40,69 @@ const getCookie = (name: string): string | null => {
   for (let cookie of cookies) {
     cookie = cookie.trim();
     if (cookie.indexOf(cookieName) === 0) {
-      return decodeURIComponent(cookie.substring(cookieName.length, cookie.length));
+      const value = decodeURIComponent(cookie.substring(cookieName.length, cookie.length));
+      console.log(`[Cookie Debug] Found cookie: ${name} with value length: ${value.length}`);
+      return value;
     }
   }
+  console.log(`[Cookie Debug] Cookie not found: ${name}`);
   return null;
 };
 
 const deleteCookie = (name: string) => {
   if (typeof window === 'undefined') return;
+  // Ensure the cookie is deleted from the root path
   document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+  console.log(`[Cookie Debug] Deleted cookie: ${name} from root path (/)`);
 };
+
+// Global storage keys - use consistent keys for all languages
+const STORAGE_KEY_INGREDIENTS = 'global_game_ingredients';
+const STORAGE_KEY_ACHIEVEMENTS = 'global_game_achievements';
 
 // Storage management functions (uses localStorage with fallback to cookies)
 const saveToStorage = <T,>(key: string, value: T): void => {
   if (typeof window === 'undefined') return;
   
+  // Use global key instead of language-dependent key
+  const globalKey = key === 'gameIngredients' ? STORAGE_KEY_INGREDIENTS : 
+                   key === 'gameAchievements' ? STORAGE_KEY_ACHIEVEMENTS : key;
+  
+  console.log(`[Storage Debug] Saving data to storage with global key '${globalKey}'`);
+  
   try {
+    // Ensure we're not trying to save null or undefined
+    if (value === null || value === undefined) {
+      console.error(`[Storage Debug] Attempted to save null/undefined value to '${globalKey}'`);
+      return;
+    }
+    
     // First attempt to use localStorage (more storage space)
     const serializedValue = JSON.stringify(value);
-    localStorage.setItem(key, serializedValue);
+    
+    // Verify we're not storing an empty array or object
+    if (serializedValue === '[]' || serializedValue === '{}') {
+      console.warn(`[Storage Debug] Saving empty value to '${globalKey}', might be unintentional`);
+    }
+    
+    localStorage.setItem(globalKey, serializedValue);
+    console.log(`[Storage Debug] Successfully saved to localStorage with key '${globalKey}' (${serializedValue.length} chars)`);
+    
+    // Also save as cookie for extra reliability
+    try {
+      setCookie(globalKey, serializedValue);
+    } catch (err) {
+      console.error(`[Storage Debug] Failed to set backup cookie for '${globalKey}':`, err);
+    }
   } catch (e) {
-    console.error('Error saving to localStorage:', e);
+    console.error(`[Storage Debug] Error saving to localStorage for key '${globalKey}':`, e);
     // Fallback to cookies if localStorage fails (e.g., private browsing mode)
     try {
-      setCookie(key, JSON.stringify(value));
+      const serializedValue = JSON.stringify(value);
+      setCookie(globalKey, serializedValue);
+      console.log(`[Storage Debug] Successfully saved to cookies with key '${globalKey}' (localStorage fallback)`);
     } catch (cookieError) {
-      console.error('Error saving to cookies:', cookieError);
+      console.error(`[Storage Debug] Error saving to cookies for key '${globalKey}':`, cookieError);
     }
   }
 };
@@ -65,20 +110,74 @@ const saveToStorage = <T,>(key: string, value: T): void => {
 const loadFromStorage = <T,>(key: string, defaultValue: T): T => {
   if (typeof window === 'undefined') return defaultValue;
   
+  // Use global key instead of language-dependent key
+  const globalKey = key === 'gameIngredients' ? STORAGE_KEY_INGREDIENTS : 
+                   key === 'gameAchievements' ? STORAGE_KEY_ACHIEVEMENTS : key;
+  
+  console.log(`[Storage Debug] Attempting to load global key '${globalKey}' from storage`);
+  
   try {
     // First try localStorage
-    const item = localStorage.getItem(key);
+    console.log(`[Storage Debug] Checking localStorage for '${globalKey}'`);
+    const item = localStorage.getItem(globalKey);
     if (item) {
-      return JSON.parse(item);
+      try {
+        const parsed = JSON.parse(item);
+        console.log(`[Storage Debug] Successfully loaded '${globalKey}' from localStorage (${item.length} chars)`);
+        return parsed;
+      } catch (parseErr) {
+        console.error(`[Storage Debug] Error parsing localStorage item for '${globalKey}':`, parseErr);
+      }
+    } else {
+      console.log(`[Storage Debug] No item found in localStorage for '${globalKey}'`);
+      
+      // For legacy migrations, also check for the non-global key
+      const legacyItem = localStorage.getItem(key);
+      if (legacyItem) {
+        try {
+          const parsed = JSON.parse(legacyItem);
+          console.log(`[Storage Debug] Found legacy item for '${key}', migrating to global key`);
+          // Migrate to global key
+          localStorage.setItem(globalKey, legacyItem);
+          return parsed;
+        } catch (parseErr) {
+          console.error(`[Storage Debug] Error parsing legacy localStorage item:`, parseErr);
+        }
+      }
     }
     
     // Fallback to cookies
-    const cookieValue = getCookie(key);
+    console.log(`[Storage Debug] Checking cookies for '${globalKey}'`);
+    const cookieValue = getCookie(globalKey);
     if (cookieValue) {
-      return JSON.parse(cookieValue);
+      try {
+        const parsed = JSON.parse(cookieValue);
+        console.log(`[Storage Debug] Successfully loaded '${globalKey}' from cookies`);
+        return parsed;
+      } catch (parseErr) {
+        console.error(`[Storage Debug] Error parsing cookie value for '${globalKey}':`, parseErr);
+      }
+    } else {
+      console.log(`[Storage Debug] No cookie found for '${globalKey}'`);
+      
+      // For legacy migrations, also check for the non-global key cookie
+      const legacyCookie = getCookie(key);
+      if (legacyCookie) {
+        try {
+          const parsed = JSON.parse(legacyCookie);
+          console.log(`[Storage Debug] Found legacy cookie for '${key}', migrating to global key`);
+          // Migrate to global key
+          setCookie(globalKey, legacyCookie);
+          return parsed;
+        } catch (parseErr) {
+          console.error(`[Storage Debug] Error parsing legacy cookie:`, parseErr);
+        }
+      }
     }
+    
+    console.log(`[Storage Debug] No data found for '${globalKey}', returning default value`);
   } catch (e) {
-    console.error('Error loading from storage:', e);
+    console.error(`[Storage Debug] Error loading from storage for '${globalKey}':`, e);
   }
   
   return defaultValue;
@@ -87,22 +186,84 @@ const loadFromStorage = <T,>(key: string, defaultValue: T): T => {
 const clearStorage = (key: string): void => {
   if (typeof window === 'undefined') return;
   
+  // Use global key instead of language-dependent key
+  const globalKey = key === 'gameIngredients' ? STORAGE_KEY_INGREDIENTS : 
+                   key === 'gameAchievements' ? STORAGE_KEY_ACHIEVEMENTS : key;
+  
+  console.log(`[Storage Debug] Clearing storage for global key '${globalKey}'`);
+  
   try {
+    localStorage.removeItem(globalKey);
+    console.log(`[Storage Debug] Successfully removed from localStorage: '${globalKey}'`);
+    
+    // Also clear the legacy key
     localStorage.removeItem(key);
   } catch (e) {
-    console.error('Error clearing localStorage:', e);
+    console.error(`[Storage Debug] Error clearing localStorage for key '${globalKey}':`, e);
   }
   
   // Also clear the cookie version if it exists
-  deleteCookie(key);
+  try {
+    deleteCookie(globalKey);
+    console.log(`[Storage Debug] Successfully removed cookie: '${globalKey}'`);
+    
+    // Also clear the legacy cookie
+    deleteCookie(key);
+  } catch (e) {
+    console.error(`[Storage Debug] Error clearing cookie for key '${globalKey}':`, e);
+  }
+};
+
+// Helper function to normalize category keys
+const normalizeCategoryKey = (category: string): string => {
+  // Handle case where category has 'categories.' prefix
+  if (category.startsWith('categories.')) {
+    return category.replace('categories.', '');
+  }
+  
+  // Find the key in the categories object that matches this value
+  for (const [key, value] of Object.entries(categories)) {
+    if (value === category) {
+      return key;
+    }
+  }
+  
+  return category;
 };
 
 const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({ 
   onDarkModeChange,
   initialDarkMode
 }) => {
+  // Add translation hook
+  const t = useTranslations();
+  
+  // Change useState initialization to use a lazy initializer function
   // Use imported data instead of redefining
-  const [ingredients, setIngredients] = useState<Ingredient[]>(initialIngredients);
+  const [ingredients, setIngredients] = useState<Ingredient[]>(() => {
+    if (typeof window === 'undefined') return initialIngredients;
+    
+    try {
+      console.log('[Storage Debug] Initializing ingredients state...');
+      const savedIngredients = loadFromStorage<Ingredient[]>('gameIngredients', initialIngredients);
+      
+      if (savedIngredients && savedIngredients.length > 0) {
+        console.log('[Storage Debug] Initial load of ingredients:', savedIngredients.length, 'items');
+        // Ensure all required properties are present
+        return savedIngredients.map((item) => ({
+          ...item,
+          discovered: item.discovered ?? false,
+          difficulty: item.difficulty ?? 1,
+          category: item.category ?? 'BASIC'
+        })) as Ingredient[];
+      }
+    } catch (e) {
+      console.error('[Storage Debug] Error initializing ingredients:', e);
+    }
+    
+    return initialIngredients;
+  });
+  
   const [workspace, setWorkspace] = useState<Ingredient[]>([]);
   const [mixWorkspace, setMixWorkspace] = useState<Ingredient[]>([]);
   const [discoveredItems, setDiscoveredItems] = useState<Ingredient[]>([]);
@@ -111,7 +272,27 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
   const [newDiscovery, setNewDiscovery] = useState<DiscoveryItem | null>(null);
   const [showHints, setShowHints] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [achievements, setAchievements] = useState<Achievement[]>(initialAchievements);
+  const [achievements, setAchievements] = useState<Achievement[]>(() => {
+    if (typeof window === 'undefined') return initialAchievements;
+    
+    try {
+      console.log('[Storage Debug] Initializing achievements state...');
+      const savedAchievements = loadFromStorage<Achievement[]>('gameAchievements', initialAchievements);
+      
+      if (savedAchievements && savedAchievements.length > 0) {
+        console.log('[Storage Debug] Initial load of achievements:', savedAchievements.length, 'items');
+        // Ensure all required properties are present
+        return savedAchievements.map((item) => ({
+          ...item,
+          achieved: item.achieved ?? false
+        })) as Achievement[];
+      }
+    } catch (e) {
+      console.error('[Storage Debug] Error initializing achievements:', e);
+    }
+    
+    return initialAchievements;
+  });
   const [showResetConfirmation, setShowResetConfirmation] = useState<boolean>(false);
   const [showContactForm, setShowContactForm] = useState<boolean>(false);
   const [contactEmail, setContactEmail] = useState<string>('');
@@ -125,69 +306,68 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
   const prevCategoriesCountRef = useRef<number>(0);
   const prevHighestDifficultyRef = useRef<number>(1);
   
-  // Load saved state on component mount
+  // Add at the top of the component, near other useStates:
+  const [debugMode] = useState<boolean>(process.env.NODE_ENV === 'development');
+  
+  // Add after initial state setup
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
-    // Try to load saved ingredients
-    const savedIngredients = loadFromStorage<Ingredient[]>('gameIngredients', initialIngredients);
-    if (savedIngredients && savedIngredients.length > 0) {
-      try {
-        // Ensure all required properties are present
-        const validIngredients = savedIngredients.map((item) => ({
-          ...item,
-          discovered: item.discovered ?? false,
-          difficulty: item.difficulty ?? 1,
-          category: item.category ?? 'BASIC'
-        })) as Ingredient[];
-        setIngredients(validIngredients);
-      } catch (e) {
-        console.error('Error processing saved ingredients:', e);
-      }
-    }
-
-    // Try to load saved achievements
-    const savedAchievements = loadFromStorage<Achievement[]>('gameAchievements', initialAchievements);
-    if (savedAchievements && savedAchievements.length > 0) {
-      try {
-        // Ensure all required properties are present
-        const validAchievements = savedAchievements.map((item) => ({
-          ...item,
-          achieved: item.achieved ?? false
-        })) as Achievement[];
-        setAchievements(validAchievements);
-      } catch (e) {
-        console.error('Error processing saved achievements:', e);
-      }
-    }
-  }, []); // Empty dependency array means this only runs once on mount
-
+    
+    // Log initial state on first render
+    console.log('[Storage Debug] Initial state loaded:');
+    console.log('- Ingredients discovered:', ingredients.filter(i => i.discovered).length);
+    console.log('- Achievements unlocked:', achievements.filter(a => a.achieved).length);
+    
+    // Dump the first few discovered ingredients for debugging
+    const discoveredIngredients = ingredients.filter(i => i.discovered);
+    console.log('- First few discovered ingredients:',
+      discoveredIngredients.slice(0, 5).map(i => i.name)
+    );
+    
+    // Dump the achieved achievements for debugging
+    const achievedItems = achievements.filter(a => a.achieved);
+    console.log('- Unlocked achievements:', achievedItems.map(a => a.id));
+    
+  }, []);
+  
   // Save game state whenever it changes
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
-    try {
-      saveToStorage('gameIngredients', ingredients);
-    } catch (e) {
-      console.error('Error saving ingredients:', e);
-    }
+    // Save all ingredient changes - don't use conditional checks that might prevent saving
+    console.log('[Storage Debug] Saving ingredients state with', ingredients.filter(i => i.discovered).length, 'discovered items');
+    saveToStorage('gameIngredients', ingredients);
   }, [ingredients]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
-    try {
-      saveToStorage('gameAchievements', achievements);
-    } catch (e) {
-      console.error('Error saving achievements:', e);
-    }
+    // Save all achievement changes - don't use conditional checks that might prevent saving
+    console.log('[Storage Debug] Saving achievements state with', achievements.filter(a => a.achieved).length, 'achieved items');
+    saveToStorage('gameAchievements', achievements);
   }, [achievements]);
 
+  // Add a periodic auto-save effect to ensure state is always saved
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const autoSaveInterval = setInterval(() => {
+      console.log('[Storage Debug] Auto-save: Saving ingredients state');
+      saveToStorage('gameIngredients', ingredients);
+      
+      console.log('[Storage Debug] Auto-save: Saving achievements state');
+      saveToStorage('gameAchievements', achievements);
+    }, 30000); // Auto-save every 30 seconds
+    
+    return () => clearInterval(autoSaveInterval);
+  }, [ingredients, achievements]);
+  
   // Update discovered items from ingredients list
   useEffect(() => {
+    // Set discovered items
     setDiscoveredItems(ingredients.filter(item => item.discovered));
     
-    // Check for achievements
+    // Get current counts for achievements
     const discoveredCount = ingredients.filter(item => item.discovered && item.difficulty > 1).length;
     
     // Fix for Gourmet achievement - only count non-basic created items
@@ -203,52 +383,65 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
     
     const highestDifficulty = Math.max(...ingredients.filter(item => item.discovered).map(item => item.difficulty || 1));
     
-    let shouldUpdateAchievements = false;
-    let updatedAchievements = [...achievements];
+    console.log(`[Achievement Debug] Current stats: discovered=${discoveredCount}, categories=${createdCategories}, difficulty=${highestDifficulty}`);
+    console.log(`[Achievement Debug] Previous stats: discovered=${prevDiscoveredCountRef.current}, categories=${prevCategoriesCountRef.current}, difficulty=${prevHighestDifficultyRef.current}`);
     
-    if (discoveredCount >= 1 && discoveredCount > prevDiscoveredCountRef.current && !achievements.find(a => a.id === 'first_combo')?.achieved) {
+    // Create a local copy of achievements to track changes
+    let updatedAchievements = [...achievements];
+    let hasChanges = false;
+    
+    // First Combo Achievement
+    if (discoveredCount >= 1 && !achievements.find(a => a.id === 'first_combo')?.achieved) {
+      console.log('[Achievement Debug] Unlocked: First Combination');
       updatedAchievements = updatedAchievements.map(a => 
         a.id === 'first_combo' ? {...a, achieved: true} : a
       );
       setMessage('Achievement unlocked: First Combination! 🏆');
-      shouldUpdateAchievements = true;
+      hasChanges = true;
     }
     
-    if (discoveredCount >= 5 && discoveredCount > prevDiscoveredCountRef.current && !achievements.find(a => a.id === 'explorer')?.achieved) {
+    // Explorer Achievement 
+    if (discoveredCount >= 5 && !achievements.find(a => a.id === 'explorer')?.achieved) {
+      console.log('[Achievement Debug] Unlocked: Culinary Explorer');
       updatedAchievements = updatedAchievements.map(a => 
         a.id === 'explorer' ? {...a, achieved: true} : a
       );
       setMessage('Achievement unlocked: Culinary Explorer! 🏆');
-      shouldUpdateAchievements = true;
+      hasChanges = true;
     }
     
-    if (createdCategories >= 5 && createdCategories > prevCategoriesCountRef.current && !achievements.find(a => a.id === 'gourmet')?.achieved) {
+    // Gourmet Achievement
+    if (createdCategories >= 5 && !achievements.find(a => a.id === 'gourmet')?.achieved) {
+      console.log('[Achievement Debug] Unlocked: Gourmet');
       updatedAchievements = updatedAchievements.map(a => 
         a.id === 'gourmet' ? {...a, achieved: true} : a
       );
       setMessage('Achievement unlocked: Gourmet! 🏆');
-      shouldUpdateAchievements = true;
+      hasChanges = true;
     }
     
-    if (highestDifficulty >= 4 && highestDifficulty > prevHighestDifficultyRef.current && !achievements.find(a => a.id === 'master_chef')?.achieved) {
+    // Master Chef Achievement
+    if (highestDifficulty >= 4 && !achievements.find(a => a.id === 'master_chef')?.achieved) {
+      console.log('[Achievement Debug] Unlocked: Master Chef');
       updatedAchievements = updatedAchievements.map(a => 
         a.id === 'master_chef' ? {...a, achieved: true} : a
       );
       setMessage('Achievement unlocked: Master Chef! 🏆');
-      shouldUpdateAchievements = true;
+      hasChanges = true;
     }
     
-    // Only update achievements if needed
-    if (shouldUpdateAchievements) {
+    // Only update achievements if there were changes
+    if (hasChanges) {
+      console.log('[Achievement Debug] Saving updated achievements');
       setAchievements(updatedAchievements);
     }
     
-    // Update refs for next comparison
+    // Always update refs for next comparison
     prevDiscoveredCountRef.current = discoveredCount;
     prevCategoriesCountRef.current = createdCategories;
     prevHighestDifficultyRef.current = highestDifficulty;
     
-  }, [ingredients]); // Remove achievements from dependencies
+  }, [ingredients]); // Keep achievements out of the dependency array to prevent loops
   
   // Handle drag start
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, item: Ingredient | CookingMethod) => {
@@ -640,7 +833,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
     setNewDiscovery(null);
     
     // Reset all ingredients to initial discovery state
-    setIngredients(initialIngredients.map(item => {
+    setIngredients(initialIngredients.map((item: Ingredient) => {
       // Keep basic ingredients discovered, reset others
       return {
         ...item,
@@ -804,22 +997,22 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
           <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-lg max-w-md text-center shadow-xl`}>
             <div className="text-5xl mb-4">⚠️</div>
-            <h2 className={`text-xl font-bold mb-3 ${darkMode ? 'text-red-300' : 'text-red-600'}`}>Warning: Progress Reset</h2>
+            <h2 className={`text-xl font-bold mb-3 ${darkMode ? 'text-red-300' : 'text-red-600'}`}>{t('reset.warning')}</h2>
             <p className={`mb-5 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              You are about to reset all your progress, including all discovered ingredients and achievements. This action cannot be undone.
+              {t('reset.message')}
             </p>
             <div className="flex gap-4 justify-center">
               <button 
                 onClick={toggleResetConfirmation}
                 className={`${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} text-gray-800 py-2 px-6 rounded-lg font-medium transition-colors cursor-pointer`}
               >
-                Cancel
+                {t('reset.cancel')}
               </button>
               <button 
                 onClick={resetApp}
                 className="bg-red-600 hover:bg-red-700 text-white py-2 px-6 rounded-lg font-medium transition-colors cursor-pointer"
               >
-                Reset Everything
+                {t('reset.confirm')}
               </button>
             </div>
           </div>
@@ -831,7 +1024,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
           <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-lg max-w-md w-full shadow-xl`}>
             <div className="flex justify-between items-center mb-4">
-              <h2 className={`text-xl font-bold ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>Feature Request</h2>
+              <h2 className={`text-xl font-bold ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>{t('contact.title')}</h2>
               <button 
                 onClick={toggleContactForm}
                 className="text-gray-500 hover:text-gray-700 text-xl"
@@ -844,9 +1037,9 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
             {formSubmitSuccess ? (
               <div className="text-center py-8">
                 <div className="text-5xl mb-4">✅</div>
-                <h3 className={`text-xl font-bold ${darkMode ? 'text-green-300' : 'text-green-600'}`}>Request Sent!</h3>
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-green-300' : 'text-green-600'}`}>{t('contact.success')}</h3>
                 <p className={`mt-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Thank you for your feedback. We&apos;ll review your request soon.
+                  {t('contact.successMessage')}
                 </p>
               </div>
             ) : (
@@ -862,7 +1055,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                     htmlFor="email" 
                     className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
                   >
-                    Your Email
+                    {t('contact.email')}
                   </label>
                   <input
                     type="email"
@@ -885,7 +1078,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                     htmlFor="feature" 
                     className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
                   >
-                    Feature Description
+                    {t('contact.feature')}
                   </label>
                   <textarea
                     id="feature"
@@ -914,7 +1107,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                     }`}
                     disabled={formSubmitting}
                   >
-                    Cancel
+                    {t('contact.cancel')}
                   </button>
                   <button 
                     type="submit"
@@ -931,9 +1124,9 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Sending...
+                        {t('contact.sending')}
                       </>
-                    ) : 'Send Request'}
+                    ) : t('contact.send')}
                   </button>
                 </div>
               </form>
@@ -957,7 +1150,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                   : 'text-gray-500 border-b-2 border-white hover:text-gray-700'
             }`}
           >
-            👨‍🍳 Cook
+            👨‍🍳 {t('navigation.cook')}
           </button>
           <button
             onClick={() => setActiveTab('discover')}
@@ -971,7 +1164,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                   : 'text-gray-500 border-b-2 border-white hover:text-gray-700'
             }`}
           >
-            🔍 Discover
+            🔍 {t('navigation.discover')}
           </button>
           <button
             onClick={() => setActiveTab('achievements')}
@@ -985,7 +1178,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                   : 'text-gray-500 border-b-2 border-white hover:text-gray-700'
             }`}
           >
-            🏆 Achievements
+            🏆 {t('navigation.achievements')}
           </button>
         </div>
       </div>
@@ -997,19 +1190,25 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
           {newDiscovery && (
             <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
               <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-8 rounded-lg max-w-md text-center shadow-xl`}>
-                <h2 className={`text-2xl font-bold mb-3 ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>New Discovery! 🎉</h2>
+                <h2 className={`text-2xl font-bold mb-3 ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>{t('cook.newDiscovery')} 🎉</h2>
                 <div className="text-7xl my-5">{newDiscovery.emoji}</div>
-                <h3 className={`text-xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'} mb-2`}>{newDiscovery.name}</h3>
-                <p className={`text-base ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Category: {newDiscovery.category}</p>
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'} mb-2`}>
+                  {t(`ingredients.${newDiscovery.id}`, { fallback: newDiscovery.name })}
+                </h3>
+                <p className={`text-base ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                  {t('cook.category')}: {t(`categories.${normalizeCategoryKey(newDiscovery.category)}`, { fallback: newDiscovery.category })}
+                </p>
                 {newDiscovery.method && (
-                  <p className={`text-base ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-4`}>Created by: {newDiscovery.method}</p>
+                  <p className={`text-base ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-4`}>
+                    {t('cook.createdBy')}: {t(`cookingMethods.${newDiscovery.method}`, { fallback: newDiscovery.method })}
+                  </p>
                 )}
-                <p className="text-base mb-5">Difficulty: {Array(newDiscovery.difficulty).fill('⭐').join('')}</p>
+                <p className="text-base mb-5">{t('cook.difficulty')}: {Array(newDiscovery.difficulty).fill('⭐').join('')}</p>
                 <button 
                   onClick={dismissDiscovery}
                   className={`${darkMode ? 'bg-blue-700 hover:bg-blue-800' : 'bg-blue-600 hover:bg-blue-700'} text-white py-3 px-6 rounded-lg text-lg font-medium transition-colors cursor-pointer`}
                 >
-                  Continue Cooking
+                  {t('cook.continueCooking')}
                 </button>
               </div>
             </div>
@@ -1021,7 +1220,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
             <div className="w-full md:w-2/3 order-1">
               {/* Mix Area */}
               <div className="w-full mb-4">
-                <h2 className={`text-xl font-bold mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Mix Area:</h2>
+                <h2 className={`text-xl font-bold mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('cook.mixArea')}:</h2>
                 <div 
                   className={`mix-area flex items-center justify-center gap-4 p-6 border-4 border-dashed ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'} rounded-lg w-full h-64 mb-4 relative shadow-md z-10`}
                   onDrop={handleDrop}
@@ -1030,10 +1229,10 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                   {mixWorkspace.length === 0 ? (
                     <div className="text-center relative z-10">
                       <p className={`text-lg font-medium ${darkMode ? 'text-gray-200' : 'text-black'}`}>
-                        Drag ingredients here to combine them
+                        {t('cook.dragIngredientsHere')}
                       </p>
                       <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}>
-                        Up to 3 ingredients can be combined
+                        {t('cook.upToThreeIngredients')}
                       </p>
                     </div>
                   ) : (
@@ -1041,14 +1240,18 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                       {mixWorkspace.map((item, index) => (
                         <div key={index} className={`flex flex-col items-center justify-center ${darkMode ? 'bg-gray-700' : 'bg-white bg-opacity-80'} p-3 rounded-lg shadow-sm`}>
                           <span className="text-6xl mb-2">{item.emoji}</span>
-                          <span className={`text-base font-medium ${darkMode ? 'text-gray-200' : 'text-black'}`}>{item.name}</span>
-                          <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-700'} mt-1`}>{item.category}</span>
+                          <span className={`text-base font-medium ${darkMode ? 'text-gray-200' : 'text-black'}`}>
+                            {t(`ingredients.${item.id}`, { fallback: item.name })}
+                          </span>
+                          <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-700'} mt-1`}>
+                            {t(`categories.${normalizeCategoryKey(item.category)}`, { fallback: item.category })}
+                          </span>
                         </div>
                       ))}
                       {mixWorkspace.length < 3 && (
                         <div className="flex flex-col items-center justify-center text-gray-400">
                           <span className="text-6xl mb-2">+</span>
-                          <span className="text-base font-medium">Add more</span>
+                          <span className="text-base font-medium">{t('cook.addMore')}</span>
                         </div>
                       )}
                     </div>
@@ -1063,6 +1266,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                         setMessage('');
                       }}
                       className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full text-sm w-8 h-8 flex items-center justify-center hover:bg-red-600 shadow-md z-20"
+                      aria-label={t('cook.clear')}
                     >
                       ×
                     </button>
@@ -1091,9 +1295,9 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
 
               {/* Cooking Methods */}
               <div className="mb-2 w-full">
-                <h2 className={`text-xl font-bold mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Cooking Methods:</h2>
+                <h2 className={`text-xl font-bold mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('cook.cookingMethods')}</h2>
                 <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2 pt-2 px-1">
-                  {cookingMethods.slice(1).map(method => (
+                  {cookingMethods.slice(1).map((method: CookingMethod) => (
                     <div 
                       key={method.id}
                       draggable
@@ -1125,7 +1329,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                             : method.id === 'chop'
                             ? `${darkMode ? 'text-green-200' : 'text-green-800'}`
                             : `${darkMode ? 'text-purple-200' : 'text-purple-800'}`
-                        }`}>{method.name}</span>
+                        }`}>{t(`cookingMethods.${method.id}`)}</span>
                       </div>
                     </div>
                   ))}
@@ -1154,13 +1358,13 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                   <div className="text-center relative z-10">
                     <p className={`text-lg font-medium ${darkMode ? 'text-gray-200' : 'text-black'}`}>
                       {selectedMethod 
-                        ? `Drag an ingredient here to ${selectedMethod.name.toLowerCase()} it`
-                        : 'Drag an ingredient here to start cooking'}
+                        ? t('cook.dragIngredientMethod', {method: selectedMethod.name.toLowerCase()})
+                        : t('cook.dragIngredientToStart')}
                     </p>
                     <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}>
                       {selectedMethod 
-                        ? `Selected: ${selectedMethod.name}`
-                        : 'Select a cooking method first'}
+                        ? t('cook.selectedMethod', {method: selectedMethod.name})
+                        : t('cook.selectMethodFirst')}
                     </p>
                   </div>
                 ) : (
@@ -1168,14 +1372,18 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                     {workspace.map((item, index) => (
                       <div key={index} className={`flex flex-col items-center justify-center ${darkMode ? 'bg-gray-700' : 'bg-white bg-opacity-80'} p-3 rounded-lg shadow-sm`}>
                         <span className="text-6xl mb-2">{item.emoji}</span>
-                        <span className={`text-base font-medium ${darkMode ? 'text-gray-200' : 'text-black'}`}>{item.name}</span>
-                        <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-700'} mt-1`}>{item.category}</span>
+                        <span className={`text-base font-medium ${darkMode ? 'text-gray-200' : 'text-black'}`}>
+                          {t(`ingredients.${item.id}`, { fallback: item.name })}
+                        </span>
+                        <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-700'} mt-1`}>
+                          {t(`categories.${normalizeCategoryKey(item.category)}`, { fallback: item.category })}
+                        </span>
                       </div>
                     ))}
                     {workspace.length < 3 && (
                       <div className="flex flex-col items-center justify-center text-gray-400">
                         <span className="text-6xl mb-2">+</span>
-                        <span className="text-base font-medium">Add more</span>
+                        <span className="text-base font-medium">{t('cook.addMore')}</span>
                       </div>
                     )}
                   </div>
@@ -1191,33 +1399,36 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
               {/* Title and Description */}
               <div className="mb-6">
                 <h1 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>
-                  👨‍🍳 Infinite Meal
+                  👨‍🍳 {t('cook.title')}
                 </h1>
                 <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Discover and create delicious recipes in this culinary adventure!
+                  {t('cook.subtitle')}
                 </p>
               </div>
 
               {/* Ingredients by category */}
               <div className="mb-4 w-full">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className={`text-xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Your Ingredients:</h2>
+                  <h2 className={`text-xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('cook.ingredients')}:</h2>
                   <div className="flex items-center gap-2">
+                    {/* All categories: BASIC, VEGETABLE, etc. */}
                     <select 
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
                       className={`text-sm border ${darkMode ? 'border-gray-700 bg-gray-800 text-white' : 'border-gray-300 bg-white text-black'} rounded-md px-2 py-1 font-medium`}
                     >
-                      <option value="All">All Ingredients</option>
-                      {Object.values(categories).map(category => (
-                        <option key={category} value={category} className={darkMode ? 'text-white' : 'text-black'}>{category}</option>
+                      <option value="All">{t('discover.all')}</option>
+                      {Object.entries(categories).map(([key, category]: [string, string]) => (
+                        <option key={category} value={category} className={darkMode ? 'text-white' : 'text-black'}>
+                          {t(`categories.${key}`, {fallback: category})}
+                        </option>
                       ))}
                     </select>
                     <button
                       onClick={toggleHints}
                       className={`text-base ${darkMode ? 'bg-blue-900 hover:bg-blue-800 text-blue-200' : 'bg-blue-100 hover:bg-blue-200 text-blue-700'} px-3 py-2 rounded-lg font-medium transition-colors`}
                     >
-                      {showHints ? 'Hide Hints' : 'Show Hints'}
+                      {showHints ? t('cook.hideHints') : t('cook.showHints')}
                     </button>
                   </div>
                 </div>
@@ -1225,19 +1436,19 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                 {/* Recipe hints */}
                 {showHints && (
                   <div className={`${darkMode ? 'bg-yellow-900 border-yellow-800' : 'bg-yellow-50 border-yellow-200'} p-4 rounded-lg mb-5 border shadow-sm`}>
-                    <h3 className={`font-bold mb-2 text-lg ${darkMode ? 'text-yellow-200' : 'text-yellow-800'}`}>Recipe Hints:</h3>
+                    <h3 className={`font-bold mb-2 text-lg ${darkMode ? 'text-yellow-200' : 'text-yellow-800'}`}>{t('cook.recipeHints')}:</h3>
                     {getRecipeHints().length > 0 ? (
                       <ul className="list-disc pl-6 space-y-2">
                         {getRecipeHints().map((hint, idx) => (
                           <li key={idx} className={`text-base ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                            Try combining {hint.knownIngredients.join(' and ')}
-                            {hint.unknownCount > 0 && ' with something else'}
-                            {hint.difficulty && ` (Difficulty: ${hint.difficulty})`}
+                            {t('cook.tryCombining', { ingredients: hint.knownIngredients.join(' and ') })}
+                            {hint.unknownCount > 0 && t('cook.withSomethingElse')}
+                            {hint.difficulty && t('cook.difficultyLevel', { level: hint.difficulty })}
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <p className={`text-base ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Discover more ingredients to unlock recipe hints!</p>
+                      <p className={`text-base ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{t('cook.discoverMoreForHints')}</p>
                     )}
                   </div>
                 )}
@@ -1254,7 +1465,9 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                         className={`inline-flex items-center p-2 mr-2 mb-2 border ${darkMode ? 'border-gray-700 bg-gray-700 hover:bg-gray-600' : 'border-gray-200 bg-white hover:bg-blue-50'} rounded-lg cursor-grab shadow-sm hover:shadow-md transition-colors`}
                       >
                         <span className="text-2xl mr-2">{item.emoji}</span>
-                        <span className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{item.name}</span>
+                        <span className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                          {t(`ingredients.${item.id}`, { fallback: item.name })}
+                        </span>
                         {item.difficulty > 1 && (
                           <span className="text-xs text-yellow-500 ml-1">
                             {Array(item.difficulty).fill('⭐').join('')}
@@ -1271,7 +1484,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
           {/* Status area */}
           <div className="flex justify-between w-full px-4 mb-4">
             <div className={`text-base font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              Discovered: {getNonBasicDiscoveredCount()}/{getTotalCount()}
+              {t('cook.discovered')}: {getNonBasicDiscoveredCount()}/{getTotalCount()}
             </div>
             <div className={`text-base font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               <button 
@@ -1280,7 +1493,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
               >
                 <span className="mr-1">🏆</span>
                 <span>
-                  {achievements.filter(a => a.achieved).length}/{achievements.length} Achievements
+                  {achievements.filter(a => a.achieved).length}/{achievements.length} {t('achievements.title')}
                 </span>
               </button>
             </div>
@@ -1292,21 +1505,21 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
       {activeTab === 'discover' && (
         <div className="w-full p-6">
           <div className={`${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-            <h2 className="text-3xl font-bold mb-6 text-center">🔍 Recipe Discovery</h2>
+            <h2 className="text-3xl font-bold mb-6 text-center">🔍 {t('discover.title')}</h2>
             
             <div className="flex flex-col md:flex-row gap-6">
               {/* Sidebar - All Discoverable Items */}
               <div className="w-full md:w-1/4">
                 <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-md border p-4 top-24`}>
-                  <h3 className={`text-lg font-bold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Discovered Items</h3>
+                  <h3 className={`text-lg font-bold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('discover.discoveredItems')}</h3>
                   
                   {/* Group items by category */}
-                  {Object.values(categories)
-                    .filter(category => 
-                      category !== categories.BASIC && 
+                  {Object.entries(categories)
+                    .filter(([categoryKey, category]: [string, string]) => 
+                      categoryKey !== 'BASIC' && 
                       ingredients.some(i => i.discovered && i.category === category && i.difficulty > 1)
                     )
-                    .map(category => {
+                    .map(([categoryKey, category]: [string, string]) => {
                     const categoryItems = ingredients.filter(i => 
                       i.discovered && 
                       i.category === category && 
@@ -1316,16 +1529,20 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                     
                     return (
                       <div key={category} className="mb-4">
-                        <h4 className={`text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{category}</h4>
+                        <h4 className={`text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          {t(`categories.${categoryKey}`, {fallback: category})}
+                        </h4>
                         <div className="flex flex-wrap gap-1">
                           {categoryItems.map(item => (
                             <div 
                               key={item.id}
                               className={`flex items-center p-1 rounded ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} cursor-pointer transition-colors`}
-                              title={`${item.name} (${item.category})`}
+                              title={`${t(`ingredients.${item.id}`, {fallback: item.name})} (${t(`categories.${categoryKey}`, {fallback: category})})`}
                             >
                               <span className="text-lg mr-1">{item.emoji}</span>
-                              <span className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{item.name}</span>
+                              <span className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                {t(`ingredients.${item.id}`, {fallback: item.name})}
+                              </span>
                               {item.difficulty > 1 && (
                                 <span className="text-xs text-yellow-500 ml-1">
                                   {Array(item.difficulty).fill('⭐').join('')}
@@ -1341,7 +1558,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                   <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
                     <div className="flex justify-between items-center">
                       <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Total discovered:
+                        {t('discover.totalDiscovered')}:
                       </span>
                       <span className={`font-medium ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
                         {getNonBasicDiscoveredCount()}/{getTotalCount()}
@@ -1352,15 +1569,15 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
 
                 {/* Discoverable Items Section */}
                 <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-md border p-4 mt-4`}>
-                  <h3 className={`text-lg font-bold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Discoverable Items</h3>
+                  <h3 className={`text-lg font-bold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('discover.discoverableItems')}</h3>
                   
                   {/* Group undiscovered items by category */}
-                  {Object.values(categories)
-                    .filter(category => 
-                      category !== categories.BASIC && 
+                  {Object.entries(categories)
+                    .filter(([categoryKey, category]: [string, string]) => 
+                      categoryKey !== 'BASIC' && 
                       ingredients.some(i => !i.discovered && i.category === category && i.difficulty > 1)
                     )
-                    .map(category => {
+                    .map(([categoryKey, category]: [string, string]) => {
                     const categoryItems = ingredients.filter(i => 
                       !i.discovered && 
                       i.category === category && 
@@ -1370,16 +1587,20 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                     
                     return (
                       <div key={category} className="mb-4">
-                        <h4 className={`text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{category}</h4>
+                        <h4 className={`text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          {t(`categories.${categoryKey}`, {fallback: category})}
+                        </h4>
                         <div className="flex flex-wrap gap-1">
                           {categoryItems.map(item => (
                             <div 
                               key={item.id}
                               className={`flex items-center p-1 rounded ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} opacity-50`}
-                              title={`${item.name} (${item.category})`}
+                              title={`${t(`ingredients.${item.id}`, {fallback: item.name})} (${t(`categories.${categoryKey}`, {fallback: category})})`}
                             >
                               <span className="text-lg mr-1">❓</span>
-                              <span className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{item.name}</span>
+                              <span className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                {t(`ingredients.${item.id}`, {fallback: item.name})}
+                              </span>
                               {item.difficulty > 1 && (
                                 <span className="text-xs text-yellow-500 ml-1">
                                   {Array(item.difficulty).fill('⭐').join('')}
@@ -1398,8 +1619,8 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
               <div className="w-full md:w-3/4">
                 {ingredients.filter(i => i.discovered && (i.category === categories.DISH || i.category === categories.DESSERT)).length === 0 ? (
                   <div className="text-center py-12">
-                    <p className="text-xl mb-4">No complete meals discovered yet!</p>
-                    <p className="text-lg">Go to the Cook tab and discover some meals to see their recipes here.</p>
+                    <p className="text-xl mb-4">{t('discover.noMealsYet')}</p>
+                    <p className="text-lg">{t('discover.goToCookTab')}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1416,16 +1637,18 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                               <div className="flex items-center">
                                 <span className="text-5xl mr-4">{dish.emoji}</span>
                                 <div>
-                                  <h3 className={`text-xl font-bold ${darkMode ? 'text-blue-100' : 'text-blue-800'}`}>{dish.name}</h3>
+                                  <h3 className={`text-xl font-bold ${darkMode ? 'text-blue-100' : 'text-blue-800'}`}>
+                                    {t(`ingredients.${dish.id}`, { fallback: dish.name })}
+                                  </h3>
                                   <p className={`${darkMode ? 'text-blue-200' : 'text-blue-700'}`}>
-                                    Difficulty: {Array(dish.difficulty).fill('⭐').join('')}
+                                    {t('discover.difficulty')}: {Array(dish.difficulty).fill('⭐').join('')}
                                   </p>
                                 </div>
                               </div>
                             </div>
                             
                             <div className="p-4">
-                              <h4 className={`font-bold text-lg mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Recipe Steps:</h4>
+                              <h4 className={`font-bold text-lg mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('discover.recipeSteps')}:</h4>
                               <ol className="list-decimal pl-5 space-y-2">
                                 {steps.map((step, idx) => (
                                   <li key={idx} className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -1435,7 +1658,9 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                               </ol>
                               <div className={`mt-4 pt-3 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                                 <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} text-sm italic`}>
-                                  ✨ {recipes.find(r => r.result === dish.id)?.description || `A delicious ${dish.name} ready to enjoy!`} ✨
+                                  ✨ {recipes.find(r => r.result === dish.id)?.description || t('discover.readyToEnjoy', {
+                                    dish: t(`ingredients.${dish.id}`, { fallback: dish.name })
+                                  })} ✨
                                 </p>
                               </div>
                             </div>
@@ -1455,13 +1680,13 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
       {activeTab === 'achievements' && (
         <div className="w-full p-6">
           <div className={`${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-            <h2 className="text-3xl font-bold mb-6 text-center">🏆 Achievements</h2>
+            <h2 className="text-3xl font-bold mb-6 text-center">🏆 {t('achievements.title')}</h2>
             
             <div className="mb-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold">Progress</h3>
+                <h3 className="text-xl font-bold">{t('achievements.progress')}</h3>
                 <div className={`text-lg font-medium ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
-                  {achievements.filter(a => a.achieved).length}/{achievements.length} Achievements
+                  {achievements.filter(a => a.achieved).length}/{achievements.length} {t('achievements.title')}
                 </div>
               </div>
               
@@ -1477,7 +1702,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Basic Progression */}
               <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-md border p-4`}>
-                <h3 className={`text-lg font-bold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Basic Progression</h3>
+                <h3 className={`text-lg font-bold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('achievements.basicProgression')}</h3>
                 <div className="space-y-2">
                   {achievements.slice(0, 4).map(achievement => (
                     <div 
@@ -1489,10 +1714,10 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                       <div className="flex items-start">
                         <div className="text-xl mr-2">{achievement.achieved ? '🏆' : '🔒'}</div>
                         <div>
-                          <h4 className={`text-sm font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{achievement.name}</h4>
-                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{achievement.description}</p>
+                          <h4 className={`text-sm font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t(`achievements.${achievement.id}`)}</h4>
+                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t(`achievements.descriptions.${achievement.id}`)}</p>
                           {achievement.achieved && (
-                            <div className={`mt-1 text-xs ${darkMode ? 'text-green-400' : 'text-green-600'} font-medium`}>Completed!</div>
+                            <div className={`mt-1 text-xs ${darkMode ? 'text-green-400' : 'text-green-600'} font-medium`}>{t('achievements.completed')}</div>
                           )}
                         </div>
                       </div>
@@ -1503,7 +1728,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
 
               {/* Discovery Milestones */}
               <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-md border p-4`}>
-                <h3 className={`text-lg font-bold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Discovery Milestones</h3>
+                <h3 className={`text-lg font-bold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('achievements.discoveryMilestones')}</h3>
                 <div className="space-y-2">
                   {achievements.slice(4, 9).map(achievement => (
                     <div 
@@ -1515,10 +1740,10 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                       <div className="flex items-start">
                         <div className="text-xl mr-2">{achievement.achieved ? '🏆' : '🔒'}</div>
                         <div>
-                          <h4 className={`text-sm font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{achievement.name}</h4>
-                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{achievement.description}</p>
+                          <h4 className={`text-sm font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t(`achievements.${achievement.id}`)}</h4>
+                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t(`achievements.descriptions.${achievement.id}`)}</p>
                           {achievement.achieved && (
-                            <div className={`mt-1 text-xs ${darkMode ? 'text-green-400' : 'text-green-600'} font-medium`}>Completed!</div>
+                            <div className={`mt-1 text-xs ${darkMode ? 'text-green-400' : 'text-green-600'} font-medium`}>{t('achievements.completed')}</div>
                           )}
                         </div>
                       </div>
@@ -1529,7 +1754,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
 
               {/* Cooking Methods */}
               <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-md border p-4`}>
-                <h3 className={`text-lg font-bold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Cooking Methods</h3>
+                <h3 className={`text-lg font-bold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('achievements.cookingMethods')}</h3>
                 <div className="space-y-2">
                   {achievements.slice(9, 15).map(achievement => (
                     <div 
@@ -1541,10 +1766,10 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                       <div className="flex items-start">
                         <div className="text-xl mr-2">{achievement.achieved ? '🏆' : '🔒'}</div>
                         <div>
-                          <h4 className={`text-sm font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{achievement.name}</h4>
-                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{achievement.description}</p>
+                          <h4 className={`text-sm font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t(`achievements.${achievement.id}`)}</h4>
+                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t(`achievements.descriptions.${achievement.id}`)}</p>
                           {achievement.achieved && (
-                            <div className={`mt-1 text-xs ${darkMode ? 'text-green-400' : 'text-green-600'} font-medium`}>Completed!</div>
+                            <div className={`mt-1 text-xs ${darkMode ? 'text-green-400' : 'text-green-600'} font-medium`}>{t('achievements.completed')}</div>
                           )}
                         </div>
                       </div>
@@ -1555,7 +1780,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
 
               {/* Categories */}
               <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-md border p-4`}>
-                <h3 className={`text-lg font-bold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Ingredient Categories</h3>
+                <h3 className={`text-lg font-bold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('achievements.categories')}</h3>
                 <div className="space-y-2">
                   {achievements.slice(15, 21).map(achievement => (
                     <div 
@@ -1567,10 +1792,10 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                       <div className="flex items-start">
                         <div className="text-xl mr-2">{achievement.achieved ? '🏆' : '🔒'}</div>
                         <div>
-                          <h4 className={`text-sm font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{achievement.name}</h4>
-                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{achievement.description}</p>
+                          <h4 className={`text-sm font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t(`achievements.${achievement.id}`)}</h4>
+                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t(`achievements.descriptions.${achievement.id}`)}</p>
                           {achievement.achieved && (
-                            <div className={`mt-1 text-xs ${darkMode ? 'text-green-400' : 'text-green-600'} font-medium`}>Completed!</div>
+                            <div className={`mt-1 text-xs ${darkMode ? 'text-green-400' : 'text-green-600'} font-medium`}>{t('achievements.completed')}</div>
                           )}
                         </div>
                       </div>
@@ -1581,7 +1806,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
 
               {/* Advanced Achievements */}
               <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-md border p-4 col-span-1 lg:col-span-2`}>
-                <h3 className={`text-lg font-bold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Advanced Achievements</h3>
+                <h3 className={`text-lg font-bold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('achievements.advanced')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                   {achievements.slice(21).map(achievement => (
                     <div 
@@ -1593,10 +1818,10 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                       <div className="flex items-start">
                         <div className="text-xl mr-2">{achievement.achieved ? '🏆' : '🔒'}</div>
                         <div>
-                          <h4 className={`text-sm font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{achievement.name}</h4>
-                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{achievement.description}</p>
+                          <h4 className={`text-sm font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t(`achievements.${achievement.id}`)}</h4>
+                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t(`achievements.descriptions.${achievement.id}`)}</p>
                           {achievement.achieved && (
-                            <div className={`mt-1 text-xs ${darkMode ? 'text-green-400' : 'text-green-600'} font-medium`}>Completed!</div>
+                            <div className={`mt-1 text-xs ${darkMode ? 'text-green-400' : 'text-green-600'} font-medium`}>{t('achievements.completed')}</div>
                           )}
                         </div>
                       </div>
@@ -1609,32 +1834,55 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
         </div>
       )}
       
-      {/* Dark mode toggle and Reset button */}
+      {/* Dark mode toggle and utility buttons */}
       <div className="fixed bottom-4 right-4 z-30 flex gap-2">
+        <LanguageSwitcher />
         <button 
           onClick={toggleContactForm}
-          className={`p-3 rounded-full shadow-lg transition-colors ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} text-gray-800 cursor-pointer`}
-          aria-label="Contact us"
+          className={`p-3 rounded-full shadow-lg transition-colors bg-blue-900 hover:bg-blue-800 text-white cursor-pointer`}
+          aria-label={t('contact.title')}
         >
           📨
         </button>
         <button 
           onClick={toggleResetConfirmation}
-          className={`p-3 rounded-full shadow-lg transition-colors ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} text-gray-800 cursor-pointer`}
-          aria-label="Reset app"
+          className={`p-3 rounded-full shadow-lg transition-colors bg-blue-900 hover:bg-blue-800 text-white cursor-pointer`}
+          aria-label={t('navigation.reset')}
         >
-          🧹
+          🗑️
         </button>
         <button 
           onClick={toggleDarkMode}
-          className={`p-3 rounded-full shadow-lg transition-colors ${darkMode ? 'bg-yellow-400 text-gray-900' : 'bg-gray-800 text-yellow-300'} cursor-pointer`}
-          aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          className={`p-3 rounded-full shadow-lg transition-colors bg-blue-900 hover:bg-blue-800 text-white cursor-pointer`}
+          aria-label={darkMode ? t('navigation.lightMode') : t('navigation.darkMode')}
         >
           {darkMode ? '☀️' : '🌙'}
         </button>
       </div>
+      
+      {/* Debug info - only shown in development */}
+      {/* Commented out debug panel
+      {debugMode && (
+        <div className="fixed bottom-28 left-4 bg-black bg-opacity-80 text-white p-2 rounded-lg text-xs z-50">
+          <div>Storage Status:</div>
+          <div>Ingredients: {ingredients.filter(i => i.discovered).length} discovered</div>
+          <div>Achievements: {achievements.filter(a => a.achieved).length} achieved</div>
+          <div>Using: {window.localStorage ? 'localStorage' : 'cookies'}</div>
+          <button 
+            onClick={() => {
+              console.log('[Storage Debug] Manual storage check');
+              console.log('localStorage.getItem(STORAGE_KEY_INGREDIENTS):', localStorage.getItem(STORAGE_KEY_INGREDIENTS));
+              console.log('localStorage.getItem(STORAGE_KEY_ACHIEVEMENTS):', localStorage.getItem(STORAGE_KEY_ACHIEVEMENTS));
+            }}
+            className="mt-1 bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded text-xs"
+          >
+            Check Storage
+          </button>
+        </div>
+      )}
+      */}
     </div>
   );
 };
 
-export default AdvancedRecipeCrafting; 
+export default withClientTranslations(AdvancedRecipeCrafting); 

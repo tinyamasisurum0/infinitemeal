@@ -1,38 +1,14 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { defaultLocale } from '@/i18n';
 
-import { useState, useEffect, useCallback } from 'react';
-import AdvancedRecipeCrafting from '@/components/AdvancedRecipeCrafting';
+// Make sure this page is always evaluated server-side
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-export default function Home() {
-  const [darkMode, setDarkMode] = useState(false);
-  
-  // Initialize dark mode from localStorage or system preferences
-  useEffect(() => {
-    const savedDarkMode = localStorage.getItem('darkMode');
-    if (savedDarkMode) {
-      setDarkMode(savedDarkMode === 'true');
-    } else {
-      // Check if user prefers dark mode
-      const prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setDarkMode(prefersDarkMode);
-    }
-  }, []);
-  
-  // Use useCallback to prevent unnecessary re-renders
-  const handleDarkModeChange = useCallback((isDarkMode: boolean) => {
-    setDarkMode(isDarkMode);
-  }, []);
-  
-  return (
-    <main className={`min-h-screen p-0 ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-b from-blue-50 to-white'} font-fredoka transition-colors duration-300`}>
-      <AdvancedRecipeCrafting 
-        onDarkModeChange={handleDarkModeChange} 
-        initialDarkMode={darkMode}
-      />
-      <footer className={`mt-6 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'} text-sm w-full transition-colors duration-300`}>
-        <p>Drag ingredients from the right panel to the cooking area on the left to discover new recipes.</p>
-        <p className="mt-2">© {new Date().getFullYear()} Infinite Meal - Recipe Crafting Game</p>
-      </footer>
-    </main>
-  );
+// This page is needed as a fallback if middleware doesn't redirect
+export default function RootPage() {
+  // This is a hard redirect to ensure the user gets to the default locale
+  // We shouldn't normally reach this point if middleware is working correctly
+  console.log('Root page fallback reached - redirecting to default locale');
+  redirect(`/${defaultLocale}`);
 }
