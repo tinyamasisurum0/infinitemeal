@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { getMessages, getTranslations } from "next-intl/server";
 import { locales } from "@/i18n";
 import IntlClientProvider from "@/components/IntlClientProvider";
+import Link from "next/link";
 
 // Import global styles
 import "../globals.css";
@@ -101,7 +102,7 @@ export default async function LocaleLayout({
             <div className="text-center p-8">
               <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
               <p className="mb-4">We&apos;re working to fix the issue. Please try again later.</p>
-              <a href="/" className="text-blue-500 hover:underline">Return to Home</a>
+              <Link href="/" className="text-blue-500 hover:underline">Return to Home</Link>
             </div>
           </div>
         </body>

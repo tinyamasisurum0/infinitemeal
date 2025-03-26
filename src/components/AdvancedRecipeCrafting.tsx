@@ -306,8 +306,6 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
   const prevCategoriesCountRef = useRef<number>(0);
   const prevHighestDifficultyRef = useRef<number>(1);
   
-  // Add at the top of the component, near other useStates:
-  const [debugMode] = useState<boolean>(process.env.NODE_ENV === 'development');
   
   // Add after initial state setup
   useEffect(() => {
