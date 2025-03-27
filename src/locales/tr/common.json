@@ -206,7 +206,13 @@
     "fry": "Kızart",
     "bake": "Fırınla",
     "chop": "Doğra",
-    "blend": "Püreleştir"
+    "blend": "Püreleştir",
+    "Mix": "Karıştır",
+    "Boil": "Haşla",
+    "Fry": "Kızart",
+    "Bake": "Fırınla",
+    "Chop": "Doğra",
+    "Blend": "Püreleştir"
   },
   "categories": {
     "BASIC": "Temel Malzeme",

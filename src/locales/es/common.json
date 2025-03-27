@@ -206,7 +206,13 @@
     "fry": "Freír",
     "bake": "Hornear",
     "chop": "Cortar",
-    "blend": "Licuar"
+    "blend": "Licuar",
+    "Mix": "Mezclar",
+    "Boil": "Hervir",
+    "Fry": "Freír",
+    "Bake": "Hornear",
+    "Chop": "Cortar",
+    "Blend": "Licuar"
   },
   "categories": {
     "BASIC": "Ingrediente Básico",
@@ -276,6 +282,7 @@
     "oil": "Aceite",
     "fried_cucumber": "Pepino Frito",
     "diced_cucumber": "Pepino en Cubos",
+    "diced_onion": "Cebolla en Cubos",
     "cucumber_juice": "Jugo de Pepino",
     "shredded_lettuce": "Lechuga Rallada",
     "spaghetti": "Espaguetis",

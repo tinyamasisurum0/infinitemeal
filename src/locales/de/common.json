@@ -206,7 +206,13 @@
     "fry": "Braten",
     "bake": "Backen",
     "chop": "Schneiden",
-    "blend": "Pürieren"
+    "blend": "Pürieren",
+    "Mix": "Mischen",
+    "Boil": "Kochen",
+    "Fry": "Braten",
+    "Bake": "Backen",
+    "Chop": "Schneiden",
+    "Blend": "Pürieren"
   },
   "categories": {
     "BASIC": "Grundzutat",

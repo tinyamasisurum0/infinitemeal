@@ -206,7 +206,13 @@
     "fry": "Frire",
     "bake": "Cuire au four",
     "chop": "Couper",
-    "blend": "Mixer"
+    "blend": "Mixer",
+    "Mix": "Mélanger",
+    "Boil": "Bouillir",
+    "Fry": "Frire",
+    "Bake": "Cuire au four",
+    "Chop": "Couper",
+    "Blend": "Mixer"
   },
   "categories": {
     "BASIC": "Ingrédient de Base",

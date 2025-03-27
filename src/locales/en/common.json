@@ -206,7 +206,13 @@
     "fry": "Fry",
     "bake": "Bake",
     "chop": "Chop",
-    "blend": "Blend"
+    "blend": "Blend",
+    "Mix": "Mix",
+    "Boil": "Boil",
+    "Fry": "Fry",
+    "Bake": "Bake",
+    "Chop": "Chop",
+    "Blend": "Blend"
   },
   "categories": {
     "BASIC": "Basic Ingredient",

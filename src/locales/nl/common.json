@@ -206,7 +206,13 @@
     "fry": "Bakken",
     "bake": "Bakken in de oven",
     "chop": "Hakken",
-    "blend": "Pureren"
+    "blend": "Pureren",
+    "Mix": "Mengen",
+    "Boil": "Koken",
+    "Fry": "Bakken",
+    "Bake": "Bakken in de oven",
+    "Chop": "Hakken",
+    "Blend": "Pureren"
   },
   "categories": {
     "BASIC": "Basis Ingrediënt",

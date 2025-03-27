@@ -29,9 +29,9 @@ export const viewport: Viewport = {
 export async function generateMetadata({ 
   params 
 }: { 
-  params: { locale: string } | Promise<{ locale: string }> 
+  params: { locale: string } 
 }): Promise<Metadata> {
-  // Await params to get locale
+  // Next.js expects params to be treated as potentially async
   const resolvedParams = await Promise.resolve(params);
   const locale = resolvedParams.locale;
   
@@ -55,10 +55,10 @@ export default async function LocaleLayout({
   params
 }: {
   children: ReactNode;
-  params: { locale: string } | Promise<{ locale: string }>;
+  params: { locale: string };
 }) {
   try {
-    // Await params to get locale
+    // Next.js expects params to be treated as potentially async
     const resolvedParams = await Promise.resolve(params);
     const locale = resolvedParams.locale;
     

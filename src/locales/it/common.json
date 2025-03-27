@@ -206,7 +206,13 @@
     "fry": "Friggere",
     "bake": "Infornare",
     "chop": "Tagliare",
-    "blend": "Frullare"
+    "blend": "Frullare",
+    "Mix": "Mescolare",
+    "Boil": "Bollire",
+    "Fry": "Friggere",
+    "Bake": "Infornare",
+    "Chop": "Tagliare",
+    "Blend": "Frullare"
   },
   "categories": {
     "BASIC": "Ingrediente Base",
