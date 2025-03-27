@@ -1,13 +1,17 @@
 import createMiddleware from 'next-intl/middleware';
-import { locales, defaultLocale } from './i18n';
+import { locales, defaultLocale, getLocaleFromBrowser } from './i18n';
 import { NextRequest, NextResponse } from 'next/server';
 
 // This function handles the root path redirect as a fallback
 function rootPathRedirect(request: NextRequest) {
   // If it's the root path with no locale
   if (request.nextUrl.pathname === '/') {
-    // Create a new URL with the default locale
-    const newUrl = new URL(`/${defaultLocale}`, request.url);
+    // Get the preferred language from the browser
+    const browserLanguage = request.headers.get('accept-language')?.split(',')[0] || defaultLocale;
+    const locale = getLocaleFromBrowser(browserLanguage);
+    
+    // Create a new URL with the detected locale
+    const newUrl = new URL(`/${locale}`, request.url);
     return NextResponse.redirect(newUrl);
   }
   return null;

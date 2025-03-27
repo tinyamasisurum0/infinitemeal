@@ -17,7 +17,7 @@ export const localeNames: Record<Locale, string> = {
 };
 
 // Map browser language codes to our supported locales
-const browserLocaleMap: Record<string, Locale> = {
+export const browserLocaleMap: Record<string, Locale> = {
   'en': 'en',
   'en-US': 'en',
   'en-GB': 'en',
@@ -35,6 +35,22 @@ const browserLocaleMap: Record<string, Locale> = {
   'tr': 'tr',
   'tr-TR': 'tr'
 };
+
+// Helper function to get locale from browser language
+export function getLocaleFromBrowser(browserLanguage: string): Locale {
+  // Try exact match first
+  if (browserLocaleMap[browserLanguage]) {
+    return browserLocaleMap[browserLanguage];
+  }
+  
+  // Try base language match (e.g., 'en' from 'en-CA')
+  const baseLanguage = browserLanguage.split('-')[0];
+  if (browserLocaleMap[baseLanguage]) {
+    return browserLocaleMap[baseLanguage];
+  }
+  
+  return defaultLocale;
+}
 
 // Load messages for the requested locale
 export default getRequestConfig(async ({ locale }) => {
