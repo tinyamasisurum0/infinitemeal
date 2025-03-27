@@ -29,10 +29,10 @@ export const viewport: Viewport = {
 export async function generateMetadata({ 
   params 
 }: { 
-  params: { locale: string } 
+  params: Promise<{ locale: string }> 
 }): Promise<Metadata> {
-  // Next.js expects params to be treated as potentially async
-  const resolvedParams = await Promise.resolve(params);
+  // Await the params to get the locale
+  const resolvedParams = await params;
   const locale = resolvedParams.locale;
   
   const t = await getTranslations({ locale, namespace: 'app' });
@@ -50,16 +50,17 @@ export async function generateMetadata({
   };
 }
 
+// In Next.js 15, params is a Promise that needs to be awaited
 export default async function LocaleLayout({
   children,
-  params
+  params,
 }: {
   children: ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
   try {
-    // Next.js expects params to be treated as potentially async
-    const resolvedParams = await Promise.resolve(params);
+    // Await the params to get the locale
+    const resolvedParams = await params;
     const locale = resolvedParams.locale;
     
     // Try to get messages for the locale
