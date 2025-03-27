@@ -25,9 +25,8 @@ const intlMiddleware = createMiddleware({
   // (e.g., /about)
   localePrefix: 'always',
   
-  // Force default locale to always have a prefix
-  // This ensures that the middleware always handles the root path
-  localeDetection: false
+  // Enable automatic locale detection based on the user's browser language
+  localeDetection: true
 });
 
 export default function middleware(request: NextRequest) {

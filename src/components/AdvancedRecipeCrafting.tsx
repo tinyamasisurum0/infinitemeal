@@ -1396,7 +1396,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
             <div className="w-full md:w-1/3 order-2">
               {/* Title and Description */}
               <div className="mb-6">
-                <h1 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>
+                <h1 className={`text-3xl font-bold tracking-[-1.5px] mb-2 ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>
                   👨‍🍳 {t('cook.title')}
                 </h1>
                 <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>

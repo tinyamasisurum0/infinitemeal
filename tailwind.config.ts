@@ -12,8 +12,8 @@ const config: Config = {
         background: 'var(--background)',
         foreground: 'var(--foreground)',
       },
-      fontFamily: {
-        fredoka: ['var(--font-fredoka)'],
+      fontWeight: {
+        DEFAULT: '500',
       },
     },
   },

@@ -16,6 +16,26 @@ export const localeNames: Record<Locale, string> = {
   tr: 'Türkçe'
 };
 
+// Map browser language codes to our supported locales
+const browserLocaleMap: Record<string, Locale> = {
+  'en': 'en',
+  'en-US': 'en',
+  'en-GB': 'en',
+  'es': 'es',
+  'es-ES': 'es',
+  'es-MX': 'es',
+  'it': 'it',
+  'it-IT': 'it',
+  'fr': 'fr',
+  'fr-FR': 'fr',
+  'de': 'de',
+  'de-DE': 'de',
+  'nl': 'nl',
+  'nl-NL': 'nl',
+  'tr': 'tr',
+  'tr-TR': 'tr'
+};
+
 // Load messages for the requested locale
 export default getRequestConfig(async ({ locale }) => {
   try {

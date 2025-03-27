@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Fredoka } from "next/font/google";
+import { Inter } from "next/font/google";
 import { ReactNode } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import { getMessages, getTranslations } from "next-intl/server";
@@ -10,11 +10,10 @@ import Link from "next/link";
 // Import global styles
 import "../globals.css";
 
-const fredoka = Fredoka({
+const inter = Inter({
   subsets: ["latin"],
   display: "swap",
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-fredoka",
+  weight: ["500", "600", "700", "800"],
 });
 
 export function generateStaticParams() {
@@ -74,7 +73,7 @@ export default async function LocaleLayout({
     }
 
     return (
-      <html lang={locale} className={fredoka.variable}>
+      <html lang={locale} className={inter.className}>
         <head>
           <link rel="icon" href="/favicons/favicon.ico" sizes="any" />
           <link rel="icon" href="/favicons/favicon.svg" type="image/svg+xml" />
@@ -82,7 +81,7 @@ export default async function LocaleLayout({
           <link rel="manifest" href="/favicons/site.webmanifest" />
           <meta name="google-adsense-account" content="ca-pub-7832787432797508" />        
         </head>
-        <body className="antialiased min-h-screen font-fredoka">
+        <body className="antialiased min-h-screen font-medium">
           <IntlClientProvider locale={locale} messages={messages}>
             {children}
           </IntlClientProvider>
@@ -94,16 +93,16 @@ export default async function LocaleLayout({
     console.error('Error in LocaleLayout:', error);
     // Fallback rendering with minimal content
     return (
-      <html lang="en" className={fredoka.variable}>
+      <html lang="en" className={inter.className}>
         <head>
           <title>Infinite Meal - Recipe Crafting Game</title>
         </head>
-        <body className="antialiased min-h-screen font-fredoka">
+        <body className="antialiased min-h-screen font-medium">
           <div className="min-h-screen flex items-center justify-center">
             <div className="text-center p-8">
               <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
-              <p className="mb-4">We&apos;re working to fix the issue. Please try again later.</p>
-              <Link href="/" className="text-blue-500 hover:underline">Return to Home</Link>
+              <p className="mb-4 font-medium">We&apos;re working to fix the issue. Please try again later.</p>
+              <Link href="/" className="text-blue-500 hover:underline font-medium">Return to Home</Link>
             </div>
           </div>
         </body>
