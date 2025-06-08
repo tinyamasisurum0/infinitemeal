@@ -12,7 +12,8 @@
     "lightMode": "Hellmodus",
     "contact": "Kontakt",
     "language": "Sprache",
-    "home": "Zurück zur Startseite"
+    "home": "Zurück zur Startseite",
+    "about": "Über Uns"
   },
   "errors": {
     "pageNotFound": "Seite nicht gefunden",
@@ -331,5 +332,9 @@
     "chocolate_cake": "Schokoladenkuchen",
     "cookie": "Keks",
     "donut": "Donut"
+  },
+  "about": {
+    "title": "Über Uns",
+    "description": "Willkommen bei Infinite Meal, wo wir Rezepte mit endlosen Möglichkeiten kreieren."
   }
 } 

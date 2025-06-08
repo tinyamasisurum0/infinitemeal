@@ -12,7 +12,8 @@
     "lightMode": "Light Mode",
     "contact": "Contact",
     "language": "Language",
-    "home": "Back to Home"
+    "home": "Back to Home",
+    "about": "About Us"
   },
   "errors": {
     "pageNotFound": "Page Not Found",
@@ -52,7 +53,8 @@
     "tryCombining": "Try combining {ingredients}",
     "withSomethingElse": " with something else",
     "difficultyLevel": " (Difficulty: {level})",
-    "discoverMoreForHints": "Discover more ingredients to unlock recipe hints!"
+    "discoverMoreForHints": "Discover more ingredients to unlock recipe hints!",
+    "basicIngredients": "Basic Ingredients"
   },
   "discover": {
     "title": "Discoveries",
@@ -215,6 +217,7 @@
     "Blend": "Blend"
   },
   "categories": {
+    "MIXED_ITEMS": "Mixed Items",
     "BASIC": "Basic Ingredient",
     "VEGETABLE": "Vegetable",
     "PROTEIN": "Protein",
@@ -331,5 +334,13 @@
     "chocolate_cake": "Chocolate Cake",
     "cookie": "Cookie",
     "donut": "Donut"
+  },
+  "about": {
+    "title": "About Us",
+    "description": "Welcome to Infinite Meal, where we craft recipes with endless possibilities.",
+    "game_title": "Infinite Meal",
+    "game_description": "Infinite Meal is a recipe crafting game where you can combine different ingredients to create unique recipes. The game features multiple cooking methods and a wide variety of ingredients to discover and experiment with.",
+    "team_title": "Our Team",
+    "team_description": "Our team is passionate about cooking and gaming. We created Infinite Meal to share our love for both worlds in an interactive and fun experience. We hope you enjoy creating new recipes and discovering all the possibilities!"
   }
 } 

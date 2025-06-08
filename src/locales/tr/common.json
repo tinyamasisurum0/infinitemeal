@@ -12,7 +12,8 @@
     "lightMode": "Aydınlık Mod",
     "contact": "İletişim",
     "language": "Dil",
-    "home": "Ana Sayfaya Dön"
+    "home": "Ana Sayfaya Dön",
+    "about": "Hakkımızda"
   },
   "errors": {
     "pageNotFound": "Sayfa Bulunamadı",
@@ -331,5 +332,9 @@
     "chocolate_cake": "Çikolatalı Kek",
     "cookie": "Kurabiye",
     "donut": "Donut"
+  },
+  "about": {
+    "title": "Hakkımızda",
+    "description": "Sonsuz olasılıklarla tarifler oluşturduğumuz Infinite Meal'e hoş geldiniz."
   }
 } 

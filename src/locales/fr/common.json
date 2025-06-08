@@ -12,7 +12,8 @@
     "lightMode": "Mode Clair",
     "contact": "Contact",
     "language": "Langue",
-    "home": "Retour à l'Accueil"
+    "home": "Retour à l'Accueil",
+    "about": "À Propos de Nous"
   },
   "errors": {
     "pageNotFound": "Page Non Trouvée",
@@ -331,5 +332,9 @@
     "chocolate_cake": "Gâteau au Chocolat",
     "cookie": "Cookie",
     "donut": "Beignet"
+  },
+  "about": {
+    "title": "À Propos de Nous",
+    "description": "Bienvenue à Infinite Meal, où nous créons des recettes aux possibilités infinies."
   }
 } 

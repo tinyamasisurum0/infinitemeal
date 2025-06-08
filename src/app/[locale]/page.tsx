@@ -4,10 +4,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import AdvancedRecipeCrafting from '@/components/AdvancedRecipeCrafting';
 import { withClientTranslations } from '@/components/withClientTranslations';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 
 function Home() {
   const t = useTranslations();
   const [darkMode, setDarkMode] = useState(false);
+  const params = useParams();
+  const locale = params.locale as string;
   
   // Initialize dark mode from localStorage or system preferences
   useEffect(() => {
@@ -37,6 +41,11 @@ function Home() {
       <footer className={`mt-6 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'} text-sm w-full transition-colors duration-300`}>
         <p>{t('cook.subtitle')}</p>
         <p className="mt-2">© {new Date().getFullYear()} {t('app.title')}</p>
+        <p className="mt-2 pb-8">
+          <Link href={`/${locale}/about`} className="underline hover:text-blue-600 transition-colors duration-300">
+            {t('navigation.about')}
+          </Link>
+        </p>
       </footer>
     </main>
   );

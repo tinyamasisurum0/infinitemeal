@@ -778,8 +778,20 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
   // Filter ingredients by selected category
   const getFilteredIngredients = () => {
     if (selectedCategory === "All") {
-      return discoveredItems;
+      // Sort ingredients with mixed items (difficulty > 1) at the top
+      return [...discoveredItems].sort((a, b) => {
+        // Mixed items (difficulty > 1) come first
+        if (a.difficulty > 1 && b.difficulty === 1) return -1;
+        if (a.difficulty === 1 && b.difficulty > 1) return 1;
+        // Within each group, sort by name
+        return a.name.localeCompare(b.name);
+      });
     }
+    if (selectedCategory === "Mixed Items") {
+      // Show only mixed items (difficulty > 1, which are discovered recipes)
+      return discoveredItems.filter(item => item.difficulty > 1);
+    }
+    // For other categories, show all items that match the category (both basic and mixed)
     return discoveredItems.filter(item => item.category === selectedCategory);
   };
   
@@ -1453,27 +1465,101 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                 
                 {/* Ingredients list */}
                 <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-4 rounded-lg shadow-sm border`}>
-                  <div className="flex flex-wrap">
-                    {getFilteredIngredients().map(item => (
-                      <div 
-                        key={item.id}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, item)}
-                        onClick={() => handleClick(item)}
-                        className={`inline-flex items-center p-2 mr-2 mb-2 border ${darkMode ? 'border-gray-700 bg-gray-700 hover:bg-gray-600' : 'border-gray-200 bg-white hover:bg-blue-50'} rounded-lg cursor-grab shadow-sm hover:shadow-md transition-colors`}
-                      >
-                        <span className="text-2xl mr-2">{item.emoji}</span>
-                        <span className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-                          {t(`ingredients.${item.id}`, { fallback: item.name })}
-                        </span>
-                        {item.difficulty > 1 && (
-                          <span className="text-xs text-yellow-500 ml-1">
-                            {Array(item.difficulty).fill('⭐').join('')}
-                          </span>
+                  {(() => {
+                    const filteredIngredients = getFilteredIngredients();
+                    const mixedItems = filteredIngredients.filter(item => item.difficulty > 1);
+                    const basicItems = filteredIngredients.filter(item => item.difficulty === 1);
+                    
+                    return (
+                      <div>
+                        {/* Mixed Items Section (only show if "All" is selected and there are mixed items) */}
+                        {selectedCategory === "All" && mixedItems.length > 0 && (
+                          <div className="mb-6">
+                            <h3 className={`text-lg font-bold mb-3 ${darkMode ? 'text-blue-300' : 'text-blue-600'} border-b ${darkMode ? 'border-blue-700' : 'border-blue-200'} pb-1`}>
+                              🍽️ {t('categories.MIXED_ITEMS', { fallback: 'Mixed Items' })}
+                            </h3>
+                            <div className="flex flex-wrap">
+                              {mixedItems.map(item => (
+                                <div 
+                                  key={item.id}
+                                  draggable
+                                  onDragStart={(e) => handleDragStart(e, item)}
+                                  onClick={() => handleClick(item)}
+                                  className={`inline-flex items-center p-2 mr-2 mb-2 border ${darkMode ? 'border-blue-700 bg-blue-900 hover:bg-blue-800' : 'border-blue-200 bg-blue-50 hover:bg-blue-100'} rounded-lg cursor-grab shadow-sm hover:shadow-md transition-colors`}
+                                >
+                                  <span className="text-2xl mr-2">{item.emoji}</span>
+                                  <span className={`text-sm font-medium ${darkMode ? 'text-blue-200' : 'text-blue-800'}`}>
+                                    {t(`ingredients.${item.id}`, { fallback: item.name })}
+                                  </span>
+                                  <span className="text-xs text-yellow-500 ml-1">
+                                    {Array(item.difficulty).fill('⭐').join('')}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Basic Ingredients Section (only show if "All" is selected and there are basic items) */}
+                        {selectedCategory === "All" && basicItems.length > 0 && (
+                          <div>
+                            <h3 className={`text-lg font-bold mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'} border-b ${darkMode ? 'border-gray-600' : 'border-gray-300'} pb-1`}>
+                              {t('cook.ingredients')}
+                            </h3>
+                            <div className="flex flex-wrap">
+                              {basicItems.map(item => (
+                                <div 
+                                  key={item.id}
+                                  draggable
+                                  onDragStart={(e) => handleDragStart(e, item)}
+                                  onClick={() => handleClick(item)}
+                                  className={`inline-flex items-center p-2 mr-2 mb-2 border ${darkMode ? 'border-gray-700 bg-gray-700 hover:bg-gray-600' : 'border-gray-200 bg-white hover:bg-blue-50'} rounded-lg cursor-grab shadow-sm hover:shadow-md transition-colors`}
+                                >
+                                  <span className="text-2xl mr-2">{item.emoji}</span>
+                                  <span className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                                    {t(`ingredients.${item.id}`, { fallback: item.name })}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Single category view (when not "All") */}
+                        {selectedCategory !== "All" && (
+                          <div className="flex flex-wrap">
+                            {filteredIngredients.map(item => (
+                              <div 
+                                key={item.id}
+                                draggable
+                                onDragStart={(e) => handleDragStart(e, item)}
+                                onClick={() => handleClick(item)}
+                                className={`inline-flex items-center p-2 mr-2 mb-2 border ${
+                                  selectedCategory === "Mixed Items" && item.difficulty > 1
+                                    ? darkMode ? 'border-blue-700 bg-blue-900 hover:bg-blue-800' : 'border-blue-200 bg-blue-50 hover:bg-blue-100'
+                                    : darkMode ? 'border-gray-700 bg-gray-700 hover:bg-gray-600' : 'border-gray-200 bg-white hover:bg-blue-50'
+                                } rounded-lg cursor-grab shadow-sm hover:shadow-md transition-colors`}
+                              >
+                                <span className="text-2xl mr-2">{item.emoji}</span>
+                                <span className={`text-sm font-medium ${
+                                  selectedCategory === "Mixed Items" && item.difficulty > 1
+                                    ? darkMode ? 'text-blue-200' : 'text-blue-800'
+                                    : darkMode ? 'text-gray-200' : 'text-gray-800'
+                                }`}>
+                                  {t(`ingredients.${item.id}`, { fallback: item.name })}
+                                </span>
+                                {item.difficulty > 1 && (
+                                  <span className="text-xs text-yellow-500 ml-1">
+                                    {Array(item.difficulty).fill('⭐').join('')}
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

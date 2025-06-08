@@ -12,7 +12,8 @@
     "lightMode": "Lichte Modus",
     "contact": "Contact",
     "language": "Taal",
-    "home": "Terug naar Home"
+    "home": "Terug naar Home",
+    "about": "Over Ons"
   },
   "errors": {
     "pageNotFound": "Pagina Niet Gevonden",
@@ -331,5 +332,9 @@
     "chocolate_cake": "Chocoladetaart",
     "cookie": "Koekje",
     "donut": "Donut"
+  },
+  "about": {
+    "title": "Over Ons",
+    "description": "Welkom bij Infinite Meal, waar we recepten maken met eindeloze mogelijkheden."
   }
 } 

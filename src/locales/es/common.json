@@ -12,7 +12,8 @@
     "lightMode": "Modo Claro",
     "contact": "Contacto",
     "language": "Idioma",
-    "home": "Volver al Inicio"
+    "home": "Volver al Inicio",
+    "about": "Sobre Nosotros"
   },
   "errors": {
     "pageNotFound": "Página No Encontrada",
@@ -332,5 +333,9 @@
     "chocolate_cake": "Pastel de Chocolate",
     "cookie": "Galleta",
     "donut": "Donut"
+  },
+  "about": {
+    "title": "Sobre Nosotros",
+    "description": "Bienvenido a Infinite Meal, donde creamos recetas con posibilidades infinitas."
   }
 } 

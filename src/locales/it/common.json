@@ -12,7 +12,8 @@
     "lightMode": "Modalità Chiara",
     "contact": "Contatto",
     "language": "Lingua",
-    "home": "Torna alla Home"
+    "home": "Torna alla Home",
+    "about": "Chi Siamo"
   },
   "errors": {
     "pageNotFound": "Pagina Non Trovata",
@@ -331,5 +332,9 @@
     "chocolate_cake": "Torta al Cioccolato",
     "cookie": "Biscotto",
     "donut": "Ciambella"
+  },
+  "about": {
+    "title": "Chi Siamo",
+    "description": "Benvenuti a Infinite Meal, dove creiamo ricette con infinite possibilità."
   }
 } 

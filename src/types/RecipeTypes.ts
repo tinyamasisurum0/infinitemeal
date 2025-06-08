@@ -55,6 +55,7 @@ export interface AdvancedRecipeCraftingProps {
 
 // Define recipe categories
 export const categories = {
+  MIXED_ITEMS: 'Mixed Items',
   BASIC: 'Basic Ingredient',
   VEGETABLE: 'Vegetable',
   PROTEIN: 'Protein',
