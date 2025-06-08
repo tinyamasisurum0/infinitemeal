@@ -926,6 +926,117 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
   // Modify the activeTab type to include 'achievements'
   const [activeTab, setActiveTab] = useState<'cook' | 'discover' | 'achievements'>('cook');
 
+  // Tutorial state
+  const [tutorialActive, setTutorialActive] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState(0);
+  const [tutorialHighlight, setTutorialHighlight] = useState<string | null>(null);
+
+  // Pizza tutorial steps
+  const pizzaTutorialSteps = [
+    {
+      id: 'start',
+      title: 'Pizza Making Tutorial',
+      instruction: 'Welcome! Let\'s learn how to make pizza step by step. We\'ll combine ingredients to create a delicious pizza! 🍕',
+      highlight: 'ingredients',
+      action: 'next'
+    },
+    {
+      id: 'flour-water',
+      title: 'Step 1: Make Dough',
+      instruction: 'First, drag 🌾 FLOUR and 💧 WATER from the ingredients panel to the Mix Area to create dough.',
+      highlight: 'mix-area',
+      requiredIngredients: ['flour', 'water'],
+      expectedResult: 'dough',
+      action: 'combine'
+    },
+    {
+      id: 'tomato-onion',
+      title: 'Step 2: Make Tomato Sauce',
+      instruction: 'Great! Now combine 🍅 TOMATO and 🧅 ONION to make tomato sauce.',
+      highlight: 'mix-area',
+      requiredIngredients: ['tomato', 'onion'],
+      expectedResult: 'tomato_sauce',
+      action: 'combine'
+    },
+    {
+      id: 'dough-sauce',
+      title: 'Step 3: Make Pizza Base',
+      instruction: 'Excellent! Now combine the 🥟 DOUGH and 🥫 TOMATO SAUCE you just made to create a pizza base.',
+      highlight: 'mix-area',
+      requiredIngredients: ['dough', 'tomato_sauce'],
+      expectedResult: 'pizza_base',
+      action: 'combine'
+    },
+    {
+      id: 'base-cheese',
+      title: 'Step 4: Complete the Pizza',
+      instruction: 'Finally, combine the 🫓 PIZZA BASE with 🧀 CHEESE to create your delicious pizza!',
+      highlight: 'mix-area',
+      requiredIngredients: ['pizza_base', 'cheese'],
+      expectedResult: 'pizza',
+      action: 'combine'
+    },
+    {
+      id: 'complete',
+      title: 'Congratulations! 🍕',
+      instruction: 'You\'ve successfully made a pizza! You can now use this same process to discover other complex recipes.',
+      highlight: 'ingredients',
+      action: 'finish'
+    }
+  ];
+
+  // Start tutorial
+  const startTutorial = () => {
+    setTutorialActive(true);
+    setTutorialStep(0);
+    setTutorialHighlight(pizzaTutorialSteps[0].highlight);
+  };
+
+  // Exit tutorial
+  const exitTutorial = () => {
+    setTutorialActive(false);
+    setTutorialStep(0);
+    setTutorialHighlight(null);
+  };
+
+  // Next tutorial step
+  const nextTutorialStep = () => {
+    if (tutorialStep < pizzaTutorialSteps.length - 1) {
+      const nextStep = tutorialStep + 1;
+      setTutorialStep(nextStep);
+      setTutorialHighlight(pizzaTutorialSteps[nextStep].highlight);
+    } else {
+      exitTutorial();
+    }
+  };
+
+  // Check if tutorial step is completed
+  const checkTutorialProgress = () => {
+    if (!tutorialActive) return;
+    
+    const currentStep = pizzaTutorialSteps[tutorialStep];
+    if (currentStep.action === 'combine' && currentStep.expectedResult) {
+      // Check if the expected result was just discovered
+      const expectedIngredient = ingredients.find(ing => ing.id === currentStep.expectedResult);
+      if (expectedIngredient && expectedIngredient.discovered) {
+        // Clear workspace and move to next step
+        setTimeout(() => {
+          setWorkspace([]);
+          setMixWorkspace([]);
+          nextTutorialStep();
+        }, 2000); // Give time to see the discovery
+      }
+    }
+  };
+
+  // Use effect to check tutorial progress
+  useEffect(() => {
+    if (tutorialActive) {
+      checkTutorialProgress();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ingredients, tutorialActive, tutorialStep]);
+
   // Add a helper function to get recipe steps for a dish
   const getRecipeSteps = (dishId: string): { steps: string[], ingredients: string[] } => {
     const steps: string[] = [];
@@ -1229,10 +1340,56 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
             {/* Left column - Workspace, Cooking Methods, and Mix Area */}
             <div className="w-full md:w-2/3 order-1">
               {/* Mix Area */}
-              <div className="w-full mb-4">
+              <div className="w-full mb-4 relative">
                 <h2 className={`text-xl font-bold mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('cook.mixArea')}:</h2>
+                
+                {/* Tutorial notification for mix area */}
+                {tutorialActive && tutorialHighlight === 'mix-area' && (
+                                     <div className={`absolute top-0 right-0 z-50 max-w-sm ${darkMode ? 'bg-yellow-900 border-yellow-700 text-yellow-200' : 'bg-yellow-100 border-yellow-300 text-yellow-800'} border-2 rounded-lg p-4 shadow-lg`}>
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-bold text-sm">{pizzaTutorialSteps[tutorialStep].title}</h3>
+                      <button
+                        onClick={exitTutorial}
+                        className="text-lg leading-none"
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <p className="text-sm mb-3">{pizzaTutorialSteps[tutorialStep].instruction}</p>
+                    {pizzaTutorialSteps[tutorialStep].action === 'next' && (
+                      <button
+                        onClick={nextTutorialStep}
+                        className={`w-full px-3 py-1 rounded text-sm font-medium ${
+                          darkMode 
+                            ? 'bg-blue-900 hover:bg-blue-800 text-blue-200 border border-blue-700' 
+                            : 'bg-blue-100 hover:bg-blue-200 text-blue-700 border border-blue-300'
+                        }`}
+                      >
+                        Start Tutorial
+                      </button>
+                    )}
+                    {pizzaTutorialSteps[tutorialStep].action === 'finish' && (
+                      <button
+                        onClick={exitTutorial}
+                        className={`w-full px-3 py-1 rounded text-sm font-medium ${
+                          darkMode 
+                            ? 'bg-green-900 hover:bg-green-800 text-green-200 border border-green-700' 
+                            : 'bg-green-100 hover:bg-green-200 text-green-700 border border-green-300'
+                        }`}
+                      >
+                        Finish Tutorial
+                      </button>
+                    )}
+                    <div className={`absolute -bottom-2 left-8 w-4 h-4 transform rotate-45 ${darkMode ? 'bg-yellow-900 border-yellow-700' : 'bg-yellow-100 border-yellow-300'} border-b-2 border-r-2`}></div>
+                  </div>
+                )}
+                
                 <div 
-                  className={`mix-area flex items-center justify-center gap-4 p-6 border-4 border-dashed ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'} rounded-lg w-full h-64 mb-4 relative shadow-md z-10`}
+                  className={`mix-area flex items-center justify-center gap-4 p-6 border-4 border-dashed ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'} rounded-lg w-full h-64 mb-4 relative shadow-md z-10 ${
+                    tutorialActive && tutorialHighlight === 'mix-area' 
+                      ? 'ring-4 ring-yellow-500 ring-opacity-75 animate-pulse' 
+                      : ''
+                  }`}
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
                 >
@@ -1411,15 +1568,68 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                 <h1 className={`text-3xl font-bold tracking-[-1.5px] mb-2 ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>
                   👨‍🍳 {t('cook.title')}
                 </h1>
-                <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {t('cook.subtitle')}
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {t('cook.subtitle')}
+                  </p>
+                  <button
+                    onClick={startTutorial}
+                    className={`ml-4 px-4 py-2 rounded-lg font-medium transition-colors ${
+                      darkMode 
+                        ? 'bg-green-900 hover:bg-green-800 text-green-200 border border-green-700' 
+                        : 'bg-green-100 hover:bg-green-200 text-green-700 border border-green-300'
+                    }`}
+                  >
+                    🍕 Pizza Tutorial
+                  </button>
+                </div>
               </div>
 
               {/* Ingredients by category */}
-              <div className="mb-4 w-full">
+              <div className="mb-4 w-full relative">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className={`text-xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('cook.ingredients')}:</h2>
+                  
+                  {/* Tutorial notification for ingredients */}
+                  {tutorialActive && tutorialHighlight === 'ingredients' && (
+                    <div className={`absolute top-0 left-0 z-50 max-w-sm ${darkMode ? 'bg-yellow-900 border-yellow-700 text-yellow-200' : 'bg-yellow-100 border-yellow-300 text-yellow-800'} border-2 rounded-lg p-4 shadow-lg`}>
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-bold text-sm">{pizzaTutorialSteps[tutorialStep].title}</h3>
+                        <button
+                          onClick={exitTutorial}
+                          className="text-lg leading-none"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <p className="text-sm mb-3">{pizzaTutorialSteps[tutorialStep].instruction}</p>
+                      {pizzaTutorialSteps[tutorialStep].action === 'next' && (
+                        <button
+                          onClick={nextTutorialStep}
+                          className={`w-full px-3 py-1 rounded text-sm font-medium ${
+                            darkMode 
+                              ? 'bg-blue-900 hover:bg-blue-800 text-blue-200 border border-blue-700' 
+                              : 'bg-blue-100 hover:bg-blue-200 text-blue-700 border border-blue-300'
+                          }`}
+                        >
+                          Start Tutorial
+                        </button>
+                      )}
+                      {pizzaTutorialSteps[tutorialStep].action === 'finish' && (
+                        <button
+                          onClick={exitTutorial}
+                          className={`w-full px-3 py-1 rounded text-sm font-medium ${
+                            darkMode 
+                              ? 'bg-green-900 hover:bg-green-800 text-green-200 border border-green-700' 
+                              : 'bg-green-100 hover:bg-green-200 text-green-700 border border-green-300'
+                          }`}
+                        >
+                          Finish Tutorial
+                        </button>
+                      )}
+                      <div className={`absolute -bottom-2 left-8 w-4 h-4 transform rotate-45 ${darkMode ? 'bg-yellow-900 border-yellow-700' : 'bg-yellow-100 border-yellow-300'} border-b-2 border-r-2`}></div>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
                     {/* All categories: BASIC, VEGETABLE, etc. */}
                     <select 
@@ -1965,6 +2175,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
         </div>
       )}
       */}
+
     </div>
   );
 };
