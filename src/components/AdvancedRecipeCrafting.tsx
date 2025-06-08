@@ -468,6 +468,93 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
       setTimeout(() => setMessage(""), 2000);
     }
   };
+
+  // Handle right-click context menu
+  const handleContextMenu = (e: React.MouseEvent, ingredient: Ingredient) => {
+    e.preventDefault();
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      ingredient
+    });
+  };
+
+  // Close context menu
+  const closeContextMenu = () => {
+    setContextMenu({
+      visible: false,
+      x: 0,
+      y: 0,
+      ingredient: null
+    });
+  };
+
+  // Apply cooking method from context menu
+  const applyCookingMethodFromContext = (method: CookingMethod) => {
+    if (!contextMenu.ingredient) return;
+    
+    const ingredient = contextMenu.ingredient;
+    
+    // Switch to cook tab and set the selected method
+    setActiveTab('cook');
+    setSelectedMethod(method);
+    
+    // Add ingredient to the cooking workspace
+    setWorkspace([ingredient]);
+    
+    // Check if this method can transform the ingredient
+    if (method.transformations[ingredient.id]) {
+      const result = method.transformations[ingredient.id];
+      
+      // Find if this result exists in ingredients
+      const resultIngredient = ingredients.find(i => i.id === result.id);
+      
+      if (resultIngredient) {
+        // Mark as discovered if not already
+        if (!resultIngredient.discovered) {
+          setNewDiscovery({...resultIngredient, method: method.name});
+          
+          setIngredients(ingredients.map(item => 
+            item.id === result.id ? {...item, discovered: true} : item
+          ));
+          
+          setMessage(`You created ${result.name} by ${method.name.toLowerCase()}ing ${ingredient.name}! 🎉`);
+        } else {
+          setMessage(`${method.name} created ${result.name}!`);
+        }
+        
+        // Clear workspace after showing the result
+        setTimeout(() => {
+          setWorkspace([]);
+        }, 1500);
+      } else {
+        // Add the new ingredient
+        const newIngredient = {
+          ...result,
+          discovered: true,
+          difficulty: ingredient.difficulty + 1
+        };
+        
+        setNewDiscovery({...newIngredient, method: method.name});
+        setIngredients([...ingredients, newIngredient]);
+        setMessage(`You discovered ${result.name} by ${method.name.toLowerCase()}ing ${ingredient.name}! 🎉`);
+        
+        // Clear workspace after showing the result
+        setTimeout(() => {
+          setWorkspace([]);
+        }, 1500);
+      }
+    } else {
+      setMessage(`${method.name} had no effect on ${ingredient.name}. Try something else!`);
+      // Clear workspace after showing the message
+      setTimeout(() => {
+        setWorkspace([]);
+      }, 1500);
+    }
+    
+    closeContextMenu();
+  };
   
   // Handle drop in workspace
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -931,6 +1018,19 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
   const [tutorialStep, setTutorialStep] = useState(0);
   const [tutorialHighlight, setTutorialHighlight] = useState<string | null>(null);
 
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    ingredient: Ingredient | null;
+  }>({
+    visible: false,
+    x: 0,
+    y: 0,
+    ingredient: null
+  });
+
   // Pizza tutorial steps
   const pizzaTutorialSteps = [
     {
@@ -1036,6 +1136,25 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ingredients, tutorialActive, tutorialStep]);
+
+  // Close context menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (contextMenu.visible) {
+        closeContextMenu();
+      }
+    };
+
+    if (contextMenu.visible) {
+      document.addEventListener('click', handleClickOutside);
+      document.addEventListener('contextmenu', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('contextmenu', handleClickOutside);
+    };
+  }, [contextMenu.visible]);
 
   // Add a helper function to get recipe steps for a dish
   const getRecipeSteps = (dishId: string): { steps: string[], ingredients: string[] } => {
@@ -1695,6 +1814,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                                   draggable
                                   onDragStart={(e) => handleDragStart(e, item)}
                                   onClick={() => handleClick(item)}
+                                  onContextMenu={(e) => handleContextMenu(e, item)}
                                   className={`inline-flex items-center p-2 mr-2 mb-2 border ${darkMode ? 'border-blue-700 bg-blue-900 hover:bg-blue-800' : 'border-blue-200 bg-blue-50 hover:bg-blue-100'} rounded-lg cursor-grab shadow-sm hover:shadow-md transition-colors`}
                                 >
                                   <span className="text-2xl mr-2">{item.emoji}</span>
@@ -1723,6 +1843,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                                   draggable
                                   onDragStart={(e) => handleDragStart(e, item)}
                                   onClick={() => handleClick(item)}
+                                  onContextMenu={(e) => handleContextMenu(e, item)}
                                   className={`inline-flex items-center p-2 mr-2 mb-2 border ${darkMode ? 'border-gray-700 bg-gray-700 hover:bg-gray-600' : 'border-gray-200 bg-white hover:bg-blue-50'} rounded-lg cursor-grab shadow-sm hover:shadow-md transition-colors`}
                                 >
                                   <span className="text-2xl mr-2">{item.emoji}</span>
@@ -1744,6 +1865,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                                 draggable
                                 onDragStart={(e) => handleDragStart(e, item)}
                                 onClick={() => handleClick(item)}
+                                onContextMenu={(e) => handleContextMenu(e, item)}
                                 className={`inline-flex items-center p-2 mr-2 mb-2 border ${
                                   selectedCategory === "Mixed Items" && item.difficulty > 1
                                     ? darkMode ? 'border-blue-700 bg-blue-900 hover:bg-blue-800' : 'border-blue-200 bg-blue-50 hover:bg-blue-100'
@@ -2176,8 +2298,39 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
       )}
       */}
 
-    </div>
-  );
-};
+          {/* Context Menu */}
+      {contextMenu.visible && (
+        <div 
+          className={`fixed z-50 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg shadow-lg p-2 min-w-[120px]`}
+          style={{
+            left: `${contextMenu.x}px`,
+            top: `${contextMenu.y}px`,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className={`text-sm font-medium mb-2 px-2 py-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            {contextMenu.ingredient && (
+              <>
+                {contextMenu.ingredient.emoji} {contextMenu.ingredient.name}
+              </>
+            )}
+          </div>
+          <hr className={`${darkMode ? 'border-gray-700' : 'border-gray-200'} mb-2`} />
+          {cookingMethods.slice(1).map((method) => (
+            <button
+              key={method.id}
+              onClick={() => applyCookingMethodFromContext(method)}
+              className={`w-full text-left px-2 py-1 rounded text-sm hover:${darkMode ? 'bg-gray-700' : 'bg-gray-100'} transition-colors flex items-center ${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'}`}
+            >
+              <span className="text-lg mr-2">{method.emoji}</span>
+              <span>{method.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
-export default withClientTranslations(AdvancedRecipeCrafting); 
+      </div>
+    );
+  };
+  
+  export default withClientTranslations(AdvancedRecipeCrafting); 
