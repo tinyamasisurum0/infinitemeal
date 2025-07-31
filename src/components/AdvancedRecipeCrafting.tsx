@@ -555,6 +555,43 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
     
     closeContextMenu();
   };
+
+  // Add ingredient to mix workspace from context menu
+  const addToMixFromContext = () => {
+    if (!contextMenu.ingredient) return;
+    
+    const ingredient = contextMenu.ingredient;
+    
+    // Switch to cook tab (where mix workspace is located)
+    setActiveTab('cook');
+    
+    // Add to mix workspace using the same logic as handleClick
+    if (mixWorkspace.length < 3) {
+      const newMixWorkspace = [...mixWorkspace, ingredient];
+      setMixWorkspace(newMixWorkspace);
+      
+      setMessage(`Added ${ingredient.name} to mix area!`);
+      setTimeout(() => setMessage(""), 2000);
+      
+      // Check for recipe matches
+      if (newMixWorkspace.length === 2) {
+        // Check for a recipe match with 2 ingredients
+        setTimeout(() => {
+          checkRecipeMatch(newMixWorkspace);
+        }, 500);
+      } else if (newMixWorkspace.length === 3) {
+        // Check for a recipe match with 3 ingredients
+        setTimeout(() => {
+          checkRecipeWith3Ingredients(newMixWorkspace);
+        }, 500);
+      }
+    } else {
+      setMessage("You can only combine up to 3 ingredients at a time!");
+      setTimeout(() => setMessage(""), 2000);
+    }
+    
+    closeContextMenu();
+  };
   
   // Handle drop in workspace
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -2316,6 +2353,20 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
             )}
           </div>
           <hr className={`${darkMode ? 'border-gray-700' : 'border-gray-200'} mb-2`} />
+          
+          {/* Mix option */}
+          <button
+            onClick={() => addToMixFromContext()}
+            className={`w-full text-left px-2 py-1 rounded text-sm hover:${darkMode ? 'bg-gray-700' : 'bg-gray-100'} transition-colors flex items-center ${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} mb-1`}
+          >
+            <span className="text-lg mr-2">🥄</span>
+            <span>Mix</span>
+          </button>
+          
+          {/* Separator */}
+          <hr className={`${darkMode ? 'border-gray-700' : 'border-gray-200'} my-1`} />
+          
+          {/* Other cooking methods */}
           {cookingMethods.slice(1).map((method) => (
             <button
               key={method.id}
