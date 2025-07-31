@@ -86,12 +86,6 @@ export const recipes: Recipe[] = [
   
   // New Mexican Cuisine Recipes
   { 
-    ingredients: ['flour', 'water'], 
-    result: 'tortilla', 
-    difficulty: 2,
-    description: 'Mix flour and water to create tortilla dough'
-  },
-  { 
     ingredients: ['tortilla', 'meat'], 
     result: 'taco', 
     difficulty: 3,

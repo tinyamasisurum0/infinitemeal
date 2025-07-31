@@ -206,12 +206,14 @@
     "boil": "Koken",
     "fry": "Bakken",
     "bake": "Bakken in de oven",
+    "griddle": "Bakplaat",
     "chop": "Hakken",
     "blend": "Pureren",
     "Mix": "Mengen",
     "Boil": "Koken",
     "Fry": "Bakken",
     "Bake": "Bakken in de oven",
+    "Griddle": "Bakplaat",
     "Chop": "Hakken",
     "Blend": "Pureren"
   },
@@ -335,6 +337,10 @@
   },
   "about": {
     "title": "Over Ons",
-    "description": "Welkom bij Infinite Meal, waar we recepten maken met eindeloze mogelijkheden."
+    "description": "Welkom bij Infinite Meal, waar we recepten maken met eindeloze mogelijkheden.",
+    "game_title": "Infinite Meal",
+    "game_description": "Infinite Meal is een receptcreatiespel waarbij je verschillende ingrediënten kunt combineren om unieke recepten te maken. Het spel bevat meerdere kookmethoden en een grote verscheidenheid aan ingrediënten om te ontdekken en mee te experimenteren.",
+    "team_title": "Ons Team",
+    "team_description": "Ons team is gepassioneerd over koken en gamen. We hebben Infinite Meal gemaakt om onze liefde voor beide werelden te delen in een interactieve en leuke ervaring. We hopen dat je plezier hebt met het maken van nieuwe recepten en het ontdekken van alle mogelijkheden!"
   }
 } 

@@ -46,6 +46,15 @@ export const cookingMethods: CookingMethod[] = [
     }
   },
   { 
+    id: 'griddle', 
+    name: 'Griddle', 
+    emoji: '🥞',
+    description: 'Cook flatbreads and pancakes on a hot, flat surface',
+    transformations: {
+      'dough': { id: 'tortilla', name: 'Tortilla', emoji: '🌮', category: categories.GRAIN }
+    }
+  },
+  { 
     id: 'chop', 
     name: 'Chop', 
     emoji: '🔪',

@@ -141,5 +141,21 @@
     "message": "所有进度将被重置，所有发现的食材将被删除。此操作无法撤销。",
     "cancel": "取消",
     "confirm": "全部重置"
+  },
+  "cookingMethods": {
+    "mix": "混合",
+    "boil": "煮",
+    "fry": "炸",
+    "bake": "烘焙",
+    "griddle": "铁板烧",
+    "chop": "切",
+    "blend": "搅拌",
+    "Mix": "混合",
+    "Boil": "煮",
+    "Fry": "炸",
+    "Bake": "烘焙",
+    "Griddle": "铁板烧",
+    "Chop": "切",
+    "Blend": "搅拌"
   }
 } 

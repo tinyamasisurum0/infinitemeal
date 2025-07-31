@@ -1,9 +1,10 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { initialIngredients } from '../../../data/ingredients';
 
 interface Recipe {
   name: string;
@@ -67,7 +68,7 @@ const RecipesPage = () => {
     {
       title: "Mexican Cuisine",
       recipes: [
-        { name: "Tortilla", emoji: "🌮", ingredients: ["flour", "water"], difficulty: 2, description: "Mix flour and water to create tortilla dough" },
+        { name: "Tortilla", emoji: "🌮", ingredients: ["dough"], difficulty: 2, description: "Cook dough on a griddle to create tortilla" },
         { name: "Taco", emoji: "🌮", ingredients: ["tortilla", "meat"], difficulty: 3, description: "Fill tortilla with meat and toppings for a taco" },
         { name: "Burrito", emoji: "🌯", ingredients: ["tortilla", "rice", "meat"], difficulty: 4, description: "Wrap rice and meat in a tortilla for a hearty burrito" },
         { name: "Quesadilla", emoji: "🧀", ingredients: ["tortilla", "cheese"], difficulty: 3, description: "Fill tortilla with cheese and fold for a quesadilla" }
@@ -161,12 +162,22 @@ const RecipesPage = () => {
 
   const totalRecipes = allRecipes.reduce((total, section) => total + section.recipes.length, 0);
 
+  // Helper function to get ingredient emoji
+  const getIngredientEmoji = (ingredientId: string): string => {
+    const ingredient = initialIngredients.find(ing => ing.id === ingredientId);
+    return ingredient ? ingredient.emoji : '';
+  };
+
   const renderStars = (difficulty: number) => {
     return Array(difficulty).fill('⭐').join('');
   };
 
   const formatIngredients = (ingredients: string[]) => {
-    return ingredients.map(ing => ing.replace(/_/g, ' ')).join(' + ');
+    return ingredients.map(ing => {
+      const emoji = getIngredientEmoji(ing);
+      const name = ing.replace(/_/g, ' ');
+      return emoji ? `${emoji} ${name}` : name;
+    }).join(' + ');
   };
 
   return (
@@ -255,7 +266,7 @@ const RecipesPage = () => {
             🎉 Complete Recipe Collection
           </p>
           <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-            You've discovered the secret to all {totalRecipes} recipes in Infinite Meal! 
+            You&apos;ve discovered the secret to all {totalRecipes} recipes in Infinite Meal! 
             Now go back and try to craft them all in the game.
           </p>
           <div className="mt-4">

@@ -206,12 +206,14 @@
     "boil": "Haşla",
     "fry": "Kızart",
     "bake": "Fırınla",
+    "griddle": "Sacda Pişir",
     "chop": "Doğra",
     "blend": "Püreleştir",
     "Mix": "Karıştır",
     "Boil": "Haşla",
     "Fry": "Kızart",
     "Bake": "Fırınla",
+    "Griddle": "Sacda Pişir",
     "Chop": "Doğra",
     "Blend": "Püreleştir"
   },
@@ -335,6 +337,10 @@
   },
   "about": {
     "title": "Hakkımızda",
-    "description": "Sonsuz olasılıklarla tarifler oluşturduğumuz Infinite Meal'e hoş geldiniz."
+    "description": "Sonsuz olasılıklarla tarifler oluşturduğumuz Infinite Meal'e hoş geldiniz.",
+    "game_title": "Infinite Meal",
+    "game_description": "Infinite Meal, benzersiz tarifler oluşturmak için farklı malzemeleri birleştirebileceğiniz bir tarif yaratma oyunudur. Oyun, keşfedilecek ve deneyimlenecek birden fazla pişirme yöntemi ve çok çeşitli malzemeler içerir.",
+    "team_title": "Ekibimiz",
+    "team_description": "Ekibimiz yemek pişirme ve oyun konularında tutkulu. Her iki dünyadaki sevgimizi interaktif ve eğlenceli bir deneyimde paylaşmak için Infinite Meal'i yarattık. Yeni tarifler oluşturmaktan ve tüm olasılıkları keşfetmekten keyif almanızı umuyoruz!"
   }
 } 

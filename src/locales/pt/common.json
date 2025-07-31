@@ -141,5 +141,29 @@
     "message": "Todo o seu progresso será redefinido e todos os ingredientes descobertos serão excluídos. Esta ação não pode ser desfeita.",
     "cancel": "Cancelar",
     "confirm": "Redefinir Tudo"
+  },
+  "cookingMethods": {
+    "mix": "Misturar",
+    "boil": "Ferver",
+    "fry": "Fritar",
+    "bake": "Assar",
+    "griddle": "Grelhar",
+    "chop": "Cortar",
+    "blend": "Liquidificar",
+    "Mix": "Misturar",
+    "Boil": "Ferver",
+    "Fry": "Fritar",
+    "Bake": "Assar",
+    "Griddle": "Grelhar",
+    "Chop": "Cortar",
+    "Blend": "Liquidificar"
+  },
+  "about": {
+    "title": "Sobre Nós",
+    "description": "Bem-vindo ao Infinite Meal, onde criamos receitas com possibilidades infinitas.",
+    "game_title": "Infinite Meal",
+    "game_description": "Infinite Meal é um jogo de criação de receitas onde você pode combinar diferentes ingredientes para criar receitas únicas. O jogo apresenta vários métodos de cozimento e uma grande variedade de ingredientes para descobrir e experimentar.",
+    "team_title": "Nossa Equipe",
+    "team_description": "Nossa equipe é apaixonada por culinária e jogos. Criamos o Infinite Meal para compartilhar nosso amor por ambos os mundos em uma experiência interativa e divertida. Esperamos que você se divirta criando novas receitas e descobrindo todas as possibilidades!"
   }
 } 

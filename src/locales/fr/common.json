@@ -206,12 +206,14 @@
     "boil": "Bouillir",
     "fry": "Frire",
     "bake": "Cuire au four",
+    "griddle": "Plancha",
     "chop": "Couper",
     "blend": "Mixer",
     "Mix": "Mélanger",
     "Boil": "Bouillir",
     "Fry": "Frire",
     "Bake": "Cuire au four",
+    "Griddle": "Plancha",
     "Chop": "Couper",
     "Blend": "Mixer"
   },
@@ -335,6 +337,10 @@
   },
   "about": {
     "title": "À Propos de Nous",
-    "description": "Bienvenue à Infinite Meal, où nous créons des recettes aux possibilités infinies."
+    "description": "Bienvenue à Infinite Meal, où nous créons des recettes aux possibilités infinies.",
+    "game_title": "Infinite Meal",
+    "game_description": "Infinite Meal est un jeu de création de recettes où vous pouvez combiner différents ingrédients pour créer des recettes uniques. Le jeu propose plusieurs méthodes de cuisson et une grande variété d'ingrédients à découvrir et à expérimenter.",
+    "team_title": "Notre Équipe",
+    "team_description": "Notre équipe est passionnée par la cuisine et les jeux. Nous avons créé Infinite Meal pour partager notre amour de ces deux mondes dans une expérience interactive et amusante. Nous espérons que vous aimerez créer de nouvelles recettes et découvrir toutes les possibilités !"
   }
 } 

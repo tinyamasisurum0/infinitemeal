@@ -547,10 +547,6 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
       }
     } else {
       setMessage(`${method.name} had no effect on ${ingredient.name}. Try something else!`);
-      // Clear workspace after showing the message
-      setTimeout(() => {
-        setWorkspace([]);
-      }, 1500);
     }
     
     closeContextMenu();
@@ -656,11 +652,6 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
           }, 1000);
         } else {
           setMessage(`${method.name} had no effect on ${ingredient.name}. Try something else!`);
-          
-          // Clear workspace after a delay
-          setTimeout(() => {
-            setWorkspace([]);
-          }, 1000);
         }
       } else if (workspace.length === 0) {
         setSelectedMethod(method);
@@ -745,9 +736,6 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
             return;
           } else {
             setMessage(`${selectedMethod.name} had no effect on ${ingredient.name}. Try something else!`);
-            setTimeout(() => {
-              setWorkspace([]);
-            }, 1000);
             return;
           }
         }
@@ -800,16 +788,16 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
           }, 100);
         }
       }
+      
+      // Clear workspace only when recipe is found
+      setTimeout(() => {
+        setWorkspace([]);
+        setMixWorkspace([]);
+      }, 1000);
     } else {
       const ingredientNames = currentWorkspace.map(item => item.name).join(', ');
       setMessage(`No recipe found with ${ingredientNames}. Try different combinations!`);
     }
-    
-    // Clear workspace after a delay
-    setTimeout(() => {
-      setWorkspace([]);
-      setMixWorkspace([]);
-    }, 1000);
   };
   
   // Check if current workspace items match a recipe
@@ -850,16 +838,16 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
           }, 100);
         }
       }
+      
+      // Clear workspace only when recipe is found
+      setTimeout(() => {
+        setWorkspace([]);
+        setMixWorkspace([]);
+      }, 1000);
     } else {
       const ingredientNames = currentWorkspace.map(item => item.name).join(' and ');
       setMessage(`No recipe found with ${ingredientNames}. Try different combinations!`);
     }
-    
-    // Clear workspace after a delay
-    setTimeout(() => {
-      setWorkspace([]);
-      setMixWorkspace([]);
-    }, 1000);
   };
   
   // Get available recipe hints
@@ -1714,6 +1702,19 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                 <div className="absolute opacity-10 text-9xl pointer-events-none">
                   {selectedMethod?.emoji || '🍳'}
                 </div>
+                {(workspace.length > 0 || selectedMethod) && (
+                  <button 
+                    onClick={() => {
+                      setWorkspace([]);
+                      setSelectedMethod(null);
+                      setMessage('');
+                    }}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full text-sm w-8 h-8 flex items-center justify-center hover:bg-red-600 shadow-md z-20"
+                    aria-label={t('cook.clear')}
+                  >
+                    ×
+                  </button>
+                )}
               </div>
             </div>
             
