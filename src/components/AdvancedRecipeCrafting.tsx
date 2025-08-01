@@ -306,6 +306,12 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
   const prevCategoriesCountRef = useRef<number>(0);
   const prevHighestDifficultyRef = useRef<number>(1);
   
+  // Mobile drag state
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [draggedItem, setDraggedItem] = useState<Ingredient | CookingMethod | null>(null);
+  const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const dragElementRef = useRef<HTMLDivElement | null>(null);
+  
   
   // Add after initial state setup
   useEffect(() => {
@@ -444,6 +450,154 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
   // Handle drag start
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, item: Ingredient | CookingMethod) => {
     e.dataTransfer.setData('text/plain', item.id);
+  };
+
+  // Mobile touch handlers for drag and drop
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>, item: Ingredient | CookingMethod) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = e.currentTarget.getBoundingClientRect();
+    
+    setDragOffset({
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
+    });
+    setDraggedItem(item);
+    setIsDragging(true);
+    
+    // Add visual feedback class
+    e.currentTarget.style.opacity = '0.7';
+    e.currentTarget.style.transform = 'scale(1.05)';
+    e.currentTarget.style.zIndex = '1000';
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isDragging || !draggedItem) return;
+    
+    e.preventDefault();
+    const touch = e.touches[0];
+    
+    // Update visual position of dragged element
+    if (dragElementRef.current) {
+      dragElementRef.current.style.position = 'fixed';
+      dragElementRef.current.style.left = `${touch.clientX - dragOffset.x}px`;
+      dragElementRef.current.style.top = `${touch.clientY - dragOffset.y}px`;
+      dragElementRef.current.style.pointerEvents = 'none';
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isDragging || !draggedItem) return;
+    
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    
+    // Find the element under the touch point
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dropZone = elementBelow?.closest('.drop-zone, .mix-area, .cook-workspace');
+    
+    if (dropZone) {
+      // Determine if it's mix area or cook workspace
+      const isMixArea = dropZone.classList.contains('mix-area');
+      const isCookWorkspace = dropZone.classList.contains('cook-workspace');
+      
+      if (isMixArea && 'transformations' in draggedItem) {
+        setMessage("Cooking methods can't be used in the Mix area!");
+        setTimeout(() => setMessage(""), 2000);
+      } else if (isMixArea && mixWorkspace.length < 3) {
+        // Add to mix workspace
+        const ingredient = draggedItem as Ingredient;
+        const newMixWorkspace = [...mixWorkspace, ingredient];
+        setMixWorkspace(newMixWorkspace);
+        
+        setMessage(`Added ${ingredient.name} to mix area!`);
+        setTimeout(() => setMessage(""), 2000);
+        
+        // Check for recipe matches
+        if (newMixWorkspace.length === 2) {
+          setTimeout(() => checkRecipeMatch(newMixWorkspace), 500);
+        } else if (newMixWorkspace.length === 3) {
+          setTimeout(() => checkRecipeWith3Ingredients(newMixWorkspace), 500);
+        }
+      } else if (isCookWorkspace) {
+        // Handle cooking workspace drop
+        if ('transformations' in draggedItem) {
+          // Dropped a cooking method
+          const method = draggedItem as CookingMethod;
+          if (workspace.length === 1) {
+            const ingredient = workspace[0];
+            
+            if (method.transformations[ingredient.id]) {
+              const result = method.transformations[ingredient.id];
+              const resultIngredient = ingredients.find(i => i.id === result.id);
+              
+              if (resultIngredient) {
+                if (!resultIngredient.discovered) {
+                  setNewDiscovery({...resultIngredient, method: method.name});
+                  setIngredients(ingredients.map(item => 
+                    item.id === result.id ? {...item, discovered: true} : item
+                  ));
+                  setMessage(`You created ${result.name} by ${method.name.toLowerCase()}ing ${ingredient.name}! 🎉`);
+                } else {
+                  setMessage(`${method.name} created ${result.name}!`);
+                }
+                setTimeout(() => setWorkspace([]), 1500);
+              } else {
+                const newIngredient = {
+                  ...result,
+                  discovered: true,
+                  difficulty: ingredient.difficulty + 1
+                };
+                setNewDiscovery({...newIngredient, method: method.name});
+                setIngredients([...ingredients, newIngredient]);
+                setMessage(`You discovered ${result.name} by ${method.name.toLowerCase()}ing ${ingredient.name}! 🎉`);
+                setTimeout(() => setWorkspace([]), 1500);
+              }
+            } else {
+              setMessage(`${method.name} had no effect on ${ingredient.name}. Try something else!`);
+            }
+          } else {
+            setSelectedMethod(method);
+            setMessage(`Selected ${method.name}! Now add an ingredient to the workspace.`);
+            setTimeout(() => setMessage(""), 2000);
+          }
+        } else {
+          // Dropped an ingredient
+          const ingredient = draggedItem as Ingredient;
+          if (workspace.length === 0) {
+            setWorkspace([ingredient]);
+            setMessage(`Added ${ingredient.name} to workspace! Now select a cooking method.`);
+            setTimeout(() => setMessage(""), 2000);
+          }
+        }
+      } else if (isMixArea && mixWorkspace.length >= 3) {
+        setMessage("You can only combine up to 3 ingredients at a time!");
+        setTimeout(() => setMessage(""), 2000);
+      }
+    }
+    
+    // Reset drag state
+    setIsDragging(false);
+    setDraggedItem(null);
+    setDragOffset({ x: 0, y: 0 });
+    
+    // Reset visual feedback
+    if (dragElementRef.current) {
+      dragElementRef.current.style.opacity = '';
+      dragElementRef.current.style.transform = '';
+      dragElementRef.current.style.zIndex = '';
+      dragElementRef.current.style.position = '';
+      dragElementRef.current.style.left = '';
+      dragElementRef.current.style.top = '';
+      dragElementRef.current.style.pointerEvents = '';
+    }
+    
+    // Reset all ingredient styles
+    document.querySelectorAll('.ingredient-item').forEach(el => {
+      (el as HTMLElement).style.opacity = '';
+      (el as HTMLElement).style.transform = '';
+      (el as HTMLElement).style.zIndex = '';
+    });
   };
 
   const handleClick = (ingredient: Ingredient) => {
@@ -738,6 +892,72 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
             setMessage(`${selectedMethod.name} had no effect on ${ingredient.name}. Try something else!`);
             return;
           }
+        } else if (newWorkspace.length >= 2) {
+          // Check for recipe matches when multiple ingredients are present
+          const checkCookingMethodRecipe = () => {
+            const ids = newWorkspace.map(item => item.id).sort();
+            
+            // Find a matching recipe
+            const matchedRecipe = recipes.find(recipe => {
+              if (recipe.ingredients.length !== newWorkspace.length) return false;
+              const recipeIds = [...recipe.ingredients].sort();
+              return recipeIds.every((id, index) => id === ids[index]);
+            });
+            
+            if (matchedRecipe) {
+              // Check if the cooking method can transform the recipe result
+              if (selectedMethod.transformations[matchedRecipe.result]) {
+                const transformation = selectedMethod.transformations[matchedRecipe.result];
+                
+                // Find if this result exists in ingredients
+                const resultIngredient = ingredients.find(i => i.id === transformation.id);
+                
+                if (resultIngredient) {
+                  // Mark as discovered if not already
+                  if (!resultIngredient.discovered) {
+                    setNewDiscovery({...resultIngredient, method: selectedMethod.name});
+                    
+                    setIngredients(ingredients.map(item => 
+                      item.id === transformation.id ? {...item, discovered: true} : item
+                    ));
+                    
+                    setMessage(`You created ${transformation.name} by ${selectedMethod.name.toLowerCase()}ing the combined ingredients! 🎉`);
+                  } else {
+                    setMessage(`${selectedMethod.name} created ${transformation.name}!`);
+                  }
+                } else {
+                  // Add the new ingredient
+                  const newIngredient = {
+                    ...transformation,
+                    discovered: true,
+                    difficulty: Math.max(...newWorkspace.map(item => item.difficulty)) + 1
+                  };
+                  
+                  setNewDiscovery({...newIngredient, method: selectedMethod.name});
+                  setIngredients([...ingredients, newIngredient]);
+                  setMessage(`You discovered ${transformation.name} by ${selectedMethod.name.toLowerCase()}ing the combined ingredients! 🎉`);
+                }
+                
+                // Clear workspace after a delay
+                setTimeout(() => {
+                  setWorkspace([]);
+                }, 1500);
+                return true;
+              } else {
+                // Recipe found but cooking method can't transform it
+                const recipeResultIngredient = ingredients.find(i => i.id === matchedRecipe.result);
+                const resultName = recipeResultIngredient?.name || matchedRecipe.result;
+                setMessage(`You made ${resultName}, but ${selectedMethod.name} can't be applied to it. Try a different cooking method!`);
+                return false;
+              }
+            }
+            return false;
+          };
+          
+          // Check for recipe with delay to allow UI to update
+          setTimeout(() => {
+            checkCookingMethodRecipe();
+          }, 500);
         }
       }
     } else {
@@ -1611,12 +1831,16 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                   {cookingMethods.slice(1).map((method: CookingMethod) => (
                     <div 
                       key={method.id}
+                      ref={isDragging && draggedItem?.id === method.id ? dragElementRef : null}
                       draggable
                       onDragStart={(e) => handleDragStart(e, method)}
+                      onTouchStart={(e) => handleTouchStart(e, method)}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
                       onClick={() => {
                         setSelectedMethod(method);
                       }}
-                      className={`flex-1 flex items-center justify-center p-1 border min-w-[100px] ${
+                      className={`ingredient-item flex-1 flex items-center justify-center p-1 border min-w-[100px] ${
                         method.id === 'boil'
                           ? `${darkMode ? 'border-red-700 bg-red-900 hover:bg-red-800' : 'border-red-200 bg-red-50 hover:bg-red-100'}`
                           : method.id === 'fry'
@@ -1626,7 +1850,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                           : method.id === 'chop'
                           ? `${darkMode ? 'border-green-700 bg-green-900 hover:bg-green-800' : 'border-green-200 bg-green-50 hover:bg-green-100'}`
                           : `${darkMode ? 'border-purple-700 bg-purple-900 hover:bg-purple-800' : 'border-purple-200 bg-purple-50 hover:bg-purple-100'}`
-                      } rounded-lg cursor-grab ${selectedMethod?.id === method.id ? 'ring-2 ring-blue-600' : ''}`}
+                      } rounded-lg cursor-grab touch-none ${selectedMethod?.id === method.id ? 'ring-2 ring-blue-600' : ''}`}
                     >
                       <span className="text-xl mr-1">{method.emoji}</span>
                       <div className="text-center">
@@ -1649,7 +1873,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
               
               {/* Workspace */}
               <div 
-                className={`flex items-center justify-center gap-4 p-6 border-4 border-dashed ${
+                className={`cook-workspace flex items-center justify-center gap-4 p-6 border-4 border-dashed ${
                   selectedMethod 
                     ? selectedMethod.id === 'boil'
                       ? `${darkMode ? 'border-red-700 bg-red-900' : 'border-red-200 bg-red-50'}`
@@ -1702,11 +1926,10 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                 <div className="absolute opacity-10 text-9xl pointer-events-none">
                   {selectedMethod?.emoji || '🍳'}
                 </div>
-                {(workspace.length > 0 || selectedMethod) && (
+                {workspace.length > 0 && (
                   <button 
                     onClick={() => {
                       setWorkspace([]);
-                      setSelectedMethod(null);
                       setMessage('');
                     }}
                     className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full text-sm w-8 h-8 flex items-center justify-center hover:bg-red-600 shadow-md z-20"
@@ -1849,11 +2072,15 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                               {mixedItems.map(item => (
                                 <div 
                                   key={item.id}
+                                  ref={isDragging && draggedItem?.id === item.id ? dragElementRef : null}
                                   draggable
                                   onDragStart={(e) => handleDragStart(e, item)}
+                                  onTouchStart={(e) => handleTouchStart(e, item)}
+                                  onTouchMove={handleTouchMove}
+                                  onTouchEnd={handleTouchEnd}
                                   onClick={() => handleClick(item)}
                                   onContextMenu={(e) => handleContextMenu(e, item)}
-                                  className={`inline-flex items-center p-2 mr-2 mb-2 border ${darkMode ? 'border-blue-700 bg-blue-900 hover:bg-blue-800' : 'border-blue-200 bg-blue-50 hover:bg-blue-100'} rounded-lg cursor-grab shadow-sm hover:shadow-md transition-colors`}
+                                  className={`ingredient-item inline-flex items-center p-2 mr-2 mb-2 border ${darkMode ? 'border-blue-700 bg-blue-900 hover:bg-blue-800' : 'border-blue-200 bg-blue-50 hover:bg-blue-100'} rounded-lg cursor-grab shadow-sm hover:shadow-md transition-colors touch-none`}
                                 >
                                   <span className="text-2xl mr-2">{item.emoji}</span>
                                   <span className={`text-sm font-medium ${darkMode ? 'text-blue-200' : 'text-blue-800'}`}>
@@ -1878,11 +2105,15 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                               {basicItems.map(item => (
                                 <div 
                                   key={item.id}
+                                  ref={isDragging && draggedItem?.id === item.id ? dragElementRef : null}
                                   draggable
                                   onDragStart={(e) => handleDragStart(e, item)}
+                                  onTouchStart={(e) => handleTouchStart(e, item)}
+                                  onTouchMove={handleTouchMove}
+                                  onTouchEnd={handleTouchEnd}
                                   onClick={() => handleClick(item)}
                                   onContextMenu={(e) => handleContextMenu(e, item)}
-                                  className={`inline-flex items-center p-2 mr-2 mb-2 border ${darkMode ? 'border-gray-700 bg-gray-700 hover:bg-gray-600' : 'border-gray-200 bg-white hover:bg-blue-50'} rounded-lg cursor-grab shadow-sm hover:shadow-md transition-colors`}
+                                  className={`ingredient-item inline-flex items-center p-2 mr-2 mb-2 border ${darkMode ? 'border-gray-700 bg-gray-700 hover:bg-gray-600' : 'border-gray-200 bg-white hover:bg-blue-50'} rounded-lg cursor-grab shadow-sm hover:shadow-md transition-colors touch-none`}
                                 >
                                   <span className="text-2xl mr-2">{item.emoji}</span>
                                   <span className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
@@ -1900,15 +2131,19 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                             {filteredIngredients.map(item => (
                               <div 
                                 key={item.id}
+                                ref={isDragging && draggedItem?.id === item.id ? dragElementRef : null}
                                 draggable
                                 onDragStart={(e) => handleDragStart(e, item)}
+                                onTouchStart={(e) => handleTouchStart(e, item)}
+                                onTouchMove={handleTouchMove}
+                                onTouchEnd={handleTouchEnd}
                                 onClick={() => handleClick(item)}
                                 onContextMenu={(e) => handleContextMenu(e, item)}
-                                className={`inline-flex items-center p-2 mr-2 mb-2 border ${
+                                className={`ingredient-item inline-flex items-center p-2 mr-2 mb-2 border ${
                                   selectedCategory === "Mixed Items" && item.difficulty > 1
                                     ? darkMode ? 'border-blue-700 bg-blue-900 hover:bg-blue-800' : 'border-blue-200 bg-blue-50 hover:bg-blue-100'
                                     : darkMode ? 'border-gray-700 bg-gray-700 hover:bg-gray-600' : 'border-gray-200 bg-white hover:bg-blue-50'
-                                } rounded-lg cursor-grab shadow-sm hover:shadow-md transition-colors`}
+                                } rounded-lg cursor-grab shadow-sm hover:shadow-md transition-colors touch-none`}
                               >
                                 <span className="text-2xl mr-2">{item.emoji}</span>
                                 <span className={`text-sm font-medium ${
