@@ -2621,9 +2621,16 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
             <div className="flex-1 overflow-y-auto p-4">
               <div className="grid grid-cols-4 gap-3">
                 {(() => {
-                  const availableIngredients = ingredients.filter(item => 
-                    item.discovered && item.id !== 'mix'
-                  );
+                  // Use the same logic as desktop - show all discovered items (both basic and mixed)
+                  const availableIngredients = discoveredItems
+                    .filter(item => item.id !== 'mix')
+                    .sort((a, b) => {
+                      // Mixed items (difficulty > 1) come first
+                      if (a.difficulty > 1 && b.difficulty === 1) return -1;
+                      if (a.difficulty === 1 && b.difficulty > 1) return 1;
+                      // Within each group, sort by name
+                      return a.name.localeCompare(b.name);
+                    });
                   
                   return availableIngredients.map(item => {
                     const isSelected = selectedItems.some(selected => selected.id === item.id);
@@ -2644,6 +2651,11 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                         <div className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                           {t(`categories.${normalizeCategoryKey(item.category)}`, { fallback: item.category })}
                         </div>
+                        {item.difficulty > 1 && (
+                          <div className="text-xs text-yellow-500 mt-1">
+                            {Array(item.difficulty).fill('⭐').join('')}
+                          </div>
+                        )}
                         {isSelected && (
                           <div className="text-green-500 text-lg mt-1">✓</div>
                         )}
