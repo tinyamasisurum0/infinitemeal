@@ -53,7 +53,10 @@
     "tryCombining": "Probeer {ingredients} te combineren",
     "withSomethingElse": " met iets anders",
     "difficultyLevel": " (Moeilijkheid: {level})",
-    "discoverMoreForHints": "Ontdek meer ingrediënten om recepthints te ontsluiten!"
+    "discoverMoreForHints": "Ontdek meer ingrediënten om recepthints te ontsluiten!",
+    "basicIngredients": "Basis Ingrediënten",
+    "selectIngredientsForMix": "Selecteer Ingrediënten voor Menggebied",
+    "selectIngredientForCooking": "Selecteer Ingrediënt voor Koken"
   },
   "discover": {
     "title": "Ontdekkingen",

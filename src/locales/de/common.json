@@ -53,7 +53,10 @@
     "tryCombining": "Versuche, {ingredients} zu kombinieren",
     "withSomethingElse": " mit etwas anderem",
     "difficultyLevel": " (Schwierigkeit: {level})",
-    "discoverMoreForHints": "Entdecke mehr Zutaten, um Rezepthinweise freizuschalten!"
+    "discoverMoreForHints": "Entdecke mehr Zutaten, um Rezepthinweise freizuschalten!",
+    "basicIngredients": "Grundzutaten",
+    "selectIngredientsForMix": "Zutaten für Mischbereich Auswählen",
+    "selectIngredientForCooking": "Zutat zum Kochen Auswählen"
   },
   "discover": {
     "title": "Entdeckungen",

@@ -53,7 +53,10 @@
     "tryCombining": "{ingredients} malzemelerini birleştirmeyi deneyin",
     "withSomethingElse": " başka bir şeyle",
     "difficultyLevel": " (Zorluk: {level})",
-    "discoverMoreForHints": "Tarif ipuçlarını açmak için daha fazla malzeme keşfedin!"
+    "discoverMoreForHints": "Tarif ipuçlarını açmak için daha fazla malzeme keşfedin!",
+    "basicIngredients": "Temel Malzemeler",
+    "selectIngredientsForMix": "Karışım Alanı için Malzeme Seç",
+    "selectIngredientForCooking": "Pişirme için Malzeme Seç"
   },
   "discover": {
     "title": "Keşifler",

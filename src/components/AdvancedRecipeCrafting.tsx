@@ -272,6 +272,11 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
   const [newDiscovery, setNewDiscovery] = useState<DiscoveryItem | null>(null);
   const [showHints, setShowHints] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  
+  // Mobile ingredient selector modal state
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [modalContext, setModalContext] = useState<'mix-area' | 'cooking-workspace' | null>(null);
+  const [selectedItems, setSelectedItems] = useState<Ingredient[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>(() => {
     if (typeof window === 'undefined') return initialAchievements;
     
@@ -587,6 +592,128 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
     }
     
     closeContextMenu();
+  };
+
+  // Mobile ingredient selector modal functions
+  const openIngredientModal = (context: 'mix-area' | 'cooking-workspace') => {
+    setModalContext(context);
+    setModalOpen(true);
+    
+    // Pre-select existing ingredients from the current workspace
+    if (context === 'mix-area') {
+      setSelectedItems([...mixWorkspace]);
+    } else if (context === 'cooking-workspace') {
+      setSelectedItems([...workspace]);
+    }
+  };
+
+  const closeIngredientModal = () => {
+    setModalOpen(false);
+    setModalContext(null);
+    setSelectedItems([]);
+  };
+
+  const toggleItemSelection = (item: Ingredient) => {
+    if (modalContext === 'mix-area') {
+      // For mix area, allow multiple selections (up to 3)
+      const currentlySelected = selectedItems.find(selected => selected.id === item.id);
+      if (currentlySelected) {
+        setSelectedItems(selectedItems.filter(selected => selected.id !== item.id));
+      } else if (selectedItems.length < 3) {
+        setSelectedItems([...selectedItems, item]);
+      }
+    } else {
+      // For cooking workspace, also allow multiple selections (up to 3)
+      const currentlySelected = selectedItems.find(selected => selected.id === item.id);
+      if (currentlySelected) {
+        setSelectedItems(selectedItems.filter(selected => selected.id !== item.id));
+      } else if (selectedItems.length < 3) {
+        setSelectedItems([...selectedItems, item]);
+      }
+    }
+  };
+
+  const addSelectedItems = () => {
+    if (modalContext === 'mix-area') {
+      // Replace mix workspace with selected items
+      const newMixWorkspace = selectedItems.slice(0, 3); // Limit to 3 items
+      setMixWorkspace(newMixWorkspace);
+      
+      if (newMixWorkspace.length > 0) {
+        setMessage(`Updated mix area with ${newMixWorkspace.length} ingredient${newMixWorkspace.length > 1 ? 's' : ''}!`);
+      } else {
+        setMessage(`Cleared mix area!`);
+      }
+      
+      // Check for recipe matches (same logic as original drag-and-drop)
+      if (newMixWorkspace.length === 2) {
+        // Check for a recipe match with 2 ingredients
+        setTimeout(() => {
+          checkRecipeMatch(newMixWorkspace);
+        }, 500);
+      } else if (newMixWorkspace.length === 3) {
+        // Check for a recipe match with 3 ingredients
+        setTimeout(() => {
+          checkRecipeWith3Ingredients(newMixWorkspace);
+        }, 500);
+      }
+    } else if (modalContext === 'cooking-workspace') {
+      // Replace cooking workspace with selected items
+      const newWorkspace = selectedItems.slice(0, 3); // Limit to 3 items
+      setWorkspace(newWorkspace);
+      
+      if (newWorkspace.length > 0) {
+        setMessage(`Updated cooking workspace with ${newWorkspace.length} ingredient${newWorkspace.length > 1 ? 's' : ''}!`);
+        
+        // Apply cooking method logic for the first item (similar to existing handleDrop logic)
+        if (selectedMethod && selectedMethod.id !== 'mix' && newWorkspace.length === 1) {
+          const item = newWorkspace[0];
+          // Check if this method can transform the ingredient
+          if (selectedMethod.transformations[item.id]) {
+            const result = selectedMethod.transformations[item.id];
+            
+            // Find if this result exists in ingredients
+            const resultIngredient = ingredients.find(i => i.id === result.id);
+            
+            if (resultIngredient) {
+              // Mark as discovered if not already
+              if (!resultIngredient.discovered) {
+                setNewDiscovery({...resultIngredient, method: selectedMethod.name});
+                setIngredients(ingredients.map(ing => 
+                  ing.id === result.id ? {...ing, discovered: true} : ing
+                ));
+                setMessage(`You created ${result.name} by applying ${selectedMethod.name}! 🎉`);
+              } else {
+                setMessage(`${selectedMethod.name} created ${result.name}!`);
+              }
+            } else {
+              // Add the new ingredient
+              const newIngredient = {
+                ...result,
+                discovered: true,
+                difficulty: item.difficulty + 1
+              };
+              setNewDiscovery({...newIngredient, method: selectedMethod.name});
+              setIngredients([...ingredients, newIngredient]);
+              setMessage(`You discovered ${result.name} by applying ${selectedMethod.name}! 🎉`);
+            }
+            
+            // Clear workspace after a delay
+            setTimeout(() => {
+              setWorkspace([]);
+            }, 1000);
+          } else {
+            setMessage(`${selectedMethod.name} can't be applied to ${item.name}. Try a different cooking method!`);
+          }
+        }
+      } else {
+        // No items selected, clear workspace
+        setMessage(`Cleared cooking workspace!`);
+      }
+    }
+
+    setTimeout(() => setMessage(""), 2000);
+    closeIngredientModal();
   };
   
   // Handle drop in workspace
@@ -1519,7 +1646,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
         <div className="w-full pt-4">
           {/* New discovery popup */}
           {newDiscovery && (
-            <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+            <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60]">
               <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-8 rounded-lg max-w-md text-center shadow-xl`}>
                 <h2 className={`text-2xl font-bold mb-3 ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>{t('cook.newDiscovery')} 🎉</h2>
                 <div className="text-7xl my-5">{newDiscovery.emoji}</div>
@@ -1548,7 +1675,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
           {/* Main content area - 2 column layout */}
           <div className="flex flex-col md:flex-row w-full md:px-4 gap-4">
             {/* Left column - Workspace, Cooking Methods, and Mix Area */}
-                         <div className="w-full md:w-2/3 order-1 sticky md:static top-0 z-50 md:z-auto bg-white">
+                         <div className="w-full md:w-2/3 order-1 static bg-white md:bg-transparent">
               {/* Mix Area */}
               <div className="w-full mb-4 relative">
                 <h2 className={`text-xl font-bold mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('cook.mixArea')}:</h2>
@@ -1603,6 +1730,14 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
                 >
+                  {/* Mobile Add Button */}
+                  <button 
+                    className="md:hidden absolute top-2 right-2 w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-lg font-bold z-20 shadow-lg transition-colors"
+                    onClick={() => openIngredientModal('mix-area')}
+                  >
+                    +
+                  </button>
+                  
                   {mixWorkspace.length === 0 ? (
                     <div className="text-center relative z-10">
                       <p className={`text-lg font-medium ${darkMode ? 'text-gray-200' : 'text-black'}`}>
@@ -1642,7 +1777,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                         setMixWorkspace([]);
                         setMessage('');
                       }}
-                      className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full text-sm w-8 h-8 flex items-center justify-center hover:bg-red-600 shadow-md z-20"
+                      className="absolute top-2 right-2 md:right-2 right-12 bg-red-500 text-white p-1 rounded-full text-sm w-8 h-8 flex items-center justify-center hover:bg-red-600 shadow-md z-20"
                       aria-label={t('cook.clear')}
                     >
                       ×
@@ -1731,6 +1866,14 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
               >
+                {/* Mobile Add Button */}
+                <button 
+                  className="md:hidden absolute top-2 right-2 w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-lg font-bold z-20 shadow-lg transition-colors"
+                  onClick={() => openIngredientModal('cooking-workspace')}
+                >
+                  +
+                </button>
+                
                 {workspace.length === 0 ? (
                   <div className="text-center relative z-10">
                     <p className={`text-lg font-medium ${darkMode ? 'text-gray-200' : 'text-black'}`}>
@@ -1769,14 +1912,14 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                   {selectedMethod?.emoji || '🍳'}
                 </div>
                 {workspace.length > 0 && (
-                  <button 
-                    onClick={() => {
-                      setWorkspace([]);
-                      setMessage('');
-                    }}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full text-sm w-8 h-8 flex items-center justify-center hover:bg-red-600 shadow-md z-20"
-                    aria-label={t('cook.clear')}
-                  >
+                                      <button 
+                      onClick={() => {
+                        setWorkspace([]);
+                        setMessage('');
+                      }}
+                      className="absolute top-2 right-2 md:right-2 right-12 bg-red-500 text-white p-1 rounded-full text-sm w-8 h-8 flex items-center justify-center hover:bg-red-600 shadow-md z-20"
+                      aria-label={t('cook.clear')}
+                    >
                     ×
                   </button>
                 )}
@@ -1784,7 +1927,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
             </div>
             
             {/* Right column - Ingredients */}
-            <div className="w-full md:w-1/3 order-2">
+            <div className="w-full md:w-1/3 order-2 hidden md:block">
               {/* Title and Description */}
               <div className="mb-6">
                 <h1 className={`text-3xl font-bold tracking-[-1.5px] mb-2 ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>
@@ -2443,6 +2586,91 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
               <span>{method.name}</span>
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Mobile Ingredient Selector Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden">
+          <div className={`w-full h-full ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'} flex flex-col`}>
+            {/* Modal Header */}
+            <div className={`flex items-center justify-between p-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              <h2 className="text-xl font-bold">
+                {modalContext === 'mix-area' 
+                  ? t('cook.selectIngredientsForMix') 
+                  : 'Select Ingredients for Cooking Workspace'
+                }
+              </h2>
+              <button
+                onClick={closeIngredientModal}
+                className="text-2xl w-8 h-8 flex items-center justify-center"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Selection Info */}
+            <div className={`p-3 text-sm ${darkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-50 text-gray-600'}`}>
+              {modalContext === 'mix-area' 
+                ? `Selected: ${selectedItems.length}/3 ingredients`
+                : `Selected: ${selectedItems.length}/3 ingredients`
+              }
+            </div>
+
+            {/* Ingredients Grid */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="grid grid-cols-4 gap-3">
+                {(() => {
+                  const availableIngredients = ingredients.filter(item => 
+                    item.discovered && item.id !== 'mix'
+                  );
+                  
+                  return availableIngredients.map(item => {
+                    const isSelected = selectedItems.some(selected => selected.id === item.id);
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => toggleItemSelection(item)}
+                        className={`p-2 border-2 rounded-lg text-center transition-all ${
+                          isSelected
+                            ? `${darkMode ? 'border-blue-400 bg-blue-900' : 'border-blue-500 bg-blue-50'}`
+                            : `${darkMode ? 'border-gray-600 bg-gray-800 hover:bg-gray-700' : 'border-gray-300 bg-white hover:bg-gray-50'}`
+                        }`}
+                      >
+                        <div className="text-4xl mb-1">{item.emoji}</div>
+                        <div className="text-sm font-medium">
+                          {t(`ingredients.${item.id}`, { fallback: item.name })}
+                        </div>
+                        <div className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {t(`categories.${normalizeCategoryKey(item.category)}`, { fallback: item.category })}
+                        </div>
+                        {isSelected && (
+                          <div className="text-green-500 text-lg mt-1">✓</div>
+                        )}
+                      </button>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+
+            {/* Action Button */}
+            <div className={`p-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              <button
+                onClick={addSelectedItems}
+                className="w-full py-3 rounded-lg font-medium transition-colors bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                {modalContext === 'mix-area' 
+                  ? selectedItems.length > 0 
+                    ? `Update Mix Area (${selectedItems.length} ingredient${selectedItems.length > 1 ? 's' : ''})`
+                    : 'Clear Mix Area'
+                  : selectedItems.length > 0 
+                    ? `Update Workspace (${selectedItems.length} ingredient${selectedItems.length > 1 ? 's' : ''})`
+                    : 'Clear Workspace'
+                }
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

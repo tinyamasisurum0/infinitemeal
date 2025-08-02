@@ -54,7 +54,9 @@
     "withSomethingElse": " with something else",
     "difficultyLevel": " (Difficulty: {level})",
     "discoverMoreForHints": "Discover more ingredients to unlock recipe hints!",
-    "basicIngredients": "Basic Ingredients"
+    "basicIngredients": "Basic Ingredients",
+    "selectIngredientsForMix": "Select Ingredients for Mix Area",
+    "selectIngredientForCooking": "Select Ingredient for Cooking"
   },
   "discover": {
     "title": "Discoveries",
