@@ -1675,7 +1675,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
           {/* Main content area - 2 column layout */}
           <div className="flex flex-col md:flex-row w-full md:px-4 gap-4">
             {/* Left column - Workspace, Cooking Methods, and Mix Area */}
-                         <div className="w-full md:w-2/3 order-1 static bg-white md:bg-transparent">
+            <div className={`w-full md:w-2/3 order-1 static ${darkMode ? 'bg-gray-900 md:bg-transparent' : 'bg-white md:bg-transparent'}`}>
               {/* Mix Area */}
               <div className="w-full mb-4 relative">
                 <h2 className={`text-xl font-bold mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('cook.mixArea')}:</h2>
