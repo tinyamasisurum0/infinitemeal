@@ -2,12 +2,14 @@ import { Ingredient, categories } from '../types/RecipeTypes';
 
 // Define basic starter ingredients that should be discovered at the beginning
 export const BASIC_STARTER_INGREDIENTS = [
-  'tomato', 'onion', 'cucumber', 'lettuce', 'egg', 
-  'cheese', 'flour', 'water', 'meat', 'potato', 
+  'tomato', 'onion', 'cucumber', 'lettuce', 'egg',
+  'cheese', 'flour', 'water', 'meat', 'potato',
   'salt', 'fruit', 'rice', 'milk', 'noodles', 'soy_sauce',
   'butter', 'sugar', 'chicken', 'fish', 'carrot', 'bell_pepper',
   'herbs', 'spices', 'chocolate', 'cream', 'syrup', 'yogurt',
-  'chickpeas', 'lemon', 'coffee_beans', 'ice', 'cabbage', 'oil'
+  'chickpeas', 'lemon', 'coffee_beans', 'ice', 'cabbage', 'oil',
+  // Turkish & Japanese cuisine basics
+  'lamb', 'walnut', 'seaweed', 'tofu', 'miso', 'vinegar'
 ];
 
 // Helper function to determine if an ingredient should be discovered initially
@@ -150,5 +152,32 @@ export const initialIngredients: Ingredient[] = [
   // Additional Desserts
   { id: 'chocolate_cake', name: 'Chocolate Cake', emoji: '🍰', category: categories.DESSERT, discovered: isDiscoveredInitially('chocolate_cake'), difficulty: 4 },
   { id: 'cookie', name: 'Cookie', emoji: '🍪', category: categories.DESSERT, discovered: isDiscoveredInitially('cookie'), difficulty: 2 },
-  { id: 'donut', name: 'Donut', emoji: '🍩', category: categories.DESSERT, discovered: isDiscoveredInitially('donut'), difficulty: 3 }
+  { id: 'donut', name: 'Donut', emoji: '🍩', category: categories.DESSERT, discovered: isDiscoveredInitially('donut'), difficulty: 3 },
+
+  // Turkish & Japanese Basic Ingredients
+  { id: 'lamb', name: 'Lamb', emoji: '🐑', category: categories.PROTEIN, discovered: isDiscoveredInitially('lamb'), difficulty: 1 },
+  { id: 'walnut', name: 'Walnut', emoji: '🌰', category: categories.BASIC, discovered: isDiscoveredInitially('walnut'), difficulty: 1 },
+  { id: 'seaweed', name: 'Seaweed', emoji: '🌿', category: categories.VEGETABLE, discovered: isDiscoveredInitially('seaweed'), difficulty: 1 },
+  { id: 'tofu', name: 'Tofu', emoji: '🧈', category: categories.PROTEIN, discovered: isDiscoveredInitially('tofu'), difficulty: 1 },
+  { id: 'miso', name: 'Miso', emoji: '🫙', category: categories.SAUCE, discovered: isDiscoveredInitially('miso'), difficulty: 1 },
+  { id: 'vinegar', name: 'Vinegar', emoji: '🫗', category: categories.SPICE, discovered: isDiscoveredInitially('vinegar'), difficulty: 1 },
+
+  // Turkish Cuisine
+  { id: 'pita_dough', name: 'Pita Dough', emoji: '🥟', category: categories.BASIC, discovered: isDiscoveredInitially('pita_dough'), difficulty: 2 },
+  { id: 'doner_meat', name: 'Döner Meat', emoji: '🥩', category: categories.PROTEIN, discovered: isDiscoveredInitially('doner_meat'), difficulty: 2 },
+  { id: 'doner', name: 'Döner', emoji: '🥙', category: categories.DISH, discovered: isDiscoveredInitially('doner'), difficulty: 3 },
+  { id: 'lahmacun_base', name: 'Lahmacun Base', emoji: '🫓', category: categories.BASIC, discovered: isDiscoveredInitially('lahmacun_base'), difficulty: 2 },
+  { id: 'lahmacun', name: 'Lahmacun', emoji: '🫓', category: categories.DISH, discovered: isDiscoveredInitially('lahmacun'), difficulty: 3 },
+  { id: 'pide', name: 'Pide', emoji: '🥧', category: categories.DISH, discovered: isDiscoveredInitially('pide'), difficulty: 3 },
+  { id: 'baklava', name: 'Baklava', emoji: '🍯', category: categories.DESSERT, discovered: isDiscoveredInitially('baklava'), difficulty: 4 },
+  { id: 'ayran', name: 'Ayran', emoji: '🥛', category: categories.DRINK, discovered: isDiscoveredInitially('ayran'), difficulty: 2 },
+
+  // Japanese Cuisine
+  { id: 'sushi_rice', name: 'Sushi Rice', emoji: '🍚', category: categories.GRAIN, discovered: isDiscoveredInitially('sushi_rice'), difficulty: 2 },
+  { id: 'ramen_noodles', name: 'Ramen Noodles', emoji: '🍜', category: categories.GRAIN, discovered: isDiscoveredInitially('ramen_noodles'), difficulty: 2 },
+  { id: 'ramen_broth', name: 'Ramen Broth', emoji: '🍲', category: categories.SAUCE, discovered: isDiscoveredInitially('ramen_broth'), difficulty: 2 },
+  { id: 'tempura_batter', name: 'Tempura Batter', emoji: '🥣', category: categories.BASIC, discovered: isDiscoveredInitially('tempura_batter'), difficulty: 2 },
+  { id: 'tempura', name: 'Tempura', emoji: '🍤', category: categories.DISH, discovered: isDiscoveredInitially('tempura'), difficulty: 3 },
+  { id: 'miso_soup', name: 'Miso Soup', emoji: '🍲', category: categories.DISH, discovered: isDiscoveredInitially('miso_soup'), difficulty: 2 },
+  { id: 'onigiri', name: 'Onigiri', emoji: '🍙', category: categories.DISH, discovered: isDiscoveredInitially('onigiri'), difficulty: 2 }
 ]; 

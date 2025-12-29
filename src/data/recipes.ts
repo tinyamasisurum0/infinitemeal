@@ -371,10 +371,116 @@ export const recipes: Recipe[] = [
     difficulty: 2,
     description: 'Mix flour, butter, and chocolate to bake into sweet cookies'
   },
-  { 
-    ingredients: ['dough', 'sugar', 'oil'], 
-    result: 'donut', 
+  {
+    ingredients: ['dough', 'sugar', 'oil'],
+    result: 'donut',
     difficulty: 3,
     description: 'Shape dough into rings and fry in oil for a sweet treat'
+  },
+
+  // Turkish Cuisine Recipes
+  {
+    ingredients: ['flour', 'water', 'yogurt'],
+    result: 'pita_dough',
+    difficulty: 2,
+    description: 'Mix flour, water and yogurt to create soft Turkish pita dough'
+  },
+  {
+    ingredients: ['lamb', 'spices'],
+    result: 'doner_meat',
+    difficulty: 2,
+    description: 'Season lamb with spices and stack for traditional döner meat'
+  },
+  {
+    ingredients: ['pita_dough', 'doner_meat', 'tomato'],
+    result: 'doner',
+    difficulty: 3,
+    description: 'Wrap döner meat with tomatoes in pita for a delicious döner'
+  },
+  {
+    ingredients: ['flour', 'water'],
+    result: 'lahmacun_base',
+    difficulty: 2,
+    description: 'Roll thin dough for crispy lahmacun base'
+  },
+  {
+    ingredients: ['lahmacun_base', 'meat', 'onion'],
+    result: 'lahmacun',
+    difficulty: 3,
+    description: 'Top thin dough with spiced meat and onions for Turkish pizza'
+  },
+  {
+    ingredients: ['pita_dough', 'cheese', 'egg'],
+    result: 'pide',
+    difficulty: 3,
+    description: 'Fill boat-shaped dough with cheese and egg for Turkish pide'
+  },
+  {
+    ingredients: ['flour', 'butter', 'walnut'],
+    result: 'baklava',
+    difficulty: 4,
+    description: 'Layer thin phyllo dough with butter and walnuts for sweet baklava'
+  },
+  {
+    ingredients: ['yogurt', 'water', 'salt'],
+    result: 'ayran',
+    difficulty: 2,
+    description: 'Blend yogurt with water and salt for refreshing Turkish drink'
+  },
+
+  // Japanese Cuisine Recipes
+  {
+    ingredients: ['rice', 'vinegar'],
+    result: 'sushi_rice',
+    difficulty: 2,
+    description: 'Season cooked rice with vinegar for sushi rice'
+  },
+  {
+    ingredients: ['sushi_rice', 'fish', 'seaweed'],
+    result: 'sushi',
+    difficulty: 3,
+    description: 'Roll sushi rice with fish in seaweed for traditional sushi'
+  },
+  {
+    ingredients: ['flour', 'egg', 'water'],
+    result: 'ramen_noodles',
+    difficulty: 2,
+    description: 'Make alkaline noodles with flour, egg and water'
+  },
+  {
+    ingredients: ['miso', 'water', 'soy_sauce'],
+    result: 'ramen_broth',
+    difficulty: 2,
+    description: 'Simmer miso with soy sauce for rich ramen broth'
+  },
+  {
+    ingredients: ['ramen_noodles', 'ramen_broth', 'egg'],
+    result: 'ramen',
+    difficulty: 4,
+    description: 'Combine noodles with broth and top with egg for authentic ramen'
+  },
+  {
+    ingredients: ['flour', 'water', 'egg'],
+    result: 'tempura_batter',
+    difficulty: 2,
+    description: 'Mix light batter for crispy tempura coating'
+  },
+  {
+    ingredients: ['tempura_batter', 'fish', 'oil'],
+    result: 'tempura',
+    difficulty: 3,
+    description: 'Dip seafood in batter and fry for crispy tempura'
+  },
+  {
+    ingredients: ['miso', 'water', 'tofu'],
+    result: 'miso_soup',
+    difficulty: 2,
+    description: 'Dissolve miso in hot water with tofu for traditional soup'
+  },
+  {
+    ingredients: ['rice', 'seaweed', 'salt'],
+    result: 'onigiri',
+    difficulty: 2,
+    description: 'Shape rice into triangles and wrap with seaweed for onigiri'
   }
 ]; 

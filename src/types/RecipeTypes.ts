@@ -42,6 +42,7 @@ export interface RecipeHint extends Recipe {
   knownCount: number;
   knownIngredients: string[];
   unknownCount: number;
+  almostThere: boolean;
 }
 
 export interface DiscoveryItem extends Ingredient {
@@ -51,6 +52,17 @@ export interface DiscoveryItem extends Ingredient {
 export interface AdvancedRecipeCraftingProps {
   onDarkModeChange?: (isDarkMode: boolean) => void;
   initialDarkMode?: boolean;
+}
+
+export interface DailyChallenge {
+  id: string;
+  type: 'discover' | 'difficulty' | 'category';
+  description: string;
+  target: number;
+  progress: number;
+  completed: boolean;
+  category?: string;
+  difficulty?: number;
 }
 
 // Define recipe categories

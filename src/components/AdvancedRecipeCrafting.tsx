@@ -4,13 +4,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { withClientTranslations } from './withClientTranslations';
 import LanguageSwitcher from './LanguageSwitcher';
-import { 
-  Ingredient, 
-  CookingMethod, 
+import {
+  Ingredient,
+  CookingMethod,
+  Recipe,
   RecipeHint,
   Achievement,
   DiscoveryItem,
   AdvancedRecipeCraftingProps,
+  DailyChallenge,
   categories
 } from '../types/RecipeTypes';
 import { 
@@ -272,11 +274,44 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
   const [newDiscovery, setNewDiscovery] = useState<DiscoveryItem | null>(null);
   const [showHints, setShowHints] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [mixFailed, setMixFailed] = useState<boolean>(false);
+
+  // Combo chain tracking
+  const [lastCreatedIngredient, setLastCreatedIngredient] = useState<string | null>(null);
+  const [comboStreak, setComboStreak] = useState<number>(0);
+  const [showComboNotification, setShowComboNotification] = useState<boolean>(false);
+
+  // Daily challenges state
+  const [dailyChallenges, setDailyChallenges] = useState<DailyChallenge[]>([]);
+  const [showChallenges, setShowChallenges] = useState<boolean>(true);
+
+  // Hint points system
+  const [hintPoints, setHintPoints] = useState<number>(() => {
+    if (typeof window === 'undefined') return 10; // Start with 10 points
+    const saved = localStorage.getItem('hintPoints');
+    return saved ? parseInt(saved, 10) : 10;
+  });
+  const [revealedHints, setRevealedHints] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set();
+    const saved = localStorage.getItem('revealedHints');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+
   // Mobile ingredient selector modal state
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [modalContext, setModalContext] = useState<'mix-area' | 'cooking-workspace' | null>(null);
   const [selectedItems, setSelectedItems] = useState<Ingredient[]>([]);
+
+  // Drag feedback state
+  const [dragOverZone, setDragOverZone] = useState<'mix-area' | 'cooking-workspace' | null>(null);
+
+  // Ingredient combos feature
+  const [hoveredIngredient, setHoveredIngredient] = useState<string | null>(null);
+  const [compatibleIngredients, setCompatibleIngredients] = useState<Set<string>>(new Set());
+
+  // Cooking method highlight feature
+  const [methodHighlightedIngredients, setMethodHighlightedIngredients] = useState<Set<string>>(new Set());
   const [achievements, setAchievements] = useState<Achievement[]>(() => {
     if (typeof window === 'undefined') return initialAchievements;
     
@@ -939,49 +974,99 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
     }
   };
   
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, zone: 'mix-area' | 'cooking-workspace') => {
     e.preventDefault();
+    setDragOverZone(zone);
   };
-  
+
+  const handleDragLeave = () => {
+    setDragOverZone(null);
+  };
+
+  const handleDropWithReset = (e: React.DragEvent<HTMLDivElement>) => {
+    setDragOverZone(null);
+    handleDrop(e);
+  };
+
+  // Check if a recipe is locked based on difficulty and discovery count
+  const isRecipeLocked = (recipe: Recipe): { locked: boolean; requiredCount: number } => {
+    const discoveryCount = discoveredItems.length;
+
+    // Difficulty 3 recipes require at least 5 discoveries
+    if (recipe.difficulty === 3 && discoveryCount < 5) {
+      return { locked: true, requiredCount: 5 };
+    }
+    // Difficulty 4 recipes require at least 15 discoveries
+    if (recipe.difficulty === 4 && discoveryCount < 15) {
+      return { locked: true, requiredCount: 15 };
+    }
+    return { locked: false, requiredCount: 0 };
+  };
+
   // Check for recipes with 3 ingredients
   const checkRecipeWith3Ingredients = (currentWorkspace: Ingredient[]) => {
     if (currentWorkspace.length !== 3) return;
-    
+
     const ids = currentWorkspace.map(item => item.id).sort();
-    
+
     // Find a matching recipe with 3 ingredients
     const matchedRecipe = recipes.find(recipe => {
       if (recipe.ingredients.length !== 3) return false;
-      
+
       const recipeIds = [...recipe.ingredients].sort();
       // Check if all ingredients in the recipe match the workspace
       return recipeIds.every((id, index) => id === ids[index]);
     });
-    
+
     if (matchedRecipe) {
+      // Check if the recipe is locked
+      const lockStatus = isRecipeLocked(matchedRecipe);
+      if (lockStatus.locked) {
+        setMessage(t('cook.recipeLocked', { count: lockStatus.requiredCount, fallback: `This recipe is locked! Discover ${lockStatus.requiredCount} ingredients first.` }));
+        setMixFailed(true);
+        setTimeout(() => setMixFailed(false), 500);
+        return;
+      }
+
       // Find the result ingredient
       const resultIngredient = ingredients.find(i => i.id === matchedRecipe.result);
-      
+
       if (resultIngredient) {
+        // Check for combo chain (used the output of last recipe as input)
+        const isCombo = lastCreatedIngredient && ids.includes(lastCreatedIngredient);
+
+        if (isCombo) {
+          setComboStreak(prev => prev + 1);
+          setShowComboNotification(true);
+          setTimeout(() => setShowComboNotification(false), 2000);
+        } else {
+          setComboStreak(0);
+        }
+
+        // Update last created ingredient
+        setLastCreatedIngredient(matchedRecipe.result);
+
         // Mark as discovered if not already
         if (!resultIngredient.discovered) {
           // Set a small delay to ensure the message is recognized by the UI
           setTimeout(() => {
             setMessage(`You discovered ${resultIngredient.name}! 🎉`);
           }, 100);
-          
+
           setNewDiscovery(resultIngredient);
-          
-          setIngredients(ingredients.map(item => 
+          updateChallengeProgress(resultIngredient, true);
+
+          setIngredients(ingredients.map(item =>
             item.id === matchedRecipe.result ? {...item, discovered: true} : item
           ));
         } else {
           setTimeout(() => {
             setMessage(`You created ${resultIngredient.name} again!`);
           }, 100);
+          updateChallengeProgress(resultIngredient, false);
         }
       }
-      
+
       // Clear workspace only when recipe is found
       setTimeout(() => {
         setWorkspace([]);
@@ -990,48 +1075,79 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
     } else {
       const ingredientNames = currentWorkspace.map(item => item.name).join(', ');
       setMessage(`No recipe found with ${ingredientNames}. Try different combinations!`);
+      // Trigger shake animation
+      setMixFailed(true);
+      setTimeout(() => setMixFailed(false), 500);
+      // Reset combo on failed combination
+      setComboStreak(0);
+      setLastCreatedIngredient(null);
     }
   };
-  
+
   // Check if current workspace items match a recipe
   const checkRecipeMatch = (currentWorkspace: Ingredient[]) => {
     if (currentWorkspace.length !== 2) return;
-    
+
     const ids = currentWorkspace.map(item => item.id).sort();
-    
+
     // Find a matching recipe
     const matchedRecipe = recipes.find(recipe => {
       // Only match recipes with exactly 2 ingredients
       if (recipe.ingredients.length !== 2) return false;
-      
+
       const recipeIds = [...recipe.ingredients].sort();
       return recipeIds[0] === ids[0] && recipeIds[1] === ids[1];
     });
-    
+
     if (matchedRecipe) {
+      // Check if the recipe is locked
+      const lockStatus = isRecipeLocked(matchedRecipe);
+      if (lockStatus.locked) {
+        setMessage(t('cook.recipeLocked', { count: lockStatus.requiredCount, fallback: `This recipe is locked! Discover ${lockStatus.requiredCount} ingredients first.` }));
+        setMixFailed(true);
+        setTimeout(() => setMixFailed(false), 500);
+        return;
+      }
+
       // Find the result ingredient
       const resultIngredient = ingredients.find(i => i.id === matchedRecipe.result);
-      
+
       if (resultIngredient) {
+        // Check for combo chain (used the output of last recipe as input)
+        const isCombo = lastCreatedIngredient && ids.includes(lastCreatedIngredient);
+
+        if (isCombo) {
+          setComboStreak(prev => prev + 1);
+          setShowComboNotification(true);
+          setTimeout(() => setShowComboNotification(false), 2000);
+        } else {
+          setComboStreak(0);
+        }
+
+        // Update last created ingredient
+        setLastCreatedIngredient(matchedRecipe.result);
+
         // Mark as discovered if not already
         if (!resultIngredient.discovered) {
           // Set a small delay to ensure the message is recognized by the UI
           setTimeout(() => {
             setMessage(`You discovered ${resultIngredient.name}! 🎉`);
           }, 100);
-          
+
           setNewDiscovery(resultIngredient);
-          
-          setIngredients(ingredients.map(item => 
+          updateChallengeProgress(resultIngredient, true);
+
+          setIngredients(ingredients.map(item =>
             item.id === matchedRecipe.result ? {...item, discovered: true} : item
           ));
         } else {
           setTimeout(() => {
             setMessage(`You created ${resultIngredient.name} again!`);
           }, 100);
+          updateChallengeProgress(resultIngredient, false);
         }
       }
-      
+
       // Clear workspace only when recipe is found
       setTimeout(() => {
         setWorkspace([]);
@@ -1040,13 +1156,19 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
     } else {
       const ingredientNames = currentWorkspace.map(item => item.name).join(' and ');
       setMessage(`No recipe found with ${ingredientNames}. Try different combinations!`);
+      // Trigger shake animation
+      setMixFailed(true);
+      setTimeout(() => setMixFailed(false), 500);
+      // Reset combo on failed combination
+      setComboStreak(0);
+      setLastCreatedIngredient(null);
     }
   };
-  
+
   // Get available recipe hints
   const getRecipeHints = (): RecipeHint[] => {
     const discoveredIds = new Set(discoveredItems.map(item => item.id));
-    
+
     return recipes
       .filter(recipe => {
         // Only show hints for recipes where at least one ingredient is discovered
@@ -1058,16 +1180,28 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
       .map(recipe => {
         const knownIngredients = recipe.ingredients.filter(id => discoveredIds.has(id));
         const unknownIngredients = recipe.ingredients.filter(id => !discoveredIds.has(id));
-        
+        const knownCount = knownIngredients.length;
+
+        // "Almost there" flag: when user has all but one ingredient (at least 2 known)
+        const almostThere = recipe.ingredients.length >= 3 &&
+                           unknownIngredients.length === 1 &&
+                           knownCount >= 2;
+
         return {
           ...recipe,
-          knownCount: knownIngredients.length,
+          knownCount,
           knownIngredients: knownIngredients.map(id => ingredients.find(i => i.id === id)?.name || id),
-          unknownCount: unknownIngredients.length
+          unknownCount: unknownIngredients.length,
+          almostThere
         };
       })
-      .sort((a, b) => b.knownCount - a.knownCount)
-      .slice(0, 3); // Show top 3 hints
+      .sort((a, b) => {
+        // Sort "almost there" hints first, then by known count
+        if (a.almostThere && !b.almostThere) return -1;
+        if (!a.almostThere && b.almostThere) return 1;
+        return b.knownCount - a.knownCount;
+      })
+      .slice(0, 5); // Show top 5 hints (increased to show more "almost there")
   };
   
   // Dismiss new discovery notification
@@ -1079,12 +1213,107 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
   const toggleHints = () => {
     setShowHints(!showHints);
   };
+
+  // Get compatible ingredients for combos
+  const getCompatibleIngredients = (ingredientId: string): Set<string> => {
+    const compatible = new Set<string>();
+    const discoveredIds = new Set(discoveredItems.map(item => item.id));
+
+    recipes.forEach(recipe => {
+      // Check if this ingredient is part of the recipe
+      if (recipe.ingredients.includes(ingredientId)) {
+        // Add all other ingredients in the recipe that are discovered
+        recipe.ingredients.forEach(id => {
+          if (id !== ingredientId && discoveredIds.has(id)) {
+            compatible.add(id);
+          }
+        });
+      }
+    });
+
+    return compatible;
+  };
+
+  // Handle ingredient hover for combos
+  const handleIngredientHover = (ingredientId: string | null) => {
+    setHoveredIngredient(ingredientId);
+    if (ingredientId) {
+      setCompatibleIngredients(getCompatibleIngredients(ingredientId));
+    } else {
+      setCompatibleIngredients(new Set());
+    }
+  };
+
+  // Handle cooking method selection with highlight
+  const handleMethodSelect = (method: CookingMethod) => {
+    setSelectedMethod(method);
+
+    // Get ingredients that can be transformed by this method
+    const transformableIds = new Set(Object.keys(method.transformations));
+
+    // Only highlight discovered ingredients that can be transformed
+    const discoveredIds = new Set(discoveredItems.map(item => item.id));
+    const highlightIds = new Set([...transformableIds].filter(id => discoveredIds.has(id)));
+
+    setMethodHighlightedIngredients(highlightIds);
+
+    // Clear highlight after 1.5 seconds
+    setTimeout(() => {
+      setMethodHighlightedIngredients(new Set());
+    }, 1500);
+  };
+
+  // Save hint points to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('hintPoints', hintPoints.toString());
+    }
+  }, [hintPoints]);
+
+  // Save revealed hints to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('revealedHints', JSON.stringify([...revealedHints]));
+    }
+  }, [revealedHints]);
+
+  // Reveal a hint (costs 5 points)
+  const revealHint = (recipeResult: string) => {
+    const HINT_COST = 5;
+    if (hintPoints >= HINT_COST) {
+      setHintPoints(prev => prev - HINT_COST);
+      setRevealedHints(prev => new Set([...prev, recipeResult]));
+    }
+  };
+
+  // Award points for discovering a recipe
+  const awardHintPoints = (difficulty: number) => {
+    // Award points based on difficulty: 2 for easy, 3 for medium, 5 for hard
+    const points = difficulty <= 2 ? 2 : difficulty === 3 ? 3 : 5;
+    setHintPoints(prev => prev + points);
+  };
+
+  // Award hint points when a new discovery is made
+  useEffect(() => {
+    if (newDiscovery && newDiscovery.difficulty > 1) {
+      awardHintPoints(newDiscovery.difficulty);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newDiscovery]);
   
   // Filter ingredients by selected category
   const getFilteredIngredients = () => {
+    // Helper function to filter by search query
+    const matchesSearch = (item: Ingredient) => {
+      if (!searchQuery.trim()) return true;
+      const query = searchQuery.toLowerCase();
+      const itemName = t(`ingredients.${item.id}`, { fallback: item.name }).toLowerCase();
+      return itemName.includes(query) || item.name.toLowerCase().includes(query);
+    };
+
     if (selectedCategory === "All") {
       // Sort ingredients with mixed items (difficulty > 1) at the top
-      return [...discoveredItems].sort((a, b) => {
+      return [...discoveredItems].filter(matchesSearch).sort((a, b) => {
         // Mixed items (difficulty > 1) come first
         if (a.difficulty > 1 && b.difficulty === 1) return -1;
         if (a.difficulty === 1 && b.difficulty > 1) return 1;
@@ -1094,10 +1323,10 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
     }
     if (selectedCategory === "Mixed Items") {
       // Show only mixed items (difficulty > 1, which are discovered recipes)
-      return discoveredItems.filter(item => item.difficulty > 1);
+      return discoveredItems.filter(item => item.difficulty > 1 && matchesSearch(item));
     }
     // For other categories, show all items that match the category (both basic and mixed)
-    return discoveredItems.filter(item => item.category === selectedCategory);
+    return discoveredItems.filter(item => item.category === selectedCategory && matchesSearch(item));
   };
   
   const [darkMode, setDarkMode] = useState<boolean>(initialDarkMode || false);
@@ -1125,7 +1354,111 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
       setDarkMode(initialDarkMode);
     }
   }, [initialDarkMode]);
-  
+
+  // Generate daily challenges based on date
+  const generateDailyChallenges = (dateStr: string): DailyChallenge[] => {
+    // Simple hash function for consistent pseudo-random based on date
+    const hashCode = (s: string) => {
+      let hash = 0;
+      for (let i = 0; i < s.length; i++) {
+        const char = s.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return Math.abs(hash);
+    };
+
+    const seed = hashCode(dateStr);
+    const challengeCategories = ['DISH', 'DESSERT', 'DRINK', 'SAUCE'];
+    const difficulties = [3, 4];
+
+    const challenges: DailyChallenge[] = [
+      {
+        id: `${dateStr}-discover`,
+        type: 'discover',
+        description: 'Discover 3 new ingredients today',
+        target: 3,
+        progress: 0,
+        completed: false
+      },
+      {
+        id: `${dateStr}-difficulty`,
+        type: 'difficulty',
+        description: `Create a difficulty ${difficulties[seed % 2]} dish`,
+        target: 1,
+        progress: 0,
+        completed: false,
+        difficulty: difficulties[seed % 2]
+      },
+      {
+        id: `${dateStr}-category`,
+        type: 'category',
+        description: `Create 2 ${challengeCategories[seed % challengeCategories.length].toLowerCase()} items`,
+        target: 2,
+        progress: 0,
+        completed: false,
+        category: challengeCategories[seed % challengeCategories.length]
+      }
+    ];
+
+    return challenges;
+  };
+
+  // Initialize daily challenges
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const today = new Date().toISOString().split('T')[0];
+    const savedDate = localStorage.getItem('dailyChallengeDate');
+    const savedChallenges = localStorage.getItem('dailyChallenges');
+
+    if (savedDate === today && savedChallenges) {
+      // Load existing challenges for today
+      try {
+        const parsed = JSON.parse(savedChallenges);
+        setDailyChallenges(parsed);
+      } catch {
+        // Generate new challenges if parse fails
+        const newChallenges = generateDailyChallenges(today);
+        setDailyChallenges(newChallenges);
+        localStorage.setItem('dailyChallengeDate', today);
+        localStorage.setItem('dailyChallenges', JSON.stringify(newChallenges));
+      }
+    } else {
+      // New day - generate new challenges
+      const newChallenges = generateDailyChallenges(today);
+      setDailyChallenges(newChallenges);
+      localStorage.setItem('dailyChallengeDate', today);
+      localStorage.setItem('dailyChallenges', JSON.stringify(newChallenges));
+    }
+  }, []);
+
+  // Update challenge progress when a new ingredient is discovered
+  const updateChallengeProgress = (newIngredient: Ingredient, isNewDiscovery: boolean) => {
+    setDailyChallenges(prev => {
+      const updated = prev.map(challenge => {
+        if (challenge.completed) return challenge;
+
+        let newProgress = challenge.progress;
+
+        if (challenge.type === 'discover' && isNewDiscovery) {
+          newProgress = challenge.progress + 1;
+        } else if (challenge.type === 'difficulty' && newIngredient.difficulty === challenge.difficulty) {
+          newProgress = challenge.progress + 1;
+        } else if (challenge.type === 'category' && newIngredient.category === challenge.category) {
+          newProgress = challenge.progress + 1;
+        }
+
+        const completed = newProgress >= challenge.target;
+        return { ...challenge, progress: newProgress, completed };
+      });
+
+      // Save to localStorage
+      localStorage.setItem('dailyChallenges', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   // Toggle dark mode and save to localStorage
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
@@ -1146,7 +1479,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
     setMessage('');
     setSelectedMethod(cookingMethods[1]); // Reset to Boil
     setNewDiscovery(null);
-    
+
     // Reset all ingredients to initial discovery state
     setIngredients(initialIngredients.map((item: Ingredient) => {
       // Keep basic ingredients discovered, reset others
@@ -1155,10 +1488,23 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
         discovered: BASIC_STARTER_INGREDIENTS.includes(item.id)
       };
     }));
-    
+
     // Reset all achievements to initial state
     setAchievements(initialAchievements);
-    
+
+    // Reset daily challenges
+    setDailyChallenges([]);
+
+    // Reset combo tracking
+    setComboStreak(0);
+    setLastCreatedIngredient(null);
+
+    // Reset hint points system
+    setHintPoints(10); // Start with 10 points
+    setRevealedHints(new Set());
+    localStorage.removeItem('hintPoints');
+    localStorage.removeItem('revealedHints');
+
     // Reset stat tracking refs
     prevDiscoveredCountRef.current = 0;
     prevCategoriesCountRef.current = 0;
@@ -1167,7 +1513,8 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
     // Clear saved game state
     clearStorage('gameIngredients');
     clearStorage('gameAchievements');
-    
+    clearStorage('dailyChallenges');
+
     // Hide the confirmation dialog
     setShowResetConfirmation(false);
   };
@@ -1428,10 +1775,62 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
     // Start building steps from the dish
     buildSteps(dishId);
     
-    return { 
-      steps, 
+    return {
+      steps,
       ingredients: Array.from(usedIngredients)
     };
+  };
+
+  // Get recipe chain visualization - shows the path from basic ingredients to final dish
+  interface RecipeChainStep {
+    inputs: { id: string; name: string; emoji: string }[];
+    output: { id: string; name: string; emoji: string };
+  }
+
+  const getRecipeChain = (dishId: string): RecipeChainStep[] => {
+    const chain: RecipeChainStep[] = [];
+    const processed = new Set<string>();
+
+    const buildChain = (resultId: string): void => {
+      if (processed.has(resultId)) return;
+
+      const recipe = recipes.find(r => r.result === resultId);
+      if (!recipe) return;
+
+      // First, recursively process ingredient dependencies
+      for (const ingredientId of recipe.ingredients) {
+        const ingredient = ingredients.find(i => i.id === ingredientId);
+        if (ingredient && ingredient.difficulty > 1 && !processed.has(ingredientId)) {
+          buildChain(ingredientId);
+        }
+      }
+
+      // Mark as processed before adding to avoid duplicates
+      processed.add(resultId);
+
+      // Get ingredient details
+      const inputs = recipe.ingredients.map(id => {
+        const ing = ingredients.find(i => i.id === id);
+        return {
+          id,
+          name: ing ? t(`ingredients.${ing.id}`, { fallback: ing.name }) : id,
+          emoji: ing?.emoji || '❓'
+        };
+      });
+
+      // Get output details
+      const outputIng = ingredients.find(i => i.id === resultId);
+      const output = {
+        id: resultId,
+        name: outputIng ? t(`ingredients.${outputIng.id}`, { fallback: outputIng.name }) : resultId,
+        emoji: outputIng?.emoji || '❓'
+      };
+
+      chain.push({ inputs, output });
+    };
+
+    buildChain(dishId);
+    return chain;
   };
 
   // Helper function to count non-basic discovered items
@@ -1594,6 +1993,27 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
       )}
       
       {/* Tab Navigation - Fixed at the top */}
+{/* Title and Description */}
+      <div className="w-full p-2">
+                <h1 className={`text-3xl font-bold tracking-[-1.5px] mb-2 ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>
+                  👨‍🍳 {t('cook.title')}
+                </h1>
+                <div className="flex items-center justify-between">
+                  <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {t('cook.subtitle')}
+                  </p>
+                  <button
+                    onClick={startTutorial}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                      darkMode 
+                        ? 'bg-green-900 hover:bg-green-800 text-green-200 border border-green-700' 
+                        : 'bg-green-100 hover:bg-green-200 text-green-700 border border-green-300'
+                    }`}
+                  >
+                    🍕 Pizza Tutorial
+                  </button>
+                </div>
+      </div>      
       <div className={`w-full sticky top-0 z-40 ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
         <div className="flex w-full">
           <button
@@ -1647,9 +2067,9 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
           {/* New discovery popup */}
           {newDiscovery && (
             <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60]">
-              <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-8 rounded-lg max-w-md text-center shadow-xl`}>
+              <div className={`discovery-celebration ${darkMode ? 'bg-gray-800' : 'bg-white'} p-8 rounded-2xl max-w-md text-center shadow-2xl`}>
                 <h2 className={`text-2xl font-bold mb-3 ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>{t('cook.newDiscovery')} 🎉</h2>
-                <div className="text-7xl my-5">{newDiscovery.emoji}</div>
+                <div className="discovery-emoji text-8xl my-6">{newDiscovery.emoji}</div>
                 <h3 className={`text-xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'} mb-2`}>
                   {t(`ingredients.${newDiscovery.id}`, { fallback: newDiscovery.name })}
                 </h3>
@@ -1661,10 +2081,48 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                     {t('cook.createdBy')}: {t(`cookingMethods.${newDiscovery.method}`, { fallback: newDiscovery.method })}
                   </p>
                 )}
-                <p className="text-base mb-5">{t('cook.difficulty')}: {Array(newDiscovery.difficulty).fill('⭐').join('')}</p>
-                <button 
+                <p className="text-base mb-4">{t('cook.difficulty')}: {Array(newDiscovery.difficulty).fill('⭐').join('')}</p>
+
+                {/* Share buttons */}
+                <div className="flex justify-center gap-3 mb-5">
+                  <button
+                    onClick={() => {
+                      const text = `I just discovered ${newDiscovery.emoji} ${newDiscovery.name} in Infinite Meal! 🍳`;
+                      const url = typeof window !== 'undefined' ? window.location.origin : '';
+                      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+                    }}
+                    className="btn-press p-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
+                    title="Share on X"
+                  >
+                    𝕏
+                  </button>
+                  <button
+                    onClick={() => {
+                      const url = typeof window !== 'undefined' ? window.location.origin : '';
+                      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+                    }}
+                    className="btn-press p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                    title="Share on Facebook"
+                  >
+                    f
+                  </button>
+                  <button
+                    onClick={() => {
+                      const text = `I just discovered ${newDiscovery.emoji} ${newDiscovery.name} in Infinite Meal! 🍳 Play at ${typeof window !== 'undefined' ? window.location.origin : ''}`;
+                      navigator.clipboard.writeText(text);
+                      setMessage('Copied to clipboard!');
+                      setTimeout(() => setMessage(''), 2000);
+                    }}
+                    className="btn-press p-2 rounded-full bg-gray-500 text-white hover:bg-gray-600 transition-colors"
+                    title="Copy to clipboard"
+                  >
+                    📋
+                  </button>
+                </div>
+
+                <button
                   onClick={dismissDiscovery}
-                  className={`${darkMode ? 'bg-blue-700 hover:bg-blue-800' : 'bg-blue-600 hover:bg-blue-700'} text-white py-3 px-6 rounded-lg text-lg font-medium transition-colors cursor-pointer`}
+                  className="gradient-blue text-white py-3 px-8 rounded-xl text-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 cursor-pointer"
                 >
                   {t('cook.continueCooking')}
                 </button>
@@ -1675,11 +2133,20 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
           {/* Main content area - 2 column layout */}
           <div className="flex flex-col md:flex-row w-full md:px-4 gap-4">
             {/* Left column - Workspace, Cooking Methods, and Mix Area */}
-            <div className={`w-full md:w-2/3 order-1 static ${darkMode ? 'bg-gray-900 md:bg-transparent' : 'bg-white md:bg-transparent'}`}>
+            <div className={`w-full md:w-1/2 order-1 static ${darkMode ? 'bg-gray-900 md:bg-transparent' : 'bg-white md:bg-transparent'}`}>
               {/* Mix Area */}
               <div className="w-full mb-4 relative">
-                <h2 className={`text-xl font-bold mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('cook.mixArea')}:</h2>
-                
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className={`text-xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('cook.mixArea')}:</h2>
+
+                  {/* Combo notification */}
+                  {showComboNotification && comboStreak > 0 && (
+                    <span className="inline-flex items-center px-3 py-1 text-sm font-bold rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white animate-bounce shadow-lg">
+                      {t('cook.comboBonus', { count: comboStreak, fallback: `Combo x${comboStreak}!` })}
+                    </span>
+                  )}
+                </div>
+
                 {/* Tutorial notification for mix area */}
                 {tutorialActive && tutorialHighlight === 'mix-area' && (
                                      <div className={`absolute top-0 right-0 z-50 max-w-sm ${darkMode ? 'bg-yellow-900 border-yellow-700 text-yellow-200' : 'bg-yellow-100 border-yellow-300 text-yellow-800'} border-2 rounded-lg p-4 shadow-lg`}>
@@ -1721,19 +2188,21 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                   </div>
                 )}
                 
-                <div 
-                  className={`mix-area flex items-center justify-center gap-4 p-6 border-4 border-dashed ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'} rounded-lg w-full h-[100px] md:h-64 mb-4 relative shadow-md z-10 ${
-                    tutorialActive && tutorialHighlight === 'mix-area' 
-                      ? 'ring-4 ring-yellow-500 ring-opacity-75 animate-pulse' 
+                <div
+                  className={`mix-area flex items-center justify-center gap-4 p-6 border-4 border-dashed ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'} rounded-xl w-full h-[100px] md:h-64 mb-4 relative shadow-md z-10 ${
+                    tutorialActive && tutorialHighlight === 'mix-area'
+                      ? 'ring-4 ring-yellow-500 ring-opacity-75 animate-pulse'
                       : ''
-                  }`}
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
+                  } ${mixFailed ? 'shake border-red-500' : ''} ${dragOverZone === 'mix-area' ? 'drop-zone-active' : ''}`}
+                  onDrop={handleDropWithReset}
+                  onDragOver={(e) => handleDragOver(e, 'mix-area')}
+                  onDragLeave={handleDragLeave}
                 >
-                  {/* Mobile Add Button */}
-                  <button 
-                    className="md:hidden absolute top-2 right-2 w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-lg font-bold z-20 shadow-lg transition-colors"
+                  {/* Add Ingredient Button */}
+                  <button
+                    className="btn-press ripple absolute top-2 right-2 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold z-20 shadow-lg"
                     onClick={() => openIngredientModal('mix-area')}
+                    title="Add ingredients"
                   >
                     +
                   </button>
@@ -1750,7 +2219,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                   ) : (
                     <div className="flex items-center justify-center gap-6 w-full flex-wrap relative z-10">
                       {mixWorkspace.map((item, index) => (
-                        <div key={index} className={`flex flex-col items-center justify-center ${darkMode ? 'bg-gray-700' : 'bg-white bg-opacity-80'} p-3 rounded-lg shadow-sm`}>
+                        <div key={index} className={`float-animation flex flex-col items-center justify-center ${darkMode ? 'bg-gray-700' : 'bg-white'} p-4 rounded-xl shadow-lg`} style={{ animationDelay: `${index * 0.2}s` }}>
                           <span className="text-6xl mb-2">{item.emoji}</span>
                           <span className={`text-base font-medium ${darkMode ? 'text-gray-200' : 'text-black'}`}>
                             {t(`ingredients.${item.id}`, { fallback: item.name })}
@@ -1761,8 +2230,8 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                         </div>
                       ))}
                       {mixWorkspace.length < 3 && (
-                        <div className="flex flex-col items-center justify-center text-gray-400">
-                          <span className="text-6xl mb-2">+</span>
+                        <div className={`flex flex-col items-center justify-center ${darkMode ? 'text-gray-500' : 'text-gray-400'} border-2 border-dashed ${darkMode ? 'border-gray-600' : 'border-gray-300'} rounded-xl p-4`}>
+                          <span className="text-5xl mb-2">+</span>
                           <span className="text-base font-medium">{t('cook.addMore')}</span>
                         </div>
                       )}
@@ -1789,17 +2258,17 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
               {/* Feedback Area */}
               <div className="w-full mb-4 h-12 md:h-20 flex flex-col justify-center z-20">
                 {/* Warning message */}
-                <div className={`${darkMode ? 'bg-yellow-900 text-yellow-200' : 'bg-yellow-100 text-yellow-800'} px-4 py-2 rounded-lg shadow-md transition-opacity duration-300 flex items-center justify-center ${message.includes("No recipe found") || message.includes("You can only combine") || message.includes("don't combine") || message.includes("had no effect") || message.includes("You can only apply") ? 'opacity-100' : 'opacity-0 absolute'}`}>
-                  <span className="text-xl mr-2">⚠️</span>
-                  <span className="font-medium">
+                <div className={`${darkMode ? 'bg-yellow-900 text-yellow-200' : 'bg-yellow-100 text-yellow-800'} px-4 py-3 rounded-xl shadow-lg flex items-center justify-center ${message.includes("No recipe found") || message.includes("You can only combine") || message.includes("don't combine") || message.includes("had no effect") || message.includes("You can only apply") ? 'opacity-100 shake' : 'opacity-0 absolute'}`}>
+                  <span className="text-2xl mr-2">⚠️</span>
+                  <span className="font-medium text-lg">
                     {message.includes("No recipe found") || message.includes("You can only combine") || message.includes("don't combine") || message.includes("had no effect") || message.includes("You can only apply") ? message : ''}
                   </span>
                 </div>
 
                 {/* Success message */}
-                <div className={`${darkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'} px-4 py-2 rounded-lg shadow-md transition-opacity duration-300 flex items-center justify-center mt-2 ${(message.includes("discovered") || message.includes("created")) && !message.includes("Achievement unlocked") ? 'opacity-100' : 'opacity-0 absolute'}`}>
-                  <span className="text-xl mr-2">🎉</span>
-                  <span className="font-medium">
+                <div className={`${darkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'} px-4 py-3 rounded-xl shadow-lg flex items-center justify-center mt-2 ${(message.includes("discovered") || message.includes("created")) && !message.includes("Achievement unlocked") ? 'opacity-100 success-animation' : 'opacity-0 absolute'}`}>
+                  <span className="text-2xl mr-2">🎉</span>
+                  <span className="font-medium text-lg">
                     {(message.includes("discovered") || message.includes("created")) && !message.includes("Achievement unlocked") ? message : ''}
                   </span>
                 </div>
@@ -1810,14 +2279,14 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                 <h2 className={`text-xl font-bold mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('cook.cookingMethods')}</h2>
                 <div className="grid grid-cols-3 gap-2 md:flex md:flex-nowrap md:overflow-x-auto pb-2 pt-2 px-1">
                   {cookingMethods.slice(1).map((method: CookingMethod) => (
-                    <div 
+                    <div
                       key={method.id}
                       draggable
                       onDragStart={(e) => handleDragStart(e, method)}
                       onClick={() => {
-                        setSelectedMethod(method);
+                        handleMethodSelect(method);
                       }}
-                      className={`w-full md:flex-1 flex items-center justify-center p-1 border md:min-w-[100px] ${
+                      className={`method-card w-full md:flex-1 flex items-center justify-center p-2 border-2 md:min-w-[100px] ${
                         method.id === 'boil'
                           ? `${darkMode ? 'border-red-700 bg-red-900 hover:bg-red-800' : 'border-red-200 bg-red-50 hover:bg-red-100'}`
                           : method.id === 'fry'
@@ -1827,7 +2296,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                           : method.id === 'chop'
                           ? `${darkMode ? 'border-green-700 bg-green-900 hover:bg-green-800' : 'border-green-200 bg-green-50 hover:bg-green-100'}`
                           : `${darkMode ? 'border-purple-700 bg-purple-900 hover:bg-purple-800' : 'border-purple-200 bg-purple-50 hover:bg-purple-100'}`
-                      } rounded-lg cursor-grab ${selectedMethod?.id === method.id ? 'ring-2 ring-blue-600' : ''}`}
+                      } rounded-xl cursor-grab shadow-md ${selectedMethod?.id === method.id ? 'selected ring-2 ring-blue-500' : ''}`}
                     >
                       <span className="text-xl mr-1">{method.emoji}</span>
                       <div className="text-center">
@@ -1849,9 +2318,9 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
               </div>
               
               {/* Workspace */}
-              <div 
+              <div
                 className={`flex items-center justify-center gap-4 p-6 border-4 border-dashed ${
-                  selectedMethod 
+                  selectedMethod
                     ? selectedMethod.id === 'boil'
                       ? `${darkMode ? 'border-red-700 bg-red-900' : 'border-red-200 bg-red-50'}`
                       : selectedMethod.id === 'fry'
@@ -1862,14 +2331,16 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                       ? `${darkMode ? 'border-green-700 bg-green-900' : 'border-green-200 bg-green-50'}`
                       : `${darkMode ? 'border-purple-700 bg-purple-900' : 'border-purple-200 bg-purple-50'}`
                     : `${darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'}`
-                } rounded-lg w-full h-[100px] md:h-64 mb-4 relative shadow-md z-10`}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
+                } rounded-xl w-full h-[100px] md:h-64 mb-4 relative shadow-md z-10 ${dragOverZone === 'cooking-workspace' ? 'drop-zone-active' : ''}`}
+                onDrop={handleDropWithReset}
+                onDragOver={(e) => handleDragOver(e, 'cooking-workspace')}
+                onDragLeave={handleDragLeave}
               >
-                {/* Mobile Add Button */}
-                <button 
-                  className="md:hidden absolute top-2 right-2 w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-lg font-bold z-20 shadow-lg transition-colors"
+                {/* Add Ingredient Button */}
+                <button
+                  className="btn-press ripple absolute top-2 right-2 w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold z-20 shadow-lg"
                   onClick={() => openIngredientModal('cooking-workspace')}
+                  title="Add ingredients"
                 >
                   +
                 </button>
@@ -1890,7 +2361,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                 ) : (
                   <div className="flex items-center justify-center gap-6 w-full flex-wrap relative z-10">
                     {workspace.map((item, index) => (
-                      <div key={index} className={`flex flex-col items-center justify-center ${darkMode ? 'bg-gray-700' : 'bg-white bg-opacity-80'} p-3 rounded-lg shadow-sm`}>
+                      <div key={index} className={`float-animation flex flex-col items-center justify-center ${darkMode ? 'bg-gray-700' : 'bg-white'} p-4 rounded-xl shadow-lg`} style={{ animationDelay: `${index * 0.2}s` }}>
                         <span className="text-6xl mb-2">{item.emoji}</span>
                         <span className={`text-base font-medium ${darkMode ? 'text-gray-200' : 'text-black'}`}>
                           {t(`ingredients.${item.id}`, { fallback: item.name })}
@@ -1901,8 +2372,8 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                       </div>
                     ))}
                     {workspace.length < 3 && (
-                      <div className="flex flex-col items-center justify-center text-gray-400">
-                        <span className="text-6xl mb-2">+</span>
+                      <div className={`flex flex-col items-center justify-center ${darkMode ? 'text-gray-500' : 'text-gray-400'} border-2 border-dashed ${darkMode ? 'border-gray-600' : 'border-gray-300'} rounded-xl p-4`}>
+                        <span className="text-5xl mb-2">+</span>
                         <span className="text-base font-medium">{t('cook.addMore')}</span>
                       </div>
                     )}
@@ -1927,28 +2398,8 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
             </div>
             
             {/* Right column - Ingredients */}
-            <div className="w-full md:w-1/3 order-2 hidden md:block">
-              {/* Title and Description */}
-              <div className="mb-6">
-                <h1 className={`text-3xl font-bold tracking-[-1.5px] mb-2 ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>
-                  👨‍🍳 {t('cook.title')}
-                </h1>
-                <div className="flex items-center justify-between">
-                  <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {t('cook.subtitle')}
-                  </p>
-                  <button
-                    onClick={startTutorial}
-                    className={`ml-4 px-4 py-2 rounded-lg font-medium transition-colors ${
-                      darkMode 
-                        ? 'bg-green-900 hover:bg-green-800 text-green-200 border border-green-700' 
-                        : 'bg-green-100 hover:bg-green-200 text-green-700 border border-green-300'
-                    }`}
-                  >
-                    🍕 Pizza Tutorial
-                  </button>
-                </div>
-              </div>
+            <div className="w-full md:w-1/2 order-2 hidden md:block">
+              
 
               {/* Ingredients by category */}
               <div className="mb-4 w-full relative">
@@ -1995,9 +2446,19 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                       <div className={`absolute -bottom-2 left-8 w-4 h-4 transform rotate-45 ${darkMode ? 'bg-yellow-900 border-yellow-700' : 'bg-yellow-100 border-yellow-300'} border-b-2 border-r-2`}></div>
                     </div>
                   )}
+                  {/* Search input */}
+                  <div className="mb-3">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={t('cook.searchIngredients', { fallback: 'Search ingredients...' })}
+                      className={`w-full text-sm border ${darkMode ? 'border-gray-700 bg-gray-800 text-white placeholder-gray-500' : 'border-gray-300 bg-white text-black placeholder-gray-400'} rounded-md px-3 py-2 font-medium focus:outline-none focus:ring-2 ${darkMode ? 'focus:ring-blue-600' : 'focus:ring-blue-400'}`}
+                    />
+                  </div>
                   <div className="flex items-center gap-2">
                     {/* All categories: BASIC, VEGETABLE, etc. */}
-                    <select 
+                    <select
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
                       className={`text-sm border ${darkMode ? 'border-gray-700 bg-gray-800 text-white' : 'border-gray-300 bg-white text-black'} rounded-md px-2 py-1 font-medium`}
@@ -2018,23 +2479,127 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                   </div>
                 </div>
                 
-                {/* Recipe hints */}
-                {showHints && (
-                  <div className={`${darkMode ? 'bg-yellow-900 border-yellow-800' : 'bg-yellow-50 border-yellow-200'} p-4 rounded-lg mb-5 border shadow-sm`}>
-                    <h3 className={`font-bold mb-2 text-lg ${darkMode ? 'text-yellow-200' : 'text-yellow-800'}`}>{t('cook.recipeHints')}:</h3>
-                    {getRecipeHints().length > 0 ? (
-                      <ul className="list-disc pl-6 space-y-2">
-                        {getRecipeHints().map((hint, idx) => (
-                          <li key={idx} className={`text-base ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                            {t('cook.tryCombining', { ingredients: hint.knownIngredients.join(' and ') })}
-                            {hint.unknownCount > 0 && t('cook.withSomethingElse')}
-                            {hint.difficulty && t('cook.difficultyLevel', { level: hint.difficulty })}
+                {/* Daily Challenges */}
+                {dailyChallenges.length > 0 && (
+                  <div className={`${darkMode ? 'bg-purple-900 border-purple-800' : 'bg-purple-50 border-purple-200'} p-4 rounded-lg mb-5 border shadow-sm`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className={`font-bold text-lg ${darkMode ? 'text-purple-200' : 'text-purple-800'}`}>
+                        {t('cook.dailyChallenges', { fallback: 'Daily Challenges' })}
+                      </h3>
+                      <button
+                        onClick={() => setShowChallenges(!showChallenges)}
+                        className={`text-sm px-2 py-1 rounded ${darkMode ? 'text-purple-300 hover:bg-purple-800' : 'text-purple-600 hover:bg-purple-100'}`}
+                      >
+                        {showChallenges ? '▼' : '▶'}
+                      </button>
+                    </div>
+                    {showChallenges && (
+                      <ul className="space-y-2">
+                        {dailyChallenges.map((challenge) => (
+                          <li key={challenge.id} className={`flex items-center justify-between p-2 rounded ${
+                            challenge.completed
+                              ? (darkMode ? 'bg-green-900/50' : 'bg-green-100')
+                              : (darkMode ? 'bg-purple-800/50' : 'bg-purple-100/50')
+                          }`}>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-lg ${challenge.completed ? 'opacity-100' : 'opacity-50'}`}>
+                                {challenge.completed ? '✅' : '⭕'}
+                              </span>
+                              <span className={`text-sm ${
+                                challenge.completed
+                                  ? (darkMode ? 'text-green-300 line-through' : 'text-green-700 line-through')
+                                  : (darkMode ? 'text-purple-200' : 'text-purple-700')
+                              }`}>
+                                {challenge.description}
+                              </span>
+                            </div>
+                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                              challenge.completed
+                                ? (darkMode ? 'bg-green-700 text-green-100' : 'bg-green-200 text-green-800')
+                                : (darkMode ? 'bg-purple-700 text-purple-100' : 'bg-purple-200 text-purple-800')
+                            }`}>
+                              {challenge.progress}/{challenge.target}
+                            </span>
                           </li>
                         ))}
+                      </ul>
+                    )}
+                    <p className={`text-xs mt-2 ${darkMode ? 'text-purple-400' : 'text-purple-500'}`}>
+                      {t('cook.newChallengesIn', { fallback: 'New challenges tomorrow!' })}
+                    </p>
+                  </div>
+                )}
+
+                {/* Recipe hints */}
+                {showHints && (
+                  <div className={`${darkMode ? 'bg-yellow-900 border-yellow-800' : 'bg-yellow-50 border-yellow-200'} p-4 rounded-xl mb-5 border shadow-md`}>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className={`font-bold text-lg ${darkMode ? 'text-yellow-200' : 'text-yellow-800'}`}>{t('cook.recipeHints')}:</h3>
+                      <div className={`flex items-center gap-1 px-3 py-1 rounded-full ${darkMode ? 'bg-yellow-800' : 'bg-yellow-200'}`}>
+                        <span className="text-lg">💡</span>
+                        <span className={`font-bold ${darkMode ? 'text-yellow-200' : 'text-yellow-800'}`}>{hintPoints}</span>
+                        <span className={`text-xs ${darkMode ? 'text-yellow-300' : 'text-yellow-700'}`}>pts</span>
+                      </div>
+                    </div>
+                    {getRecipeHints().length > 0 ? (
+                      <ul className="space-y-3">
+                        {getRecipeHints().map((hint, idx) => {
+                          const isRevealed = revealedHints.has(hint.result);
+                          const resultIngredient = ingredients.find(i => i.id === hint.result);
+                          return (
+                            <li key={idx} className={`flex items-center justify-between p-3 rounded-lg ${
+                              hint.almostThere
+                                ? (darkMode ? 'bg-amber-800' : 'bg-amber-100')
+                                : (darkMode ? 'bg-yellow-800' : 'bg-yellow-100')
+                            }`}>
+                              <div className="flex-1">
+                                {hint.almostThere && (
+                                  <span className={`inline-block mr-2 px-2 py-0.5 text-xs rounded-full ${
+                                    darkMode ? 'bg-amber-600 text-white' : 'bg-amber-400 text-amber-900'
+                                  }`}>
+                                    {t('cook.almostThere', { fallback: 'Almost there!' })}
+                                  </span>
+                                )}
+                                {isRevealed ? (
+                                  <span className={`text-base font-medium ${darkMode ? 'text-green-300' : 'text-green-700'}`}>
+                                    {hint.knownIngredients.join(' + ')} {hint.unknownCount > 0 && `+ ${hint.unknownCount} more`} = {resultIngredient?.emoji} {resultIngredient?.name}
+                                  </span>
+                                ) : (
+                                  <span className={`text-base ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                    {t('cook.tryCombining', { ingredients: hint.knownIngredients.join(' + ') })}
+                                    {hint.unknownCount > 0 && ` + ???`} = ???
+                                  </span>
+                                )}
+                                <span className={`ml-2 text-xs ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                                  {'⭐'.repeat(hint.difficulty)}
+                                </span>
+                              </div>
+                              {!isRevealed && (
+                                <button
+                                  onClick={() => revealHint(hint.result)}
+                                  disabled={hintPoints < 5}
+                                  className={`ml-3 px-3 py-1 rounded-lg text-sm font-medium transition-all ${
+                                    hintPoints >= 5
+                                      ? 'btn-press bg-blue-500 hover:bg-blue-600 text-white shadow-md'
+                                      : (darkMode ? 'bg-gray-700 text-gray-500' : 'bg-gray-300 text-gray-500') + ' cursor-not-allowed'
+                                  }`}
+                                >
+                                  🔓 5 pts
+                                </button>
+                              )}
+                              {isRevealed && (
+                                <span className="ml-3 text-green-500 text-lg">✓</span>
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
                     ) : (
                       <p className={`text-base ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{t('cook.discoverMoreForHints')}</p>
                     )}
+                    <p className={`text-xs mt-3 ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                      💡 Earn points by discovering recipes! (2-5 pts per discovery)
+                    </p>
                   </div>
                 )}
                 
@@ -2054,28 +2619,38 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                               🍽️ {t('categories.MIXED_ITEMS', { fallback: 'Mixed Items' })}
                             </h3>
                             <div className="flex flex-wrap">
-                              {mixedItems.map(item => (
-                                <div 
-                                  key={item.id}
-                                  draggable
-                                  onDragStart={(e) => handleDragStart(e, item)}
-                                  onClick={() => handleClick(item)}
-                                  onContextMenu={(e) => handleContextMenu(e, item)}
-                                  className={`inline-flex items-center p-2 mr-2 mb-2 border ${darkMode ? 'border-blue-700 bg-blue-900 hover:bg-blue-800' : 'border-blue-200 bg-blue-50 hover:bg-blue-100'} rounded-lg cursor-grab shadow-sm hover:shadow-md transition-colors`}
-                                >
-                                  <span className="text-2xl mr-2">{item.emoji}</span>
-                                  <span className={`text-sm font-medium ${darkMode ? 'text-blue-200' : 'text-blue-800'}`}>
-                                    {t(`ingredients.${item.id}`, { fallback: item.name })}
-                                  </span>
-                                  <span className="text-xs text-yellow-500 ml-1">
-                                    {Array(item.difficulty).fill('⭐').join('')}
-                                  </span>
-                                </div>
-                              ))}
+                              {mixedItems.map(item => {
+                                const isHovered = hoveredIngredient === item.id;
+                                const isCompatible = compatibleIngredients.has(item.id);
+                                const isMethodHighlighted = methodHighlightedIngredients.has(item.id);
+                                return (
+                                  <div
+                                    key={item.id}
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, item)}
+                                    onClick={() => handleClick(item)}
+                                    onContextMenu={(e) => handleContextMenu(e, item)}
+                                    onMouseEnter={() => handleIngredientHover(item.id)}
+                                    onMouseLeave={() => handleIngredientHover(null)}
+                                    className={`ingredient-item inline-flex items-center p-2 mr-2 mb-2 border rounded-xl cursor-grab shadow-md ring-2 transition-all duration-300 ${
+                                      darkMode ? 'border-blue-700 bg-blue-900 hover:bg-blue-800' : 'border-blue-200 bg-blue-50 hover:bg-blue-100'
+                                    } ${isMethodHighlighted ? 'ring-orange-400 scale-105' : isHovered || isCompatible ? 'ring-green-400' : 'ring-transparent'}`}
+                                  >
+                                    <span className="text-2xl mr-2">{item.emoji}</span>
+                                    <span className={`text-sm font-medium ${darkMode ? 'text-blue-200' : 'text-blue-800'}`}>
+                                      {t(`ingredients.${item.id}`, { fallback: item.name })}
+                                    </span>
+                                    <span className="text-xs text-yellow-500 ml-1">
+                                      {Array(item.difficulty).fill('⭐').join('')}
+                                    </span>
+                                    <span className={`ml-1 ${isCompatible ? 'text-green-500' : 'invisible'}`}>✓</span>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
-                        
+
                         {/* Basic Ingredients Section (only show if "All" is selected and there are basic items) */}
                         {selectedCategory === "All" && basicItems.length > 0 && (
                           <div>
@@ -2083,44 +2658,60 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                               {t('cook.ingredients')}
                             </h3>
                             <div className="flex flex-wrap">
-                              {basicItems.map(item => (
-                                <div 
+                              {basicItems.map(item => {
+                                const isHovered = hoveredIngredient === item.id;
+                                const isCompatible = compatibleIngredients.has(item.id);
+                                const isMethodHighlighted = methodHighlightedIngredients.has(item.id);
+                                return (
+                                  <div
+                                    key={item.id}
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, item)}
+                                    onClick={() => handleClick(item)}
+                                    onContextMenu={(e) => handleContextMenu(e, item)}
+                                    onMouseEnter={() => handleIngredientHover(item.id)}
+                                    onMouseLeave={() => handleIngredientHover(null)}
+                                    className={`ingredient-item inline-flex items-center p-2 mr-2 mb-2 border rounded-xl cursor-grab shadow-md ring-2 transition-all duration-300 ${
+                                      darkMode ? 'border-gray-700 bg-gray-700 hover:bg-gray-600' : 'border-gray-200 bg-white hover:bg-blue-50'
+                                    } ${isMethodHighlighted ? 'ring-orange-400 scale-105' : isHovered || isCompatible ? 'ring-green-400' : 'ring-transparent'}`}
+                                  >
+                                    <span className="text-2xl mr-2">{item.emoji}</span>
+                                    <span className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                                      {t(`ingredients.${item.id}`, { fallback: item.name })}
+                                    </span>
+                                    <span className={`ml-1 ${isCompatible ? 'text-green-500' : 'invisible'}`}>✓</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Single category view (when not "All") */}
+                        {selectedCategory !== "All" && (
+                          <div className="flex flex-wrap">
+                            {filteredIngredients.map(item => {
+                              const isHovered = hoveredIngredient === item.id;
+                              const isCompatible = compatibleIngredients.has(item.id);
+                              const isMethodHighlighted = methodHighlightedIngredients.has(item.id);
+                              return (
+                                <div
                                   key={item.id}
                                   draggable
                                   onDragStart={(e) => handleDragStart(e, item)}
                                   onClick={() => handleClick(item)}
                                   onContextMenu={(e) => handleContextMenu(e, item)}
-                                  className={`inline-flex items-center p-2 mr-2 mb-2 border ${darkMode ? 'border-gray-700 bg-gray-700 hover:bg-gray-600' : 'border-gray-200 bg-white hover:bg-blue-50'} rounded-lg cursor-grab shadow-sm hover:shadow-md transition-colors`}
+                                  onMouseEnter={() => handleIngredientHover(item.id)}
+                                  onMouseLeave={() => handleIngredientHover(null)}
+                                  className={`ingredient-item inline-flex items-center p-2 mr-2 mb-2 border rounded-xl cursor-grab shadow-md ring-2 transition-all duration-300 ${
+                                    selectedCategory === "Mixed Items" && item.difficulty > 1
+                                      ? (darkMode ? 'border-blue-700 bg-blue-900 hover:bg-blue-800' : 'border-blue-200 bg-blue-50 hover:bg-blue-100')
+                                      : (darkMode ? 'border-gray-700 bg-gray-700 hover:bg-gray-600' : 'border-gray-200 bg-white hover:bg-blue-50')
+                                  } ${isMethodHighlighted ? 'ring-orange-400 scale-105' : isHovered || isCompatible ? 'ring-green-400' : 'ring-transparent'}`}
                                 >
                                   <span className="text-2xl mr-2">{item.emoji}</span>
-                                  <span className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-                                    {t(`ingredients.${item.id}`, { fallback: item.name })}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Single category view (when not "All") */}
-                        {selectedCategory !== "All" && (
-                          <div className="flex flex-wrap">
-                            {filteredIngredients.map(item => (
-                              <div 
-                                key={item.id}
-                                draggable
-                                onDragStart={(e) => handleDragStart(e, item)}
-                                onClick={() => handleClick(item)}
-                                onContextMenu={(e) => handleContextMenu(e, item)}
-                                className={`inline-flex items-center p-2 mr-2 mb-2 border ${
-                                  selectedCategory === "Mixed Items" && item.difficulty > 1
-                                    ? darkMode ? 'border-blue-700 bg-blue-900 hover:bg-blue-800' : 'border-blue-200 bg-blue-50 hover:bg-blue-100'
-                                    : darkMode ? 'border-gray-700 bg-gray-700 hover:bg-gray-600' : 'border-gray-200 bg-white hover:bg-blue-50'
-                                } rounded-lg cursor-grab shadow-sm hover:shadow-md transition-colors`}
-                              >
-                                <span className="text-2xl mr-2">{item.emoji}</span>
-                                <span className={`text-sm font-medium ${
-                                  selectedCategory === "Mixed Items" && item.difficulty > 1
+                                  <span className={`text-sm font-medium ${
+                                    selectedCategory === "Mixed Items" && item.difficulty > 1
                                     ? darkMode ? 'text-blue-200' : 'text-blue-800'
                                     : darkMode ? 'text-gray-200' : 'text-gray-800'
                                 }`}>
@@ -2131,8 +2722,24 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                                     {Array(item.difficulty).fill('⭐').join('')}
                                   </span>
                                 )}
+                                <span className={`ml-1 ${isCompatible ? 'text-green-500' : 'invisible'}`}>✓</span>
                               </div>
-                            ))}
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* No results message */}
+                        {filteredIngredients.length === 0 && searchQuery.trim() && (
+                          <div className={`text-center py-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            <p className="text-lg">🔍</p>
+                            <p className="font-medium">{t('cook.noResultsFound', { fallback: 'No ingredients found' })}</p>
+                            <button
+                              onClick={() => setSearchQuery('')}
+                              className={`mt-2 text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'} underline`}
+                            >
+                              {t('cook.clearSearch', { fallback: 'Clear search' })}
+                            </button>
                           </div>
                         )}
                       </div>
@@ -2290,9 +2897,10 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                       .filter(i => i.discovered && (i.category === categories.DISH || i.category === categories.DESSERT))
                       .map(dish => {
                         const { steps } = getRecipeSteps(dish.id);
+                        const recipeChain = getRecipeChain(dish.id);
                         return (
-                          <div 
-                            key={dish.id} 
+                          <div
+                            key={dish.id}
                             className={`rounded-lg overflow-hidden shadow-md ${darkMode ? 'bg-gray-800' : 'bg-white'} transition-transform hover:scale-[1.02]`}
                           >
                             <div className={`p-4 ${darkMode ? 'bg-blue-900' : 'bg-blue-50'}`}>
@@ -2308,8 +2916,36 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                                 </div>
                               </div>
                             </div>
-                            
+
                             <div className="p-4">
+                              {/* Recipe Chain Visualization */}
+                              {recipeChain.length > 0 && (
+                                <div className={`mb-4 p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                                  <h4 className={`font-bold text-sm mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                    {t('discover.recipePath', { fallback: 'Recipe Path' })}:
+                                  </h4>
+                                  <div className="space-y-1">
+                                    {recipeChain.map((step, idx) => (
+                                      <div key={idx} className={`flex items-center flex-wrap text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                        <span className="flex items-center">
+                                          {step.inputs.map((input, i) => (
+                                            <span key={input.id} className="flex items-center">
+                                              {i > 0 && <span className="mx-1">+</span>}
+                                              <span>{input.emoji}</span>
+                                              <span className="ml-1">{input.name}</span>
+                                            </span>
+                                          ))}
+                                        </span>
+                                        <span className="mx-2">→</span>
+                                        <span className="font-medium">
+                                          {step.output.emoji} {step.output.name}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
                               <h4 className={`font-bold text-lg mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t('discover.recipeSteps')}:</h4>
                               <ol className="list-decimal pl-5 space-y-2">
                                 {steps.map((step, idx) => (
@@ -2320,9 +2956,9 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                               </ol>
                               <div className={`mt-4 pt-3 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                                 <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} text-sm italic`}>
-                                  ✨ {recipes.find(r => r.result === dish.id)?.description || t('discover.readyToEnjoy', {
+                                  {recipes.find(r => r.result === dish.id)?.description || t('discover.readyToEnjoy', {
                                     dish: t(`ingredients.${dish.id}`, { fallback: dish.name })
-                                  })} ✨
+                                  })}
                                 </p>
                               </div>
                             </div>
@@ -2589,10 +3225,10 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
         </div>
       )}
 
-      {/* Mobile Ingredient Selector Modal */}
+      {/* Ingredient Selector Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden">
-          <div className={`w-full h-full ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'} flex flex-col`}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className={`w-full h-full md:w-[600px] md:h-[500px] md:max-h-[80vh] md:rounded-xl ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'} flex flex-col shadow-2xl`}>
             {/* Modal Header */}
             <div className={`flex items-center justify-between p-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
               <h2 className="text-xl font-bold">
@@ -2619,7 +3255,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
 
             {/* Ingredients Grid */}
             <div className="flex-1 overflow-y-auto p-4">
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-4 md:grid-cols-5 gap-3">
                 {(() => {
                   // Use the same logic as desktop - show all discovered items (both basic and mixed)
                   const availableIngredients = discoveredItems

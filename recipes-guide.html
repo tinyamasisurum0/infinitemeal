@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Meal - Complete Recipe Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #764ba2;
+            text-align: center;
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 40px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        h2 {
+            color: #764ba2;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            margin: 40px 0 20px 0;
+            font-size: 2em;
+        }
+
+        h3 {
+            color: #667eea;
+            margin: 30px 0 15px 0;
+            font-size: 1.5em;
+        }
+
+        .difficulty {
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9em;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tbody tr:hover {
+            background-color: #f5f7fa;
+            transition: background-color 0.3s ease;
+        }
+
+        .emoji {
+            font-size: 1.5em;
+            margin-right: 5px;
+        }
+
+        .ingredients {
+            color: #555;
+            font-style: italic;
+        }
+
+        .description {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .method-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .method-title {
+            font-size: 1.3em;
+            color: #764ba2;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .transformation-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .transformation-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .transformation-list li:last-child {
+            border-bottom: none;
+        }
+
+        .arrow {
+            color: #667eea;
+            font-weight: bold;
+            margin: 0 10px;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+
+            tbody tr:hover {
+                background-color: transparent;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ Infinite Meal 🍽️</h1>
+        <p class="subtitle">Complete Recipe Crafting Guide</p>
+
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-number">72</div>
+                <div class="stat-label">Recipe Combinations</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">16</div>
+                <div class="stat-label">Cooking Transformations</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">7</div>
+                <div class="stat-label">Cooking Methods</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">38</div>
+                <div class="stat-label">Base Ingredients</div>
+            </div>
+        </div>
+
+        <h2>🔥 Cooking Methods & Transformations</h2>
+
+        <div class="method-card">
+            <div class="method-title">♨️ Boil - Softens ingredients and extracts flavors</div>
+            <ul class="transformation-list">
+                <li><span class="emoji">🥔</span> Potato <span class="arrow">→</span> <span class="emoji">🥔</span> Boiled Potato</li>
+                <li><span class="emoji">🥚</span> Egg <span class="arrow">→</span> <span class="emoji">🥚</span> Boiled Egg</li>
+                <li><span class="emoji">📏</span> Raw Pasta <span class="arrow">→</span> <span class="emoji">🍝</span> Pasta</li>
+                <li><span class="emoji">🥒</span> Cucumber <span class="arrow">→</span> <span class="emoji">🥒</span> Pickled Cucumber</li>
+            </ul>
+        </div>
+
+        <div class="method-card">
+            <div class="method-title">🍳 Fry - Crisps the outside, adds richness</div>
+            <ul class="transformation-list">
+                <li><span class="emoji">🥚</span> Egg <span class="arrow">→</span> <span class="emoji">🍳</span> Fried Egg</li>
+                <li><span class="emoji">🥔</span> Potato <span class="arrow">→</span> <span class="emoji">🍟</span> French Fries</li>
+                <li><span class="emoji">🥟</span> Dough <span class="arrow">→</span> <span class="emoji">🥯</span> Fried Dough</li>
+                <li><span class="emoji">🥒</span> Cucumber <span class="arrow">→</span> <span class="emoji">🥒</span> Fried Cucumber</li>
+            </ul>
+        </div>
+
+        <div class="method-card">
+            <div class="method-title">🔥 Bake - Slow, even cooking with dry heat</div>
+            <ul class="transformation-list">
+                <li><span class="emoji">🥟</span> Dough <span class="arrow">→</span> <span class="emoji">🍞</span> Bread</li>
+                <li><span class="emoji">🫓</span> Pizza Base <span class="arrow">→</span> <span class="emoji">🍕</span> Pizza</li>
+                <li><span class="emoji">🥣</span> Cake Batter <span class="arrow">→</span> <span class="emoji">🍰</span> Cake</li>
+                <li><span class="emoji">🍞</span> Bread <span class="arrow">→</span> <span class="emoji">🍞</span> Croutons</li>
+            </ul>
+        </div>
+
+        <div class="method-card">
+            <div class="method-title">🥞 Griddle - Cook flatbreads and pancakes on a hot, flat surface</div>
+            <ul class="transformation-list">
+                <li><span class="emoji">🥟</span> Dough <span class="arrow">→</span> <span class="emoji">🌮</span> Tortilla</li>
+            </ul>
+        </div>
+
+        <div class="method-card">
+            <div class="method-title">🔪 Chop - Cuts ingredients into smaller pieces</div>
+            <ul class="transformation-list">
+                <li><span class="emoji">🍅</span> Tomato <span class="arrow">→</span> <span class="emoji">🍅</span> Diced Tomato</li>
+                <li><span class="emoji">🧅</span> Onion <span class="arrow">→</span> <span class="emoji">🧅</span> Diced Onion</li>
+                <li><span class="emoji">🥩</span> Meat <span class="arrow">→</span> <span class="emoji">🥩</span> Diced Meat</li>
+                <li><span class="emoji">🥒</span> Cucumber <span class="arrow">→</span> <span class="emoji">🥒</span> Diced Cucumber</li>
+                <li><span class="emoji">🥬</span> Lettuce <span class="arrow">→</span> <span class="emoji">🥬</span> Shredded Lettuce</li>
+            </ul>
+        </div>
+
+        <div class="method-card">
+            <div class="method-title">🧂 Blend - Combines ingredients into a smooth mixture</div>
+            <ul class="transformation-list">
+                <li><span class="emoji">🍅</span> Tomato <span class="arrow">→</span> <span class="emoji">🥫</span> Tomato Puree</li>
+                <li><span class="emoji">🍎</span> Fruit <span class="arrow">→</span> <span class="emoji">🥤</span> Fruit Smoothie</li>
+                <li><span class="emoji">🥕</span> Vegetable <span class="arrow">→</span> <span class="emoji">🥣</span> Vegetable Soup</li>
+                <li><span class="emoji">🥒</span> Cucumber <span class="arrow">→</span> <span class="emoji">🥤</span> Cucumber Juice</li>
+            </ul>
+        </div>
+
+        <h2>📖 Recipe Combinations</h2>
+
+        <h3>⭐⭐ Basic Recipes (Difficulty 2)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Result</th>
+                    <th>Ingredients</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="emoji">🥟</span> Dough</td>
+                    <td class="ingredients">Flour + Water</td>
+                    <td class="description">Mix flour and water to create basic dough</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">📏</span> Raw Pasta</td>
+                    <td class="ingredients">Flour + Egg</td>
+                    <td class="description">Combine flour and egg to make raw pasta dough</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥫</span> Tomato Sauce</td>
+                    <td class="ingredients">Tomato + Onion</td>
+                    <td class="description">Tomatoes and onions make the base for a simple sauce</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥗</span> Salad</td>
+                    <td class="ingredients">Diced Tomato + Diced Onion</td>
+                    <td class="description">Mix diced vegetables to create a simple salad</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥗</span> Salad</td>
+                    <td class="ingredients">Cucumber + Tomato</td>
+                    <td class="description">Slice cucumber and tomato for a refreshing salad</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥗</span> Salad</td>
+                    <td class="ingredients">Diced Cucumber + Diced Tomato</td>
+                    <td class="description">Combine diced cucumber and tomato for a fresh garden salad</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥪</span> Cucumber Sandwich</td>
+                    <td class="ingredients">Bread + Cucumber</td>
+                    <td class="description">A light and refreshing cucumber sandwich</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍞</span> Croutons</td>
+                    <td class="ingredients">Bread + Salt</td>
+                    <td class="description">Season and toast bread pieces to make crunchy croutons</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥞</span> Pancakes</td>
+                    <td class="ingredients">Flour + Egg + Milk</td>
+                    <td class="description">Mix ingredients and cook on a griddle for fluffy pancakes</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥤</span> Milkshake</td>
+                    <td class="ingredients">Ice Cream + Milk</td>
+                    <td class="description">Blend ice cream with milk for a creamy milkshake</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">☕</span> Hot Chocolate</td>
+                    <td class="ingredients">Milk + Chocolate + Sugar</td>
+                    <td class="description">Heat milk with chocolate and sugar for rich hot chocolate</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥞</span> Crepe</td>
+                    <td class="ingredients">Flour + Milk + Egg</td>
+                    <td class="description">Create a thin pancake with a simple batter of flour, milk and egg</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍳</span> Scrambled Eggs</td>
+                    <td class="ingredients">Egg + Milk + Butter</td>
+                    <td class="description">Whisk eggs with milk and cook in butter for perfect scrambled eggs</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥗</span> Tzatziki</td>
+                    <td class="ingredients">Yogurt + Cucumber + Herbs</td>
+                    <td class="description">Mix yogurt with cucumber and herbs for a refreshing Greek sauce</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🫓</span> Pita</td>
+                    <td class="ingredients">Flour + Water + Yogurt</td>
+                    <td class="description">Create a simple flatbread with flour, water, and a touch of yogurt</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍋</span> Lemonade</td>
+                    <td class="ingredients">Water + Lemon + Sugar</td>
+                    <td class="description">Mix water, lemon juice, and sugar for a refreshing drink</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">☕</span> Coffee</td>
+                    <td class="ingredients">Water + Coffee Beans + Milk</td>
+                    <td class="description">Brew coffee beans with hot water and add milk for a morning pick-me-up</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍪</span> Cookie</td>
+                    <td class="ingredients">Flour + Butter + Chocolate</td>
+                    <td class="description">Mix flour, butter, and chocolate to bake into sweet cookies</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍝</span> Pasta Sauce</td>
+                    <td class="ingredients">Tomato + Onion + Herbs</td>
+                    <td class="description">Simmer tomatoes with onions and herbs for pasta sauce</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥘</span> Curry Sauce</td>
+                    <td class="ingredients">Tomato + Onion + Spices</td>
+                    <td class="description">Simmer tomatoes and onions with spices for curry sauce</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍨</span> Fruit Parfait</td>
+                    <td class="ingredients">Fruit + Yogurt</td>
+                    <td class="description">Layer fresh fruit with creamy yogurt for a quick breakfast parfait</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥣</span> Creamy Tomato Soup</td>
+                    <td class="ingredients">Tomato + Cream</td>
+                    <td class="description">Blend ripe tomatoes with cream for a silky soup starter</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥗</span> Coleslaw</td>
+                    <td class="ingredients">Cabbage + Carrot</td>
+                    <td class="description">Shred crisp cabbage and carrot for a crunchy side salad</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥔</span> Mashed Potatoes</td>
+                    <td class="ingredients">Potato + Butter</td>
+                    <td class="description">Mash tender potatoes with butter for a comforting side dish</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>⭐⭐⭐ Intermediate Recipes (Difficulty 3)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Result</th>
+                    <th>Ingredients</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="emoji">🫓</span> Pizza Base</td>
+                    <td class="ingredients">Dough + Tomato Sauce</td>
+                    <td class="description">Spread tomato sauce on dough for a pizza base</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥣</span> Cake Batter</td>
+                    <td class="ingredients">Flour + Egg + Fruit</td>
+                    <td class="description">Mix flour, eggs and fruit for a simple cake batter</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥪</span> Sandwich</td>
+                    <td class="ingredients">Bread + Cheese</td>
+                    <td class="description">Place cheese between slices of bread for a simple sandwich</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥗</span> Greek Salad</td>
+                    <td class="ingredients">Cucumber + Lettuce + Tomato</td>
+                    <td class="description">Mix fresh vegetables for a traditional Greek salad base</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🫗</span> Caesar Dressing</td>
+                    <td class="ingredients">Egg + Salt + Cheese</td>
+                    <td class="description">Whip eggs with salt and cheese to create a rich Caesar dressing</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥗</span> Greek Salad</td>
+                    <td class="ingredients">Shredded Lettuce + Diced Cucumber + Cheese</td>
+                    <td class="description">Mix shredded lettuce, cucumber and cheese for a simple Greek salad</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥤</span> Fruit Smoothie</td>
+                    <td class="ingredients">Cucumber Juice + Fruit</td>
+                    <td class="description">Blend cucumber juice with fruit for a refreshing smoothie</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥪</span> Sandwich</td>
+                    <td class="ingredients">Pickled Cucumber + Bread + Cheese</td>
+                    <td class="description">Layer pickled cucumber and cheese between bread for a tangy sandwich</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍚</span> Fried Rice</td>
+                    <td class="ingredients">Rice + Egg</td>
+                    <td class="description">Stir-fry rice with eggs for a classic fried rice</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥘</span> Stir Fry</td>
+                    <td class="ingredients">Rice Noodles + Soy Sauce</td>
+                    <td class="description">Stir-fry noodles with soy sauce for a quick Asian dish</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🌮</span> Taco</td>
+                    <td class="ingredients">Tortilla + Meat</td>
+                    <td class="description">Fill tortilla with meat and toppings for a taco</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🧀</span> Quesadilla</td>
+                    <td class="ingredients">Tortilla + Cheese</td>
+                    <td class="description">Fill tortilla with cheese and fold for a quesadilla</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🫓</span> Naan</td>
+                    <td class="ingredients">Flour + Yogurt</td>
+                    <td class="description">Mix flour with yogurt to create soft naan bread</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍦</span> Ice Cream</td>
+                    <td class="ingredients">Milk + Sugar + Cream</td>
+                    <td class="description">Freeze milk, sugar, and cream for homemade ice cream</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🧇</span> Waffles</td>
+                    <td class="ingredients">Pancakes + Butter + Syrup</td>
+                    <td class="description">Cook pancake batter in a waffle iron for crispy waffles</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥖</span> Baguette</td>
+                    <td class="ingredients">Flour + Water + Salt</td>
+                    <td class="description">Mix flour, water and salt to form a dough, then bake into a French baguette</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍞</span> French Toast</td>
+                    <td class="ingredients">Bread + Egg + Milk</td>
+                    <td class="description">Dip bread in a mixture of egg and milk, then cook until golden</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍳</span> Omelette</td>
+                    <td class="ingredients">Egg + Cheese + Bell Pepper</td>
+                    <td class="description">Beat eggs and cook with cheese and peppers for a fluffy breakfast omelette</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🧆</span> Falafel</td>
+                    <td class="ingredients">Chickpeas + Herbs + Spices</td>
+                    <td class="description">Form chickpeas with herbs and spices into balls and fry them</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🫘</span> Hummus</td>
+                    <td class="ingredients">Pita + Falafel + Tzatziki</td>
+                    <td class="description">Blend chickpeas with tahini, lemon, and garlic for a smooth dip</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🌮</span> Fish Taco</td>
+                    <td class="ingredients">Fish + Tortilla + Cabbage</td>
+                    <td class="description">Fill a tortilla with cooked fish and fresh toppings for a tasty taco</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">☕</span> Iced Coffee</td>
+                    <td class="ingredients">Coffee + Ice + Milk</td>
+                    <td class="description">Chill coffee with ice and milk for a cooling caffeinated beverage</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍩</span> Donut</td>
+                    <td class="ingredients">Dough + Sugar + Oil</td>
+                    <td class="description">Shape dough into rings and fry in oil for a sweet treat</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🫑</span> Stuffed Pepper</td>
+                    <td class="ingredients">Bell Pepper + Rice + Meat</td>
+                    <td class="description">Bake peppers filled with seasoned rice and meat for a hearty entrée</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥪</span> Chicken Sandwich</td>
+                    <td class="ingredients">Bread + Chicken + Lettuce</td>
+                    <td class="description">Layer cooked chicken and crisp lettuce between slices of bread</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🌯</span> Veggie Wrap</td>
+                    <td class="ingredients">Tortilla + Lettuce + Tomato</td>
+                    <td class="description">Roll a soft tortilla around fresh lettuce and juicy tomatoes</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍜</span> Chicken Stir Fry</td>
+                    <td class="ingredients">Rice Noodles + Chicken + Soy Sauce</td>
+                    <td class="description">Stir-fry noodles with chicken and soy sauce for a quick weeknight meal</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍟</span> Loaded Fries</td>
+                    <td class="ingredients">French Fries + Cheese + Herbs</td>
+                    <td class="description">Top crispy fries with melted cheese and herbs for a savory snack</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>⭐⭐⭐⭐ Advanced Recipes (Difficulty 4)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Result</th>
+                    <th>Ingredients</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="emoji">🍕</span> Pizza</td>
+                    <td class="ingredients">Pizza Base + Cheese</td>
+                    <td class="description">Add cheese and your favorite toppings to the pizza base for a delicious pizza</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍝</span> Spaghetti</td>
+                    <td class="ingredients">Pasta + Tomato Sauce</td>
+                    <td class="description">Combine pasta with tomato sauce to make spaghetti</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥗</span> Caesar Salad</td>
+                    <td class="ingredients">Lettuce + Croutons + Caesar Dressing</td>
+                    <td class="description">Toss lettuce and croutons in Caesar dressing for a classic Caesar salad</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍱</span> Sushi</td>
+                    <td class="ingredients">Rice + Fish</td>
+                    <td class="description">Roll rice and fish in seaweed for traditional sushi</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍜</span> Ramen</td>
+                    <td class="ingredients">Noodles + Chicken</td>
+                    <td class="description">Combine noodles with chicken in a rich broth for ramen</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🌯</span> Burrito</td>
+                    <td class="ingredients">Tortilla + Rice + Meat</td>
+                    <td class="description">Wrap rice and meat in a tortilla for a hearty burrito</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍛</span> Curry</td>
+                    <td class="ingredients">Rice + Curry Sauce + Chicken</td>
+                    <td class="description">Combine rice with curry sauce and chicken for a rich curry</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍝</span> Lasagna</td>
+                    <td class="ingredients">Pasta + Cheese + Pasta Sauce</td>
+                    <td class="description">Layer pasta with cheese and sauce for lasagna</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍚</span> Risotto</td>
+                    <td class="ingredients">Rice + Chicken + Cheese</td>
+                    <td class="description">Slowly cook rice with chicken and cheese for creamy risotto</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥐</span> Croissant</td>
+                    <td class="ingredients">Flour + Butter + Milk</td>
+                    <td class="description">Layer butter between thin sheets of dough to create flaky French pastries</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🥧</span> Quiche</td>
+                    <td class="ingredients">Egg + Cream + Cheese</td>
+                    <td class="description">Combine eggs, cream, and cheese to create a savory custard base for quiche</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🌯</span> Breakfast Burrito</td>
+                    <td class="ingredients">Tortilla + Egg + Cheese</td>
+                    <td class="description">Fill a tortilla with eggs and cheese for a hearty breakfast burrito</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍟</span> Fish and Chips</td>
+                    <td class="ingredients">Fish + Potato + Flour</td>
+                    <td class="description">Batter fish and serve with fried potatoes for a classic dish</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍝</span> Seafood Pasta</td>
+                    <td class="ingredients">Pasta + Fish + Cream</td>
+                    <td class="description">Combine pasta with seafood and a creamy sauce for a luxurious meal</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍰</span> Chocolate Cake</td>
+                    <td class="ingredients">Cake Batter + Chocolate + Cream</td>
+                    <td class="description">Add chocolate to cake batter and top with cream for a decadent dessert</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍝</span> Chicken Alfredo</td>
+                    <td class="ingredients">Pasta + Cream + Chicken</td>
+                    <td class="description">Toss tender pasta with cream and chicken for a rich Italian classic</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍕</span> Veggie Pizza</td>
+                    <td class="ingredients">Pizza Base + Cheese + Bell Pepper</td>
+                    <td class="description">Load a pizza base with cheese and peppers for a vibrant veggie pie</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🧆</span> Mediterranean Platter</td>
+                    <td class="ingredients">Pita + Falafel + Tzatziki</td>
+                    <td class="description">Serve warm pita with falafel and tzatziki for a mezze-style feast</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍛</span> Fish Curry</td>
+                    <td class="ingredients">Curry Sauce + Fish + Rice</td>
+                    <td class="description">Simmer fish in curry sauce and plate over fluffy rice</td>
+                </tr>
+                <tr>
+                    <td><span class="emoji">🍫</span> Chocolate Fondue</td>
+                    <td class="ingredients">Chocolate + Cream + Fruit</td>
+                    <td class="description">Melt chocolate with cream and dip fresh fruit for an indulgent dessert</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>🌟 Game Statistics</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Total Recipe Combinations</td>
+                    <td><strong>72</strong></td>
+                </tr>
+                <tr>
+                    <td>Cooking Method Transformations</td>
+                    <td><strong>16</strong></td>
+                </tr>
+                <tr>
+                    <td>Available Cooking Methods</td>
+                    <td><strong>7</strong> (Mix, Boil, Fry, Bake, Griddle, Chop, Blend)</td>
+                </tr>
+                <tr>
+                    <td>Starting Ingredients</td>
+                    <td><strong>38</strong></td>
+                </tr>
+                <tr>
+                    <td>Difficulty 2 Recipes (Basic)</td>
+                    <td><strong>24</strong></td>
+                </tr>
+                <tr>
+                    <td>Difficulty 3 Recipes (Intermediate)</td>
+                    <td><strong>28</strong></td>
+                </tr>
+                <tr>
+                    <td>Difficulty 4 Recipes (Advanced)</td>
+                    <td><strong>20</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>🗺️ Cuisine Categories</h2>
+        <ul style="list-style: none; padding: 20px; background: #f5f7fa; border-radius: 10px; line-height: 2;">
+            <li>🍕 <strong>Italian:</strong> Pizza, Veggie Pizza, Chicken Alfredo, Spaghetti, Lasagna, Risotto, Pasta Sauce</li>
+            <li>🍜 <strong>Asian:</strong> Sushi, Ramen, Fried Rice, Stir Fry</li>
+            <li>🌮 <strong>Mexican:</strong> Tacos, Burritos, Veggie Wrap, Quesadillas, Fish Tacos</li>
+            <li>🍛 <strong>Indian:</strong> Curry, Naan, Curry Sauce</li>
+            <li>🥐 <strong>French:</strong> Croissant, Crepe, Baguette, French Toast, Quiche</li>
+            <li>🧆 <strong>Mediterranean:</strong> Falafel, Mediterranean Platter, Stuffed Pepper, Hummus, Tzatziki, Pita, Greek Salad</li>
+            <li>🥞 <strong>Breakfast:</strong> Pancakes, Scrambled Eggs, Omelette, Breakfast Burrito</li>
+            <li>🐟 <strong>Seafood:</strong> Fish and Chips, Fish Taco, Seafood Pasta, Fish Curry</li>
+            <li>🍰 <strong>Desserts:</strong> Cake, Chocolate Cake, Chocolate Fondue, Ice Cream, Waffles, Cookies, Donuts</li>
+            <li>🥗 <strong>Fresh Sides:</strong> Fruit Parfait, Creamy Tomato Soup, Coleslaw, Mashed Potatoes, Loaded Fries</li>
+            <li>☕ <strong>Drinks:</strong> Coffee, Iced Coffee, Lemonade, Hot Chocolate, Milkshake, Smoothies</li>
+        </ul>
+
+        <div style="margin-top: 40px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px; text-align: center;">
+            <p style="font-size: 1.2em; margin-bottom: 10px;">🎮 Happy Cooking! 🎮</p>
+            <p style="font-size: 0.9em; opacity: 0.9;">Discover all recipes and become a Master Chef in Infinite Meal!</p>
+        </div>
+    </div>
+</body>
+</html>

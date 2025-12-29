@@ -54,9 +54,17 @@
     "withSomethingElse": " başka bir şeyle",
     "difficultyLevel": " (Zorluk: {level})",
     "discoverMoreForHints": "Tarif ipuçlarını açmak için daha fazla malzeme keşfedin!",
+    "almostThere": "Neredeyse tamam!",
+    "comboBonus": "Kombo x{count}!",
+    "recipeLocked": "Bu tarif kilitli! Önce {count} malzeme keşfedin.",
+    "dailyChallenges": "Günlük Görevler",
+    "newChallengesIn": "Yarın yeni görevler!",
     "basicIngredients": "Temel Malzemeler",
     "selectIngredientsForMix": "Karışım Alanı için Malzeme Seç",
-    "selectIngredientForCooking": "Pişirme için Malzeme Seç"
+    "selectIngredientForCooking": "Pişirme için Malzeme Seç",
+    "searchIngredients": "Malzeme ara...",
+    "noResultsFound": "Malzeme bulunamadı",
+    "clearSearch": "Aramayı temizle"
   },
   "discover": {
     "title": "Keşifler",
@@ -72,7 +80,8 @@
     "goToCookTab": "Tariflerini burada görmek için Pişir sekmesine git ve bazı yemekler keşfet.",
     "difficulty": "Zorluk",
     "recipeSteps": "Tarif Adımları",
-    "readyToEnjoy": "Lezzetli bir {dish} keyif almaya hazır!"
+    "readyToEnjoy": "Lezzetli bir {dish} keyif almaya hazır!",
+    "recipePath": "Tarif Yolu"
   },
   "achievements": {
     "title": "Başarılar",
@@ -221,6 +230,7 @@
     "Blend": "Püreleştir"
   },
   "categories": {
+    "MIXED_ITEMS": "Karışımlar",
     "BASIC": "Temel Malzeme",
     "VEGETABLE": "Sebze",
     "PROTEIN": "Protein",
@@ -336,7 +346,28 @@
     "iced_coffee": "Soğuk Kahve",
     "chocolate_cake": "Çikolatalı Kek",
     "cookie": "Kurabiye",
-    "donut": "Donut"
+    "donut": "Donut",
+    "lamb": "Kuzu Eti",
+    "walnut": "Ceviz",
+    "seaweed": "Deniz Yosunu",
+    "tofu": "Tofu",
+    "miso": "Miso",
+    "vinegar": "Sirke",
+    "pita_dough": "Pide Hamuru",
+    "doner_meat": "Döner Eti",
+    "doner": "Döner",
+    "lahmacun_base": "Lahmacun Hamuru",
+    "lahmacun": "Lahmacun",
+    "pide": "Pide",
+    "baklava": "Baklava",
+    "ayran": "Ayran",
+    "sushi_rice": "Suşi Pirinci",
+    "ramen_noodles": "Ramen Eriştesi",
+    "ramen_broth": "Ramen Suyu",
+    "tempura_batter": "Tempura Hamuru",
+    "tempura": "Tempura",
+    "miso_soup": "Miso Çorbası",
+    "onigiri": "Onigiri"
   },
   "about": {
     "title": "Hakkımızda",

@@ -54,9 +54,17 @@
     "withSomethingElse": " con algo más",
     "difficultyLevel": " (Dificultad: {level})",
     "discoverMoreForHints": "¡Descubre más ingredientes para desbloquear pistas de recetas!",
+    "almostThere": "¡Casi listo!",
+    "comboBonus": "¡Combo x{count}!",
+    "recipeLocked": "¡Esta receta está bloqueada! Descubre {count} ingredientes primero.",
+    "dailyChallenges": "Desafíos Diarios",
+    "newChallengesIn": "¡Nuevos desafíos mañana!",
     "basicIngredients": "Ingredientes Básicos",
     "selectIngredientsForMix": "Seleccionar Ingredientes para Área de Mezcla",
-    "selectIngredientForCooking": "Seleccionar Ingrediente para Cocinar"
+    "selectIngredientForCooking": "Seleccionar Ingrediente para Cocinar",
+    "searchIngredients": "Buscar ingredientes...",
+    "noResultsFound": "No se encontraron ingredientes",
+    "clearSearch": "Limpiar búsqueda"
   },
   "discover": {
     "title": "Descubrimientos",
@@ -72,7 +80,8 @@
     "goToCookTab": "Ve a la pestaña Cocinar y descubre algunas comidas para ver sus recetas aquí.",
     "difficulty": "Dificultad",
     "recipeSteps": "Pasos de la Receta",
-    "readyToEnjoy": "¡Un delicioso {dish} listo para disfrutar!"
+    "readyToEnjoy": "¡Un delicioso {dish} listo para disfrutar!",
+    "recipePath": "Ruta de la Receta"
   },
   "achievements": {
     "title": "Logros",
@@ -221,6 +230,7 @@
     "Blend": "Licuar"
   },
   "categories": {
+    "MIXED_ITEMS": "Ingredientes Combinados",
     "BASIC": "Ingrediente Básico",
     "VEGETABLE": "Verdura",
     "PROTEIN": "Proteína",
@@ -258,6 +268,7 @@
     "dough": "Masa",
     "pasta_raw": "Pasta Cruda",
     "tomato_sauce": "Salsa de Tomate",
+    "tomato_puree": "Puré de Tomate",
     "pizza_base": "Base de Pizza",
     "cake_batter": "Masa de Pastel",
     "bread": "Pan",
@@ -337,7 +348,28 @@
     "iced_coffee": "Café Helado",
     "chocolate_cake": "Pastel de Chocolate",
     "cookie": "Galleta",
-    "donut": "Donut"
+    "donut": "Donut",
+    "lamb": "Cordero",
+    "walnut": "Nuez",
+    "seaweed": "Alga Marina",
+    "tofu": "Tofu",
+    "miso": "Miso",
+    "vinegar": "Vinagre",
+    "pita_dough": "Masa de Pita",
+    "doner_meat": "Carne de Döner",
+    "doner": "Döner",
+    "lahmacun_base": "Base de Lahmacun",
+    "lahmacun": "Lahmacun",
+    "pide": "Pide",
+    "baklava": "Baklava",
+    "ayran": "Ayran",
+    "sushi_rice": "Arroz de Sushi",
+    "ramen_noodles": "Fideos Ramen",
+    "ramen_broth": "Caldo de Ramen",
+    "tempura_batter": "Masa de Tempura",
+    "tempura": "Tempura",
+    "miso_soup": "Sopa de Miso",
+    "onigiri": "Onigiri"
   },
   "about": {
     "title": "Sobre Nosotros",

@@ -54,9 +54,17 @@
     "withSomethingElse": " with something else",
     "difficultyLevel": " (Difficulty: {level})",
     "discoverMoreForHints": "Discover more ingredients to unlock recipe hints!",
+    "almostThere": "Almost there!",
+    "comboBonus": "Combo x{count}!",
+    "recipeLocked": "This recipe is locked! Discover {count} ingredients first.",
+    "dailyChallenges": "Daily Challenges",
+    "newChallengesIn": "New challenges tomorrow!",
     "basicIngredients": "Basic Ingredients",
     "selectIngredientsForMix": "Select Ingredients for Mix Area",
-    "selectIngredientForCooking": "Select Ingredient for Cooking"
+    "selectIngredientForCooking": "Select Ingredient for Cooking",
+    "searchIngredients": "Search ingredients...",
+    "noResultsFound": "No ingredients found",
+    "clearSearch": "Clear search"
   },
   "discover": {
     "title": "Discoveries",
@@ -72,7 +80,8 @@
     "goToCookTab": "Go to the Cook tab and discover some meals to see their recipes here.",
     "difficulty": "Difficulty",
     "recipeSteps": "Recipe Steps",
-    "readyToEnjoy": "A delicious {dish} ready to enjoy!"
+    "readyToEnjoy": "A delicious {dish} ready to enjoy!",
+    "recipePath": "Recipe Path"
   },
   "achievements": {
     "title": "Achievements",
@@ -338,7 +347,28 @@
     "iced_coffee": "Iced Coffee",
     "chocolate_cake": "Chocolate Cake",
     "cookie": "Cookie",
-    "donut": "Donut"
+    "donut": "Donut",
+    "lamb": "Lamb",
+    "walnut": "Walnut",
+    "seaweed": "Seaweed",
+    "tofu": "Tofu",
+    "miso": "Miso",
+    "vinegar": "Vinegar",
+    "pita_dough": "Pita Dough",
+    "doner_meat": "Döner Meat",
+    "doner": "Döner",
+    "lahmacun_base": "Lahmacun Base",
+    "lahmacun": "Lahmacun",
+    "pide": "Pide",
+    "baklava": "Baklava",
+    "ayran": "Ayran",
+    "sushi_rice": "Sushi Rice",
+    "ramen_noodles": "Ramen Noodles",
+    "ramen_broth": "Ramen Broth",
+    "tempura_batter": "Tempura Batter",
+    "tempura": "Tempura",
+    "miso_soup": "Miso Soup",
+    "onigiri": "Onigiri"
   },
   "about": {
     "title": "About Us",

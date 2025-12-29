@@ -54,9 +54,17 @@
     "withSomethingElse": " avec autre chose",
     "difficultyLevel": " (Difficulté : {level})",
     "discoverMoreForHints": "Découvrez plus d'ingrédients pour débloquer des astuces de recettes !",
+    "almostThere": "Presque fini !",
+    "comboBonus": "Combo x{count} !",
+    "recipeLocked": "Cette recette est verrouillée ! Découvrez d'abord {count} ingrédients.",
+    "dailyChallenges": "Défis Quotidiens",
+    "newChallengesIn": "Nouveaux défis demain !",
     "basicIngredients": "Ingrédients de Base",
     "selectIngredientsForMix": "Sélectionner Ingrédients pour Zone de Mélange",
-    "selectIngredientForCooking": "Sélectionner Ingrédient pour Cuisiner"
+    "selectIngredientForCooking": "Sélectionner Ingrédient pour Cuisiner",
+    "searchIngredients": "Rechercher des ingrédients...",
+    "noResultsFound": "Aucun ingrédient trouvé",
+    "clearSearch": "Effacer la recherche"
   },
   "discover": {
     "title": "Découvertes",
@@ -72,7 +80,8 @@
     "goToCookTab": "Allez dans l'onglet Cuisiner et découvrez des repas pour voir leurs recettes ici.",
     "difficulty": "Difficulté",
     "recipeSteps": "Étapes de la Recette",
-    "readyToEnjoy": "Un délicieux {dish} prêt à déguster !"
+    "readyToEnjoy": "Un délicieux {dish} prêt à déguster !",
+    "recipePath": "Chemin de la Recette"
   },
   "achievements": {
     "title": "Succès",
@@ -221,6 +230,7 @@
     "Blend": "Mixer"
   },
   "categories": {
+    "MIXED_ITEMS": "Ingrédients Mélangés",
     "BASIC": "Ingrédient de Base",
     "VEGETABLE": "Légume",
     "PROTEIN": "Protéine",
@@ -258,6 +268,7 @@
     "dough": "Pâte",
     "pasta_raw": "Pâtes Crues",
     "tomato_sauce": "Sauce Tomate",
+    "tomato_puree": "Purée de Tomates",
     "pizza_base": "Base de Pizza",
     "cake_batter": "Pâte à Gâteau",
     "bread": "Pain",
@@ -336,7 +347,28 @@
     "iced_coffee": "Café Glacé",
     "chocolate_cake": "Gâteau au Chocolat",
     "cookie": "Cookie",
-    "donut": "Beignet"
+    "donut": "Beignet",
+    "lamb": "Agneau",
+    "walnut": "Noix",
+    "seaweed": "Algue",
+    "tofu": "Tofu",
+    "miso": "Miso",
+    "vinegar": "Vinaigre",
+    "pita_dough": "Pâte à Pita",
+    "doner_meat": "Viande de Döner",
+    "doner": "Döner",
+    "lahmacun_base": "Base de Lahmacun",
+    "lahmacun": "Lahmacun",
+    "pide": "Pide",
+    "baklava": "Baklava",
+    "ayran": "Ayran",
+    "sushi_rice": "Riz à Sushi",
+    "ramen_noodles": "Nouilles Ramen",
+    "ramen_broth": "Bouillon Ramen",
+    "tempura_batter": "Pâte à Tempura",
+    "tempura": "Tempura",
+    "miso_soup": "Soupe Miso",
+    "onigiri": "Onigiri"
   },
   "about": {
     "title": "À Propos de Nous",

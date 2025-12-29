@@ -54,9 +54,17 @@
     "withSomethingElse": " met iets anders",
     "difficultyLevel": " (Moeilijkheid: {level})",
     "discoverMoreForHints": "Ontdek meer ingrediënten om recepthints te ontsluiten!",
+    "almostThere": "Bijna klaar!",
+    "comboBonus": "Combo x{count}!",
+    "recipeLocked": "Dit recept is vergrendeld! Ontdek eerst {count} ingrediënten.",
+    "dailyChallenges": "Dagelijkse Uitdagingen",
+    "newChallengesIn": "Morgen nieuwe uitdagingen!",
     "basicIngredients": "Basis Ingrediënten",
     "selectIngredientsForMix": "Selecteer Ingrediënten voor Menggebied",
-    "selectIngredientForCooking": "Selecteer Ingrediënt voor Koken"
+    "selectIngredientForCooking": "Selecteer Ingrediënt voor Koken",
+    "searchIngredients": "Zoek ingrediënten...",
+    "noResultsFound": "Geen ingrediënten gevonden",
+    "clearSearch": "Zoekopdracht wissen"
   },
   "discover": {
     "title": "Ontdekkingen",
@@ -72,7 +80,8 @@
     "goToCookTab": "Ga naar het Koken-tabblad en ontdek enkele maaltijden om hun recepten hier te zien.",
     "difficulty": "Moeilijkheid",
     "recipeSteps": "Receptstappen",
-    "readyToEnjoy": "Een heerlijke {dish} klaar om van te genieten!"
+    "readyToEnjoy": "Een heerlijke {dish} klaar om van te genieten!",
+    "recipePath": "Receptpad"
   },
   "achievements": {
     "title": "Prestaties",
@@ -221,6 +230,7 @@
     "Blend": "Pureren"
   },
   "categories": {
+    "MIXED_ITEMS": "Gemengde Ingrediënten",
     "BASIC": "Basis Ingrediënt",
     "VEGETABLE": "Groente",
     "PROTEIN": "Eiwit",
@@ -258,6 +268,7 @@
     "dough": "Deeg",
     "pasta_raw": "Rauwe Pasta",
     "tomato_sauce": "Tomatensaus",
+    "tomato_puree": "Tomatenpuree",
     "pizza_base": "Pizzabodem",
     "cake_batter": "Cakebeslag",
     "bread": "Brood",
@@ -336,7 +347,28 @@
     "iced_coffee": "IJskoffie",
     "chocolate_cake": "Chocoladetaart",
     "cookie": "Koekje",
-    "donut": "Donut"
+    "donut": "Donut",
+    "lamb": "Lam",
+    "walnut": "Walnoot",
+    "seaweed": "Zeewier",
+    "tofu": "Tofu",
+    "miso": "Miso",
+    "vinegar": "Azijn",
+    "pita_dough": "Pitadeeg",
+    "doner_meat": "Dönervlees",
+    "doner": "Döner",
+    "lahmacun_base": "Lahmacun Basis",
+    "lahmacun": "Lahmacun",
+    "pide": "Pide",
+    "baklava": "Baklava",
+    "ayran": "Ayran",
+    "sushi_rice": "Sushirijst",
+    "ramen_noodles": "Ramennoedels",
+    "ramen_broth": "Ramenbouillon",
+    "tempura_batter": "Tempurabeslag",
+    "tempura": "Tempura",
+    "miso_soup": "Misosoep",
+    "onigiri": "Onigiri"
   },
   "about": {
     "title": "Over Ons",

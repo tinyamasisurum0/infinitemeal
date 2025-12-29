@@ -54,9 +54,17 @@
     "withSomethingElse": " mit etwas anderem",
     "difficultyLevel": " (Schwierigkeit: {level})",
     "discoverMoreForHints": "Entdecke mehr Zutaten, um Rezepthinweise freizuschalten!",
+    "almostThere": "Fast geschafft!",
+    "comboBonus": "Kombo x{count}!",
+    "recipeLocked": "Dieses Rezept ist gesperrt! Entdecke zuerst {count} Zutaten.",
+    "dailyChallenges": "Tägliche Herausforderungen",
+    "newChallengesIn": "Morgen neue Herausforderungen!",
     "basicIngredients": "Grundzutaten",
     "selectIngredientsForMix": "Zutaten für Mischbereich Auswählen",
-    "selectIngredientForCooking": "Zutat zum Kochen Auswählen"
+    "selectIngredientForCooking": "Zutat zum Kochen Auswählen",
+    "searchIngredients": "Zutaten suchen...",
+    "noResultsFound": "Keine Zutaten gefunden",
+    "clearSearch": "Suche löschen"
   },
   "discover": {
     "title": "Entdeckungen",
@@ -72,7 +80,8 @@
     "goToCookTab": "Gehe zum Kochen-Tab und entdecke einige Mahlzeiten, um ihre Rezepte hier zu sehen.",
     "difficulty": "Schwierigkeit",
     "recipeSteps": "Rezeptschritte",
-    "readyToEnjoy": "Ein köstliches {dish} bereit zum Genießen!"
+    "readyToEnjoy": "Ein köstliches {dish} bereit zum Genießen!",
+    "recipePath": "Rezeptpfad"
   },
   "achievements": {
     "title": "Erfolge",
@@ -221,6 +230,7 @@
     "Blend": "Pürieren"
   },
   "categories": {
+    "MIXED_ITEMS": "Gemischte Zutaten",
     "BASIC": "Grundzutat",
     "VEGETABLE": "Gemüse",
     "PROTEIN": "Protein",
@@ -258,6 +268,7 @@
     "dough": "Teig",
     "pasta_raw": "Rohe Pasta",
     "tomato_sauce": "Tomatensauce",
+    "tomato_puree": "Tomatenpüree",
     "pizza_base": "Pizzaboden",
     "cake_batter": "Kuchenteig",
     "bread": "Brot",
@@ -336,7 +347,28 @@
     "iced_coffee": "Eiskaffee",
     "chocolate_cake": "Schokoladenkuchen",
     "cookie": "Keks",
-    "donut": "Donut"
+    "donut": "Donut",
+    "lamb": "Lamm",
+    "walnut": "Walnuss",
+    "seaweed": "Seetang",
+    "tofu": "Tofu",
+    "miso": "Miso",
+    "vinegar": "Essig",
+    "pita_dough": "Pita-Teig",
+    "doner_meat": "Döner-Fleisch",
+    "doner": "Döner",
+    "lahmacun_base": "Lahmacun-Basis",
+    "lahmacun": "Lahmacun",
+    "pide": "Pide",
+    "baklava": "Baklava",
+    "ayran": "Ayran",
+    "sushi_rice": "Sushi-Reis",
+    "ramen_noodles": "Ramen-Nudeln",
+    "ramen_broth": "Ramen-Brühe",
+    "tempura_batter": "Tempura-Teig",
+    "tempura": "Tempura",
+    "miso_soup": "Miso-Suppe",
+    "onigiri": "Onigiri"
   },
   "about": {
     "title": "Über Uns",

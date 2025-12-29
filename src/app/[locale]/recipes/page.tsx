@@ -155,17 +155,52 @@ const RecipesPage = () => {
         { name: "Hot Chocolate", emoji: "☕", ingredients: ["milk", "chocolate", "sugar"], difficulty: 2, description: "Heat milk with chocolate and sugar for rich hot chocolate" },
         { name: "Lemonade", emoji: "🍋", ingredients: ["water", "lemon", "sugar"], difficulty: 2, description: "Mix water, lemon juice, and sugar for a refreshing drink" },
         { name: "Coffee", emoji: "☕", ingredients: ["water", "coffee_beans", "milk"], difficulty: 2, description: "Brew coffee beans with hot water and add milk for a morning pick-me-up" },
-        { name: "Iced Coffee", emoji: "☕", ingredients: ["coffee", "ice", "milk"], difficulty: 3, description: "Chill coffee with ice and milk for a cooling caffeinated beverage" }
+        { name: "Iced Coffee", emoji: "☕", ingredients: ["coffee", "ice", "milk"], difficulty: 3, description: "Chill coffee with ice and milk for a cooling caffeinated beverage" },
+        { name: "Ayran", emoji: "🥛", ingredients: ["yogurt", "water", "salt"], difficulty: 2, description: "Blend yogurt with water and salt for refreshing Turkish drink" }
+      ]
+    },
+    {
+      title: "Turkish Cuisine",
+      recipes: [
+        { name: "Pita Dough", emoji: "🥟", ingredients: ["flour", "water", "yogurt"], difficulty: 2, description: "Mix flour, water and yogurt to create soft Turkish pita dough" },
+        { name: "Döner Meat", emoji: "🥩", ingredients: ["lamb", "spices"], difficulty: 2, description: "Season lamb with spices and stack for traditional döner meat" },
+        { name: "Döner", emoji: "🥙", ingredients: ["pita_dough", "doner_meat", "tomato"], difficulty: 3, description: "Wrap döner meat with tomatoes in pita for a delicious döner" },
+        { name: "Lahmacun Base", emoji: "🫓", ingredients: ["flour", "water"], difficulty: 2, description: "Roll thin dough for crispy lahmacun base" },
+        { name: "Lahmacun", emoji: "🫓", ingredients: ["lahmacun_base", "meat", "onion"], difficulty: 3, description: "Top thin dough with spiced meat and onions for Turkish pizza" },
+        { name: "Pide", emoji: "🥧", ingredients: ["pita_dough", "cheese", "egg"], difficulty: 3, description: "Fill boat-shaped dough with cheese and egg for Turkish pide" },
+        { name: "Baklava", emoji: "🍯", ingredients: ["flour", "butter", "walnut"], difficulty: 4, description: "Layer thin phyllo dough with butter and walnuts for sweet baklava" }
+      ]
+    },
+    {
+      title: "Japanese Cuisine",
+      recipes: [
+        { name: "Sushi Rice", emoji: "🍚", ingredients: ["rice", "vinegar"], difficulty: 2, description: "Season cooked rice with vinegar for sushi rice" },
+        { name: "Sushi", emoji: "🍱", ingredients: ["sushi_rice", "fish", "seaweed"], difficulty: 3, description: "Roll sushi rice with fish in seaweed for traditional sushi" },
+        { name: "Ramen Noodles", emoji: "🍜", ingredients: ["flour", "egg", "water"], difficulty: 2, description: "Make alkaline noodles with flour, egg and water" },
+        { name: "Ramen Broth", emoji: "🍲", ingredients: ["miso", "water", "soy_sauce"], difficulty: 2, description: "Simmer miso with soy sauce for rich ramen broth" },
+        { name: "Ramen", emoji: "🍜", ingredients: ["ramen_noodles", "ramen_broth", "egg"], difficulty: 4, description: "Combine noodles with broth and top with egg for authentic ramen" },
+        { name: "Tempura Batter", emoji: "🥣", ingredients: ["flour", "water", "egg"], difficulty: 2, description: "Mix light batter for crispy tempura coating" },
+        { name: "Tempura", emoji: "🍤", ingredients: ["tempura_batter", "fish", "oil"], difficulty: 3, description: "Dip seafood in batter and fry for crispy tempura" },
+        { name: "Miso Soup", emoji: "🍲", ingredients: ["miso", "water", "tofu"], difficulty: 2, description: "Dissolve miso in hot water with tofu for traditional soup" },
+        { name: "Onigiri", emoji: "🍙", ingredients: ["rice", "seaweed", "salt"], difficulty: 2, description: "Shape rice into triangles and wrap with seaweed for onigiri" }
       ]
     }
   ];
 
   const totalRecipes = allRecipes.reduce((total, section) => total + section.recipes.length, 0);
 
-  // Helper function to get ingredient emoji
-  const getIngredientEmoji = (ingredientId: string): string => {
+  // Helper function to get ingredient info
+  const getIngredientInfo = (ingredientId: string): { emoji: string; name: string } => {
     const ingredient = initialIngredients.find(ing => ing.id === ingredientId);
-    return ingredient ? ingredient.emoji : '';
+    if (ingredient) {
+      return { emoji: ingredient.emoji, name: ingredient.name };
+    }
+    // Fallback: capitalize and replace underscores
+    const fallbackName = ingredientId
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+    return { emoji: '', name: fallbackName };
   };
 
   const renderStars = (difficulty: number) => {
@@ -173,11 +208,16 @@ const RecipesPage = () => {
   };
 
   const formatIngredients = (ingredients: string[]) => {
-    return ingredients.map(ing => {
-      const emoji = getIngredientEmoji(ing);
-      const name = ing.replace(/_/g, ' ');
-      return emoji ? `${emoji} ${name}` : name;
-    }).join(' + ');
+    return ingredients.map((ing, index) => {
+      const { emoji, name } = getIngredientInfo(ing);
+      return (
+        <span key={ing}>
+          {index > 0 && <span className="mx-1">+</span>}
+          {emoji && <span className="text-4xl align-middle">{emoji}</span>}
+          <span className="ml-1 text-xl">{name}</span>
+        </span>
+      );
+    });
   };
 
   return (
@@ -239,7 +279,7 @@ const RecipesPage = () => {
                         <h3 className={`text-lg font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                           {recipe.name}
                         </h3>
-                        <div className={`text-sm mb-2 ${darkMode ? 'text-blue-300' : 'text-blue-600'} font-medium`}>
+                        <div className={`text-lg mb-2 ${darkMode ? 'text-blue-300' : 'text-blue-600'} font-medium`}>
                           {formatIngredients(recipe.ingredients)}
                         </div>
                         <div className="text-sm mb-2">
