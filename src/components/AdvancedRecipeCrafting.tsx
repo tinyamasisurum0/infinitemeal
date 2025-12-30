@@ -2083,43 +2083,6 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                 )}
                 <p className="text-base mb-4">{t('cook.difficulty')}: {Array(newDiscovery.difficulty).fill('⭐').join('')}</p>
 
-                {/* Share buttons */}
-                <div className="flex justify-center gap-3 mb-5">
-                  <button
-                    onClick={() => {
-                      const text = `I just discovered ${newDiscovery.emoji} ${newDiscovery.name} in Infinite Meal! 🍳`;
-                      const url = typeof window !== 'undefined' ? window.location.origin : '';
-                      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
-                    }}
-                    className="btn-press p-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
-                    title="Share on X"
-                  >
-                    𝕏
-                  </button>
-                  <button
-                    onClick={() => {
-                      const url = typeof window !== 'undefined' ? window.location.origin : '';
-                      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
-                    }}
-                    className="btn-press p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                    title="Share on Facebook"
-                  >
-                    f
-                  </button>
-                  <button
-                    onClick={() => {
-                      const text = `I just discovered ${newDiscovery.emoji} ${newDiscovery.name} in Infinite Meal! 🍳 Play at ${typeof window !== 'undefined' ? window.location.origin : ''}`;
-                      navigator.clipboard.writeText(text);
-                      setMessage('Copied to clipboard!');
-                      setTimeout(() => setMessage(''), 2000);
-                    }}
-                    className="btn-press p-2 rounded-full bg-gray-500 text-white hover:bg-gray-600 transition-colors"
-                    title="Copy to clipboard"
-                  >
-                    📋
-                  </button>
-                </div>
-
                 <button
                   onClick={dismissDiscovery}
                   className="gradient-blue text-white py-3 px-8 rounded-xl text-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 cursor-pointer"
