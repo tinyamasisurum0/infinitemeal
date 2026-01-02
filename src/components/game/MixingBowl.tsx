@@ -47,7 +47,7 @@ const MixingBowl: React.FC<MixingBowlProps> = ({ onDrop, items, status, onClear 
         ${isOver ? 'border-amber-400 bg-slate-800/80 scale-105 rotate-3' : 'border-slate-800 bg-slate-900/40'}
         ${status === 'mixing' ? 'animate-pulse scale-105 border-amber-500/50' : ''}
         ${status === 'success' ? 'border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.3)]' : ''}
-        ${isJiggling ? 'animate-bounce' : ''}
+        ${isJiggling ? 'jiggle' : ''}
       `}
     >
       <div className="absolute inset-0 rounded-full bg-gradient-to-b from-transparent to-black/20 pointer-events-none"></div>
@@ -62,7 +62,7 @@ const MixingBowl: React.FC<MixingBowlProps> = ({ onDrop, items, status, onClear 
       ) : (
         <div className="flex gap-4 items-center z-10 px-4">
           {items.map((item, idx) => (
-            <div key={`${item.id}-${idx}`} className="flex flex-col items-center animate-in zoom-in slide-in-from-bottom-2 duration-300">
+            <div key={`${item.id}-${idx}`} className="flex flex-col items-center animate-in fade-in duration-200">
               <div className="w-20 h-20 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-4xl shadow-xl mb-2 hover:scale-110 transition-transform">
                 {item.emoji}
               </div>

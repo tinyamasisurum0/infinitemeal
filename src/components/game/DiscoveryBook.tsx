@@ -17,9 +17,10 @@ interface DiscoveryBookProps {
   ingredients: Ingredient[];
   history: DiscoveryHistoryItem[];
   achievements: Achievement[];
+  onIngredientClick?: (ingredientId: string) => void;
 }
 
-const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, achievements }) => {
+const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, achievements, onIngredientClick }) => {
   const t = useTranslations();
   const [showUndiscovered, setShowUndiscovered] = useState(false);
   const [activeView, setActiveView] = useState<'discoveries' | 'achievements'>('discoveries');
@@ -108,7 +109,16 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
               ) : (
                 <div className="space-y-3">
                   {[...history].reverse().slice(0, 15).map((discovery, idx) => (
-                    <div key={idx} className="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50 flex flex-col gap-2 group transition-all">
+                    <div
+                      key={idx}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('ingredientId', discovery.result.id);
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      onClick={() => onIngredientClick?.(discovery.result.id)}
+                      className="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50 flex flex-col gap-2 group transition-all cursor-grab active:cursor-grabbing hover:border-amber-500/50 hover:bg-slate-800"
+                    >
                       <div className="flex items-center gap-3">
                         <span className="text-2xl group-hover:scale-110 transition-transform">{discovery.result.emoji}</span>
                         <div className="flex-1">
@@ -152,7 +162,13 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
                   return (
                     <div
                       key={ing.id}
-                      className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:border-slate-600 transition-all group"
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('ingredientId', ing.id);
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      onClick={() => onIngredientClick?.(ing.id)}
+                      className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:border-amber-500/50 hover:bg-slate-800 transition-all group cursor-grab active:cursor-grabbing"
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-2xl group-hover:scale-110 transition-transform">{ing.emoji}</span>

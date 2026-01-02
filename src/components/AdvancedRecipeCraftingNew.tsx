@@ -73,7 +73,7 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
     }));
   });
 
-  const [achievements] = useState<Achievement[]>(() => {
+  const [achievements, setAchievements] = useState<Achievement[]>(() => {
     if (typeof window === 'undefined') return initialAchievements;
     return loadFromStorage<Achievement[]>(STORAGE_KEY_ACHIEVEMENTS, initialAchievements);
   });
@@ -283,7 +283,7 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
   };
 
   return (
-    <div className="flex h-screen w-full bg-[#0f172a] text-slate-100 overflow-hidden font-fredoka">
+    <div className="flex h-screen w-full bg-[#0f172a] text-slate-100 overflow-hidden">
       {/* Left Sidebar - Ingredient Shelf */}
       <div className="w-80 flex flex-col border-r border-slate-800 bg-slate-900/50 backdrop-blur-md">
         <div className="p-4 border-b border-slate-800">
@@ -410,6 +410,7 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
           ingredients={ingredients}
           history={discoveryHistory}
           achievements={achievements}
+          onIngredientClick={handleDrop}
         />
       </div>
 

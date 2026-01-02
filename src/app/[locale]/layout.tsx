@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Outfit } from "next/font/google";
 import { ReactNode } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import { getMessages, getTranslations } from "next-intl/server";
@@ -10,10 +10,11 @@ import Link from "next/link";
 // Import global styles
 import "../globals.css";
 
-const inter = Inter({
+const outfit = Outfit({
   subsets: ["latin"],
   display: "swap",
-  weight: ["500", "600", "700", "800"],
+  weight: ["300", "400", "600", "700"],
+  variable: "--font-outfit",
 });
 
 export function generateStaticParams() {
@@ -73,7 +74,7 @@ export default async function LocaleLayout({
     }
 
     return (
-      <html lang={locale} className={inter.className}>
+      <html lang={locale} className={`${outfit.variable} ${outfit.className}`}>
         <head>
           <link rel="icon" href="/favicons/favicon.ico" sizes="any" />
           <link rel="icon" href="/favicons/favicon.svg" type="image/svg+xml" />
@@ -93,7 +94,7 @@ export default async function LocaleLayout({
     console.error('Error in LocaleLayout:', error);
     // Fallback rendering with minimal content
     return (
-      <html lang="en" className={inter.className}>
+      <html lang="en" className={`${outfit.variable} ${outfit.className}`}>
         <head>
           <title>Infinite Meal - Recipe Crafting Game</title>
         </head>

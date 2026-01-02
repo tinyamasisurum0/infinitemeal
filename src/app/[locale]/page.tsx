@@ -5,7 +5,7 @@ import { withClientTranslations } from '@/components/withClientTranslations';
 
 function Home() {
   return (
-    <main className="min-h-screen p-0 font-fredoka">
+    <main className="min-h-screen p-0">
       <AdvancedRecipeCraftingNew />
     </main>
   );
