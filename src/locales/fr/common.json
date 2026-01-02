@@ -24,6 +24,24 @@
     "networkError": "Erreur Réseau",
     "serverError": "Erreur Serveur"
   },
+  "game": {
+    "dropElement": "Déposer l'élément",
+    "next": "Suivant",
+    "clear": "Effacer",
+    "forging": "Création...",
+    "almanac": "Almanach Gourmet",
+    "discovered": "découverts",
+    "latestBreakthroughs": "Dernières Découvertes",
+    "noDiscoveries": "Pas encore de découvertes. Commencez à mélanger !",
+    "encyclopedia": "Encyclopédie",
+    "newDiscovery": "Nouvelle Découverte",
+    "addToCollection": "Ajouter à la Collection",
+    "filterIngredients": "Filtrer les ingrédients...",
+    "synthesizer": "Synthétiseur",
+    "masterIngredients": "Maîtrisez les ingrédients, découvrez de nouvelles recettes.",
+    "noEffect": "Cette méthode de cuisson n'a aucun effet sur cet ingrédient",
+    "noRecipe": "Aucune recette trouvée pour cette combinaison"
+  },
   "cook": {
     "title": "Repas Infini",
     "subtitle": "Découvrez et créez de délicieuses recettes dans cette aventure culinaire !",
@@ -240,7 +258,18 @@
     "SPICE": "Épice",
     "DISH": "Plat",
     "DESSERT": "Dessert",
-    "DRINK": "Boisson"
+    "DRINK": "Boisson",
+    "Mixed Items": "Ingrédients Mélangés",
+    "Basic Ingredient": "Ingrédient de Base",
+    "Vegetable": "Légume",
+    "Protein": "Protéine",
+    "Grain": "Céréale",
+    "Dairy": "Produit Laitier",
+    "Sauce": "Sauce",
+    "Spice": "Épice",
+    "Dish": "Plat",
+    "Dessert": "Dessert",
+    "Drink": "Boisson"
   },
   "ingredients": {
     "tomato": "Tomate",

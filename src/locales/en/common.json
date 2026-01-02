@@ -24,6 +24,24 @@
     "networkError": "Network Error",
     "serverError": "Server Error"
   },
+  "game": {
+    "dropElement": "Drop Element",
+    "next": "Next",
+    "clear": "Clear",
+    "forging": "Forging...",
+    "almanac": "Gourmet Almanac",
+    "discovered": "discovered",
+    "latestBreakthroughs": "Latest Breakthroughs",
+    "noDiscoveries": "No discoveries yet. Start mixing!",
+    "encyclopedia": "Encyclopedia",
+    "newDiscovery": "New Discovery",
+    "addToCollection": "Add to Collection",
+    "filterIngredients": "Filter ingredients...",
+    "synthesizer": "Synthesizer",
+    "masterIngredients": "Master the ingredients, discover new recipes.",
+    "noEffect": "This cooking method has no effect on this ingredient",
+    "noRecipe": "No recipe found for this combination"
+  },
   "cook": {
     "title": "Infinite Meal",
     "subtitle": "Discover and create delicious recipes in this culinary adventure!",
@@ -240,7 +258,18 @@
     "SPICE": "Spice",
     "DISH": "Dish",
     "DESSERT": "Dessert",
-    "DRINK": "Drink"
+    "DRINK": "Drink",
+    "Mixed Items": "Mixed Items",
+    "Basic Ingredient": "Basic Ingredient",
+    "Vegetable": "Vegetable",
+    "Protein": "Protein",
+    "Grain": "Grain",
+    "Dairy": "Dairy",
+    "Sauce": "Sauce",
+    "Spice": "Spice",
+    "Dish": "Dish",
+    "Dessert": "Dessert",
+    "Drink": "Drink"
   },
   "ingredients": {
     "tomato": "Tomato",

@@ -322,3 +322,104 @@ h1, h2, h3, h4, h5, h6 {
   border-width: 2px;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
 }
+
+/* Animate-in utilities for new UI */
+@keyframes animate-in-zoom {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes animate-in-slide-from-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes animate-in-slide-from-top {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes animate-in-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-in {
+  animation-duration: 300ms;
+  animation-fill-mode: both;
+}
+
+.zoom-in {
+  animation-name: animate-in-zoom;
+}
+
+.slide-in-from-bottom-2 {
+  animation-name: animate-in-slide-from-bottom;
+}
+
+.slide-in-from-top {
+  animation-name: animate-in-slide-from-top;
+}
+
+.fade-in {
+  animation-name: animate-in-fade;
+}
+
+.duration-300 {
+  animation-duration: 300ms;
+}
+
+.duration-200 {
+  animation-duration: 200ms;
+}
+
+/* Jiggle animation for mixing bowl */
+@keyframes jiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+  75% { transform: rotate(-3deg); }
+}
+
+.jiggle {
+  animation: jiggle 0.3s ease-in-out;
+}
+
+/* Radiance aura for success modal */
+@keyframes radiance {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}
+
+.radiance-aura {
+  background: radial-gradient(circle at center, rgba(245, 158, 11, 0.2) 0%, transparent 70%);
+  animation: radiance 2s ease-in-out infinite;
+}

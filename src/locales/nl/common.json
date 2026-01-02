@@ -24,6 +24,24 @@
     "networkError": "Netwerkfout",
     "serverError": "Serverfout"
   },
+  "game": {
+    "dropElement": "Element Neerzetten",
+    "next": "Volgende",
+    "clear": "Wissen",
+    "forging": "Creëren...",
+    "almanac": "Gourmet Almanak",
+    "discovered": "ontdekt",
+    "latestBreakthroughs": "Laatste Ontdekkingen",
+    "noDiscoveries": "Nog geen ontdekkingen. Begin met mixen!",
+    "encyclopedia": "Encyclopedie",
+    "newDiscovery": "Nieuwe Ontdekking",
+    "addToCollection": "Toevoegen aan Collectie",
+    "filterIngredients": "Ingrediënten filteren...",
+    "synthesizer": "Synthesizer",
+    "masterIngredients": "Beheers de ingrediënten, ontdek nieuwe recepten.",
+    "noEffect": "Deze kookmethode heeft geen effect op dit ingrediënt",
+    "noRecipe": "Geen recept gevonden voor deze combinatie"
+  },
   "cook": {
     "title": "Oneindige Maaltijd",
     "subtitle": "Ontdek en creëer heerlijke recepten in dit culinaire avontuur!",
@@ -240,7 +258,18 @@
     "SPICE": "Kruiden",
     "DISH": "Gerecht",
     "DESSERT": "Dessert",
-    "DRINK": "Drank"
+    "DRINK": "Drank",
+    "Mixed Items": "Gemengde Ingrediënten",
+    "Basic Ingredient": "Basis Ingrediënt",
+    "Vegetable": "Groente",
+    "Protein": "Eiwit",
+    "Grain": "Graan",
+    "Dairy": "Zuivel",
+    "Sauce": "Saus",
+    "Spice": "Kruiden",
+    "Dish": "Gerecht",
+    "Dessert": "Dessert",
+    "Drink": "Drank"
   },
   "ingredients": {
     "tomato": "Tomaat",

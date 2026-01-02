@@ -24,6 +24,24 @@
     "networkError": "Netzwerkfehler",
     "serverError": "Serverfehler"
   },
+  "game": {
+    "dropElement": "Element ablegen",
+    "next": "Weiter",
+    "clear": "Löschen",
+    "forging": "Erstellen...",
+    "almanac": "Gourmet-Almanach",
+    "discovered": "entdeckt",
+    "latestBreakthroughs": "Neueste Entdeckungen",
+    "noDiscoveries": "Noch keine Entdeckungen. Fang an zu mischen!",
+    "encyclopedia": "Enzyklopädie",
+    "newDiscovery": "Neue Entdeckung",
+    "addToCollection": "Zur Sammlung hinzufügen",
+    "filterIngredients": "Zutaten filtern...",
+    "synthesizer": "Synthesizer",
+    "masterIngredients": "Meistere die Zutaten, entdecke neue Rezepte.",
+    "noEffect": "Diese Kochmethode hat keine Wirkung auf diese Zutat",
+    "noRecipe": "Kein Rezept für diese Kombination gefunden"
+  },
   "cook": {
     "title": "Unendliche Mahlzeit",
     "subtitle": "Entdecke und erschaffe köstliche Rezepte in diesem kulinarischen Abenteuer!",
@@ -240,7 +258,18 @@
     "SPICE": "Gewürz",
     "DISH": "Gericht",
     "DESSERT": "Dessert",
-    "DRINK": "Getränk"
+    "DRINK": "Getränk",
+    "Mixed Items": "Gemischte Zutaten",
+    "Basic Ingredient": "Grundzutat",
+    "Vegetable": "Gemüse",
+    "Protein": "Protein",
+    "Grain": "Getreide",
+    "Dairy": "Milchprodukt",
+    "Sauce": "Sauce",
+    "Spice": "Gewürz",
+    "Dish": "Gericht",
+    "Dessert": "Dessert",
+    "Drink": "Getränk"
   },
   "ingredients": {
     "tomato": "Tomate",

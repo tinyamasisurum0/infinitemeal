@@ -24,6 +24,24 @@
     "networkError": "Error de Red",
     "serverError": "Error del Servidor"
   },
+  "game": {
+    "dropElement": "Soltar Elemento",
+    "next": "Siguiente",
+    "clear": "Limpiar",
+    "forging": "Creando...",
+    "almanac": "Almanaque Gourmet",
+    "discovered": "descubiertos",
+    "latestBreakthroughs": "Últimos Descubrimientos",
+    "noDiscoveries": "Aún no hay descubrimientos. ¡Empieza a mezclar!",
+    "encyclopedia": "Enciclopedia",
+    "newDiscovery": "Nuevo Descubrimiento",
+    "addToCollection": "Añadir a la Colección",
+    "filterIngredients": "Filtrar ingredientes...",
+    "synthesizer": "Sintetizador",
+    "masterIngredients": "Domina los ingredientes, descubre nuevas recetas.",
+    "noEffect": "Este método de cocción no tiene efecto en este ingrediente",
+    "noRecipe": "No se encontró receta para esta combinación"
+  },
   "cook": {
     "title": "Comida Infinita",
     "subtitle": "¡Descubre y crea deliciosas recetas en esta aventura culinaria!",
@@ -240,7 +258,18 @@
     "SPICE": "Especia",
     "DISH": "Plato",
     "DESSERT": "Postre",
-    "DRINK": "Bebida"
+    "DRINK": "Bebida",
+    "Mixed Items": "Ingredientes Combinados",
+    "Basic Ingredient": "Ingrediente Básico",
+    "Vegetable": "Verdura",
+    "Protein": "Proteína",
+    "Grain": "Grano",
+    "Dairy": "Lácteo",
+    "Sauce": "Salsa",
+    "Spice": "Especia",
+    "Dish": "Plato",
+    "Dessert": "Postre",
+    "Drink": "Bebida"
   },
   "ingredients": {
     "tomato": "Tomate",

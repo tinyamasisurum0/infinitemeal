@@ -24,6 +24,24 @@
     "networkError": "Ağ Hatası",
     "serverError": "Sunucu Hatası"
   },
+  "game": {
+    "dropElement": "Elementi Bırak",
+    "next": "Sonraki",
+    "clear": "Temizle",
+    "forging": "Oluşturuluyor...",
+    "almanac": "Gurme Almanağı",
+    "discovered": "keşfedildi",
+    "latestBreakthroughs": "Son Keşifler",
+    "noDiscoveries": "Henüz keşif yok. Karıştırmaya başla!",
+    "encyclopedia": "Ansiklopedi",
+    "newDiscovery": "Yeni Keşif",
+    "addToCollection": "Koleksiyona Ekle",
+    "filterIngredients": "Malzemeleri filtrele...",
+    "synthesizer": "Sentezleyici",
+    "masterIngredients": "Malzemelerde ustalaş, yeni tarifler keşfet.",
+    "noEffect": "Bu pişirme yöntemi bu malzeme üzerinde etkili değil",
+    "noRecipe": "Bu kombinasyon için tarif bulunamadı"
+  },
   "cook": {
     "title": "Sonsuz Yemek",
     "subtitle": "Bu mutfak macerasında lezzetli tarifler keşfedin ve yaratın!",
@@ -240,7 +258,18 @@
     "SPICE": "Baharat",
     "DISH": "Yemek",
     "DESSERT": "Tatlı",
-    "DRINK": "İçecek"
+    "DRINK": "İçecek",
+    "Mixed Items": "Karışımlar",
+    "Basic Ingredient": "Temel Malzeme",
+    "Vegetable": "Sebze",
+    "Protein": "Protein",
+    "Grain": "Tahıl",
+    "Dairy": "Süt Ürünü",
+    "Sauce": "Sos",
+    "Spice": "Baharat",
+    "Dish": "Yemek",
+    "Dessert": "Tatlı",
+    "Drink": "İçecek"
   },
   "ingredients": {
     "tomato": "Domates",

@@ -24,6 +24,24 @@
     "networkError": "Errore di Rete",
     "serverError": "Errore del Server"
   },
+  "game": {
+    "dropElement": "Rilascia Elemento",
+    "next": "Avanti",
+    "clear": "Cancella",
+    "forging": "Creazione...",
+    "almanac": "Almanacco Gourmet",
+    "discovered": "scoperti",
+    "latestBreakthroughs": "Ultime Scoperte",
+    "noDiscoveries": "Nessuna scoperta ancora. Inizia a mescolare!",
+    "encyclopedia": "Enciclopedia",
+    "newDiscovery": "Nuova Scoperta",
+    "addToCollection": "Aggiungi alla Collezione",
+    "filterIngredients": "Filtra ingredienti...",
+    "synthesizer": "Sintetizzatore",
+    "masterIngredients": "Padroneggia gli ingredienti, scopri nuove ricette.",
+    "noEffect": "Questo metodo di cottura non ha effetto su questo ingrediente",
+    "noRecipe": "Nessuna ricetta trovata per questa combinazione"
+  },
   "cook": {
     "title": "Pasto Infinito",
     "subtitle": "Scopri e crea deliziose ricette in questa avventura culinaria!",
@@ -240,7 +258,18 @@
     "SPICE": "Spezia",
     "DISH": "Piatto",
     "DESSERT": "Dessert",
-    "DRINK": "Bevanda"
+    "DRINK": "Bevanda",
+    "Mixed Items": "Ingredienti Misti",
+    "Basic Ingredient": "Ingrediente Base",
+    "Vegetable": "Verdura",
+    "Protein": "Proteina",
+    "Grain": "Cereale",
+    "Dairy": "Latticino",
+    "Sauce": "Salsa",
+    "Spice": "Spezia",
+    "Dish": "Piatto",
+    "Dessert": "Dessert",
+    "Drink": "Bevanda"
   },
   "ingredients": {
     "tomato": "Pomodoro",
