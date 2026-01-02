@@ -82,7 +82,10 @@
     "selectIngredientForCooking": "Zutat zum Kochen Auswählen",
     "searchIngredients": "Zutaten suchen...",
     "noResultsFound": "Keine Zutaten gefunden",
-    "clearSearch": "Suche löschen"
+    "clearSearch": "Suche löschen",
+    "aiOn": "KI An",
+    "aiOff": "KI Aus",
+    "aiGenerating": "KI erstellt etwas Neues..."
   },
   "discover": {
     "title": "Entdeckungen",

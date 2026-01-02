@@ -82,7 +82,10 @@
     "selectIngredientForCooking": "Select Ingredient for Cooking",
     "searchIngredients": "Search ingredients...",
     "noResultsFound": "No ingredients found",
-    "clearSearch": "Clear search"
+    "clearSearch": "Clear search",
+    "aiOn": "AI On",
+    "aiOff": "AI Off",
+    "aiGenerating": "AI is creating something new..."
   },
   "discover": {
     "title": "Discoveries",

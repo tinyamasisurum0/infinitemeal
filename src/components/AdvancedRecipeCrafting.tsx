@@ -23,6 +23,7 @@ import { cookingMethods } from '../data/cookingMethods';
 import { recipes } from '../data/recipes';
 import { initialAchievements } from '../data/achievements';
 import emailjs from '@emailjs/browser';
+import { generateRecipeWithAI, isAIGenerationAvailable } from '../services/geminiService';
 
 // Cookie management functions
 const setCookie = (name: string, value: string, days: number = 365) => {
@@ -312,6 +313,14 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
 
   // Cooking method highlight feature
   const [methodHighlightedIngredients, setMethodHighlightedIngredients] = useState<Set<string>>(new Set());
+
+  // AI generation state for infinite discovery
+  const [isAIGenerating, setIsAIGenerating] = useState<boolean>(false);
+  const [aiEnabled, setAiEnabled] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const saved = localStorage.getItem('aiEnabled');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   const [achievements, setAchievements] = useState<Achievement[]>(() => {
     if (typeof window === 'undefined') return initialAchievements;
     
@@ -494,13 +503,13 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
       // Check for recipe matches
       if (newMixWorkspace.length === 2) {
         // Check for a recipe match with 2 ingredients
-        setTimeout(() => {
-          checkRecipeMatch(newMixWorkspace);
+        setTimeout(async () => {
+          await checkRecipeMatch(newMixWorkspace);
         }, 500);
       } else if (newMixWorkspace.length === 3) {
         // Check for a recipe match with 3 ingredients
-        setTimeout(() => {
-          checkRecipeWith3Ingredients(newMixWorkspace);
+        setTimeout(async () => {
+          await checkRecipeWith3Ingredients(newMixWorkspace);
         }, 500);
       }
     } else {
@@ -612,13 +621,13 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
       // Check for recipe matches
       if (newMixWorkspace.length === 2) {
         // Check for a recipe match with 2 ingredients
-        setTimeout(() => {
-          checkRecipeMatch(newMixWorkspace);
+        setTimeout(async () => {
+          await checkRecipeMatch(newMixWorkspace);
         }, 500);
       } else if (newMixWorkspace.length === 3) {
         // Check for a recipe match with 3 ingredients
-        setTimeout(() => {
-          checkRecipeWith3Ingredients(newMixWorkspace);
+        setTimeout(async () => {
+          await checkRecipeWith3Ingredients(newMixWorkspace);
         }, 500);
       }
     } else {
@@ -683,13 +692,13 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
       // Check for recipe matches (same logic as original drag-and-drop)
       if (newMixWorkspace.length === 2) {
         // Check for a recipe match with 2 ingredients
-        setTimeout(() => {
-          checkRecipeMatch(newMixWorkspace);
+        setTimeout(async () => {
+          await checkRecipeMatch(newMixWorkspace);
         }, 500);
       } else if (newMixWorkspace.length === 3) {
         // Check for a recipe match with 3 ingredients
-        setTimeout(() => {
-          checkRecipeWith3Ingredients(newMixWorkspace);
+        setTimeout(async () => {
+          await checkRecipeWith3Ingredients(newMixWorkspace);
         }, 500);
       }
     } else if (modalContext === 'cooking-workspace') {
@@ -834,13 +843,13 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
         // Check for recipe matches
         if (newMixWorkspace.length === 2) {
           // Check for a recipe match with 2 ingredients
-          setTimeout(() => {
-            checkRecipeMatch(newMixWorkspace);
+          setTimeout(async () => {
+            await checkRecipeMatch(newMixWorkspace);
           }, 500);
         } else if (newMixWorkspace.length === 3) {
           // Check for a recipe match with 3 ingredients
-          setTimeout(() => {
-            checkRecipeWith3Ingredients(newMixWorkspace);
+          setTimeout(async () => {
+            await checkRecipeWith3Ingredients(newMixWorkspace);
           }, 500);
         }
       } else {
@@ -988,6 +997,68 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
     handleDrop(e);
   };
 
+  // AI-powered recipe generation fallback
+  const generateAIRecipe = async (workspaceIngredients: Ingredient[], cookingMethod?: string) => {
+    console.log('[Component] generateAIRecipe called');
+    console.log('[Component] aiEnabled:', aiEnabled);
+    console.log('[Component] isAIGenerationAvailable:', isAIGenerationAvailable());
+
+    if (!aiEnabled || !isAIGenerationAvailable()) {
+      console.log('[Component] AI generation skipped - disabled or unavailable');
+      return null;
+    }
+
+    setIsAIGenerating(true);
+    setMessage('AI is creating something new...');
+
+    try {
+      console.log('[Component] Calling generateRecipeWithAI...');
+      const aiResult = await generateRecipeWithAI(workspaceIngredients, cookingMethod);
+      console.log('[Component] AI result:', aiResult);
+
+      if (aiResult) {
+        // Check if this AI ingredient already exists
+        const existingIngredient = ingredients.find(i => i.id === aiResult.id);
+
+        if (existingIngredient) {
+          // Already exists, just mark as discovered if needed
+          if (!existingIngredient.discovered) {
+            setNewDiscovery(existingIngredient);
+            setIngredients(prev => prev.map(item =>
+              item.id === aiResult.id ? { ...item, discovered: true } : item
+            ));
+            setMessage(`AI discovered ${existingIngredient.name}!`);
+          } else {
+            setMessage(`AI created ${existingIngredient.name} again!`);
+          }
+          setLastCreatedIngredient(existingIngredient.id);
+        } else {
+          // New AI-generated ingredient - add to ingredients list
+          const newIngredient = { ...aiResult, discovered: true };
+          setIngredients(prev => [...prev, newIngredient]);
+          setNewDiscovery(newIngredient);
+          setMessage(`AI discovered ${aiResult.name}!`);
+          setLastCreatedIngredient(aiResult.id);
+          updateChallengeProgress(newIngredient, true);
+        }
+
+        // Clear workspace after successful AI generation
+        setTimeout(() => {
+          setWorkspace([]);
+          setMixWorkspace([]);
+        }, 1000);
+
+        return aiResult;
+      }
+    } catch (error) {
+      console.error('AI recipe generation failed:', error);
+    } finally {
+      setIsAIGenerating(false);
+    }
+
+    return null;
+  };
+
   // Check if a recipe is locked based on difficulty and discovery count
   const isRecipeLocked = (recipe: Recipe): { locked: boolean; requiredCount: number } => {
     const discoveryCount = discoveredItems.length;
@@ -1004,7 +1075,7 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
   };
 
   // Check for recipes with 3 ingredients
-  const checkRecipeWith3Ingredients = (currentWorkspace: Ingredient[]) => {
+  const checkRecipeWith3Ingredients = async (currentWorkspace: Ingredient[]) => {
     if (currentWorkspace.length !== 3) return;
 
     const ids = currentWorkspace.map(item => item.id).sort();
@@ -1073,19 +1144,27 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
         setMixWorkspace([]);
       }, 1000);
     } else {
-      const ingredientNames = currentWorkspace.map(item => item.name).join(', ');
-      setMessage(`No recipe found with ${ingredientNames}. Try different combinations!`);
-      // Trigger shake animation
-      setMixFailed(true);
-      setTimeout(() => setMixFailed(false), 500);
-      // Reset combo on failed combination
-      setComboStreak(0);
-      setLastCreatedIngredient(null);
+      // No hardcoded recipe found - try AI generation
+      console.log('[Component] No recipe found for 3 ingredients, trying AI...');
+      const aiResult = await generateAIRecipe(currentWorkspace, selectedMethod?.id);
+
+      if (!aiResult) {
+        // AI also failed or is disabled
+        console.log('[Component] AI also returned null for 3 ingredients');
+        const ingredientNames = currentWorkspace.map(item => item.name).join(', ');
+        setMessage(`No recipe found with ${ingredientNames}. Try different combinations!`);
+        // Trigger shake animation
+        setMixFailed(true);
+        setTimeout(() => setMixFailed(false), 500);
+        // Reset combo on failed combination
+        setComboStreak(0);
+        setLastCreatedIngredient(null);
+      }
     }
   };
 
   // Check if current workspace items match a recipe
-  const checkRecipeMatch = (currentWorkspace: Ingredient[]) => {
+  const checkRecipeMatch = async (currentWorkspace: Ingredient[]) => {
     if (currentWorkspace.length !== 2) return;
 
     const ids = currentWorkspace.map(item => item.id).sort();
@@ -1154,14 +1233,22 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
         setMixWorkspace([]);
       }, 1000);
     } else {
-      const ingredientNames = currentWorkspace.map(item => item.name).join(' and ');
-      setMessage(`No recipe found with ${ingredientNames}. Try different combinations!`);
-      // Trigger shake animation
-      setMixFailed(true);
-      setTimeout(() => setMixFailed(false), 500);
-      // Reset combo on failed combination
-      setComboStreak(0);
-      setLastCreatedIngredient(null);
+      // No hardcoded recipe found - try AI generation
+      console.log('[Component] No recipe found for 2 ingredients, trying AI...');
+      const aiResult = await generateAIRecipe(currentWorkspace, selectedMethod?.id);
+
+      if (!aiResult) {
+        // AI also failed or is disabled
+        console.log('[Component] AI also returned null for 2 ingredients');
+        const ingredientNames = currentWorkspace.map(item => item.name).join(' and ');
+        setMessage(`No recipe found with ${ingredientNames}. Try different combinations!`);
+        // Trigger shake animation
+        setMixFailed(true);
+        setTimeout(() => setMixFailed(false), 500);
+        // Reset combo on failed combination
+        setComboStreak(0);
+        setLastCreatedIngredient(null);
+      }
     }
   };
 
@@ -1849,6 +1936,32 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
 
   return (
     <div className={`flex flex-col items-center justify-center w-full ${darkMode ? 'bg-gray-900 text-white' : ''}`}>
+      {/* GIANT AI TEST BUTTON */}
+      <div className="fixed top-4 right-4 z-[9999]">
+        <button
+          onClick={async () => {
+            alert('Testing AI API...');
+            try {
+              const res = await fetch('/api/generate-recipe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  ingredients: [{ name: 'Water', emoji: '💧' }, { name: 'Salt', emoji: '🧂' }]
+                })
+              });
+              const data = await res.json();
+              console.log('AI Result:', data);
+              alert(data.name ? `SUCCESS! AI created: ${data.emoji} ${data.name}` : `ERROR: ${JSON.stringify(data)}`);
+            } catch (err) {
+              console.error(err);
+              alert(`FAILED: ${err}`);
+            }
+          }}
+          className="bg-red-600 hover:bg-red-700 text-white text-xl font-bold py-4 px-8 rounded-xl shadow-2xl animate-pulse"
+        >
+          🧪 TEST AI - TIKLA!
+        </button>
+      </div>
       {/* Reset Confirmation Dialog */}
       {showResetConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
@@ -2220,13 +2333,23 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
 
               {/* Feedback Area */}
               <div className="w-full mb-4 h-12 md:h-20 flex flex-col justify-center z-20">
+                {/* AI Loading message */}
+                {isAIGenerating && (
+                  <div className={`${darkMode ? 'bg-purple-900 text-purple-200' : 'bg-purple-100 text-purple-800'} px-4 py-3 rounded-xl shadow-lg flex items-center justify-center animate-pulse`}>
+                    <span className="text-2xl mr-2 animate-spin">✨</span>
+                    <span className="font-medium text-lg">{t('cook.aiGenerating', { fallback: 'AI is creating something new...' })}</span>
+                  </div>
+                )}
+
                 {/* Warning message */}
+                {!isAIGenerating && (
                 <div className={`${darkMode ? 'bg-yellow-900 text-yellow-200' : 'bg-yellow-100 text-yellow-800'} px-4 py-3 rounded-xl shadow-lg flex items-center justify-center ${message.includes("No recipe found") || message.includes("You can only combine") || message.includes("don't combine") || message.includes("had no effect") || message.includes("You can only apply") ? 'opacity-100 shake' : 'opacity-0 absolute'}`}>
                   <span className="text-2xl mr-2">⚠️</span>
                   <span className="font-medium text-lg">
                     {message.includes("No recipe found") || message.includes("You can only combine") || message.includes("don't combine") || message.includes("had no effect") || message.includes("You can only apply") ? message : ''}
                   </span>
                 </div>
+                )}
 
                 {/* Success message */}
                 <div className={`${darkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'} px-4 py-3 rounded-xl shadow-lg flex items-center justify-center mt-2 ${(message.includes("discovered") || message.includes("created")) && !message.includes("Achievement unlocked") ? 'opacity-100 success-animation' : 'opacity-0 absolute'}`}>
@@ -2438,6 +2561,49 @@ const AdvancedRecipeCrafting: React.FC<AdvancedRecipeCraftingProps> = ({
                       className={`text-base ${darkMode ? 'bg-blue-900 hover:bg-blue-800 text-blue-200' : 'bg-blue-100 hover:bg-blue-200 text-blue-700'} px-3 py-2 rounded-lg font-medium transition-colors`}
                     >
                       {showHints ? t('cook.hideHints') : t('cook.showHints')}
+                    </button>
+                    {/* AI Toggle */}
+                    <button
+                      onClick={() => {
+                        setAiEnabled(!aiEnabled);
+                        localStorage.setItem('aiEnabled', JSON.stringify(!aiEnabled));
+                      }}
+                      className={`text-base ${
+                        aiEnabled
+                          ? (darkMode ? 'bg-green-900 hover:bg-green-800 text-green-200' : 'bg-green-100 hover:bg-green-200 text-green-700')
+                          : (darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-600')
+                      } px-3 py-2 rounded-lg font-medium transition-colors flex items-center gap-1`}
+                    >
+                      <span>{aiEnabled ? '✨' : '💤'}</span>
+                      <span>{aiEnabled ? t('cook.aiOn', { fallback: 'AI On' }) : t('cook.aiOff', { fallback: 'AI Off' })}</span>
+                    </button>
+                    {/* AI Test Button */}
+                    <button
+                      onClick={async () => {
+                        setMessage('Testing AI...');
+                        try {
+                          const res = await fetch('/api/generate-recipe', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              ingredients: [{ name: 'Water', emoji: '💧' }, { name: 'Salt', emoji: '🧂' }]
+                            })
+                          });
+                          const data = await res.json();
+                          console.log('AI Test Result:', data);
+                          if (data.name) {
+                            setMessage(`AI Works! Created: ${data.emoji} ${data.name}`);
+                          } else {
+                            setMessage(`AI Error: ${JSON.stringify(data)}`);
+                          }
+                        } catch (err) {
+                          console.error('AI Test Error:', err);
+                          setMessage(`AI Test Failed: ${err}`);
+                        }
+                      }}
+                      className={`text-base ${darkMode ? 'bg-purple-900 hover:bg-purple-800 text-purple-200' : 'bg-purple-100 hover:bg-purple-200 text-purple-700'} px-3 py-2 rounded-lg font-medium transition-colors`}
+                    >
+                      🧪 Test AI
                     </button>
                   </div>
                 </div>

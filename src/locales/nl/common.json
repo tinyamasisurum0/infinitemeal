@@ -82,7 +82,10 @@
     "selectIngredientForCooking": "Selecteer Ingrediënt voor Koken",
     "searchIngredients": "Zoek ingrediënten...",
     "noResultsFound": "Geen ingrediënten gevonden",
-    "clearSearch": "Zoekopdracht wissen"
+    "clearSearch": "Zoekopdracht wissen",
+    "aiOn": "AI Aan",
+    "aiOff": "AI Uit",
+    "aiGenerating": "AI maakt iets nieuws..."
   },
   "discover": {
     "title": "Ontdekkingen",

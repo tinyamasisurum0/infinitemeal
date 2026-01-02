@@ -73,7 +73,8 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
     }));
   });
 
-  const [achievements, setAchievements] = useState<Achievement[]>(() => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [achievements, _setAchievements] = useState<Achievement[]>(() => {
     if (typeof window === 'undefined') return initialAchievements;
     return loadFromStorage<Achievement[]>(STORAGE_KEY_ACHIEVEMENTS, initialAchievements);
   });
@@ -239,6 +240,60 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
           }
         }, 800);
       } else {
+        // No hardcoded recipe - try AI generation
+        try {
+          const res = await fetch('/api/generate-recipe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ingredients: itemsToMix.map(i => ({ name: i.name, emoji: i.emoji })),
+              cookingMethod: selectedMethod.id !== 'mix' ? selectedMethod.id : undefined
+            })
+          });
+
+          if (res.ok) {
+            const aiResult = await res.json();
+
+            if (aiResult.name) {
+              // Create new AI-generated ingredient
+              const aiId = `ai_${aiResult.name.toLowerCase().replace(/[^a-z0-9]/g, '_').substring(0, 30)}`;
+
+              const resultIngredient: Ingredient = {
+                id: aiId,
+                name: aiResult.name,
+                emoji: aiResult.emoji,
+                category: aiResult.category || 'Dish',
+                discovered: true,
+                difficulty: 3
+              };
+
+              // Add to ingredients if not exists
+              setIngredients(prev => {
+                const exists = prev.find(i => i.id === aiId);
+                if (exists) {
+                  return prev.map(i => i.id === aiId ? { ...i, discovered: true } : i);
+                }
+                return [...prev, resultIngredient];
+              });
+
+              setDiscoveryHistory(prev => [...prev, {
+                ingredients: itemsToMix.map(i => i.name),
+                method: 'AI',
+                result: resultIngredient,
+                isNewDiscovery: true
+              }]);
+
+              setLastDiscovery({ ingredient: resultIngredient, isNew: true });
+              setStatus('success');
+              setCurrentMixingIds([]);
+              return;
+            }
+          }
+        } catch (err) {
+          console.error('AI generation failed:', err);
+        }
+
+        // AI also failed - show error
         setTimeout(() => {
           const names = itemsToMix.map(i => i.name).join(' + ');
           setError(t('game.noRecipe') || `No recipe found for ${names}`);
@@ -284,7 +339,7 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
 
   return (
     <div className="flex h-screen w-full bg-[#0f172a] text-slate-100 overflow-hidden">
-      {/* Left Sidebar - Ingredient Shelf */}
+            {/* Left Sidebar - Ingredient Shelf */}
       <div className="w-80 flex flex-col border-r border-slate-800 bg-slate-900/50 backdrop-blur-md">
         <div className="p-4 border-b border-slate-800">
           <div className="flex items-center gap-2">

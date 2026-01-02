@@ -82,7 +82,10 @@
     "selectIngredientForCooking": "Seleziona Ingrediente per Cucinare",
     "searchIngredients": "Cerca ingredienti...",
     "noResultsFound": "Nessun ingrediente trovato",
-    "clearSearch": "Cancella ricerca"
+    "clearSearch": "Cancella ricerca",
+    "aiOn": "IA Attiva",
+    "aiOff": "IA Disattiva",
+    "aiGenerating": "L'IA sta creando qualcosa di nuovo..."
   },
   "discover": {
     "title": "Scoperte",

@@ -82,7 +82,10 @@
     "selectIngredientForCooking": "Pişirme için Malzeme Seç",
     "searchIngredients": "Malzeme ara...",
     "noResultsFound": "Malzeme bulunamadı",
-    "clearSearch": "Aramayı temizle"
+    "clearSearch": "Aramayı temizle",
+    "aiOn": "AI Açık",
+    "aiOff": "AI Kapalı",
+    "aiGenerating": "AI yeni bir şey oluşturuyor..."
   },
   "discover": {
     "title": "Keşifler",

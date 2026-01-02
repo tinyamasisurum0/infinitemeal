@@ -46,6 +46,19 @@ Game progress persists via localStorage with cookie fallback. Uses global keys (
 2. **Cooking Methods**: Transform single ingredients (e.g., potato → fries via fry)
 3. **Discoveries**: Track discovered ingredients per session
 4. **Achievements**: Unlock based on discovery milestones and cooking actions
+5. **Infinite Discovery (AI)**: When no hardcoded recipe matches, Gemini AI generates creative culinary results
+
+### AI Integration (Gemini)
+
+- **API Route**: `src/app/api/generate-recipe/route.ts` - Server-side AI generation (secure)
+- **Service**: `src/services/geminiService.ts` - Client-side wrapper that calls the API route
+- **SDK**: Uses `@google/genai` with Gemini 2.0 Flash model
+- **Features**:
+  - Structured JSON output with `responseMimeType: "application/json"` and `responseSchema`
+  - Generates dish name, emoji, description, and category
+  - API key kept server-side only for security
+- **Environment**: Requires `API_KEY` in `.env.local` (see `.env.example`)
+- **UI Toggle**: Users can enable/disable AI generation via button in the game UI
 
 ### Path Alias
 
