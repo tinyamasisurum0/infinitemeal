@@ -31,6 +31,7 @@ interface UndergroundPanelProps {
   onImportRecipes: (recipes: CustomRecipe[]) => void;
   onClearAll: () => void;
   availableIngredients: Ingredient[];
+  onLogout?: () => void;
 }
 
 type TabType = 'ledger' | 'creator' | 'settings';
@@ -43,7 +44,8 @@ const UndergroundPanel: React.FC<UndergroundPanelProps> = ({
   onDeleteRecipe,
   onImportRecipes,
   onClearAll,
-  availableIngredients
+  availableIngredients,
+  onLogout
 }) => {
   // Tab state
   const [activeTab, setActiveTab] = useState<TabType>('ledger');
@@ -219,12 +221,22 @@ const UndergroundPanel: React.FC<UndergroundPanelProps> = ({
                 <span className="ml-2 text-amber-400 animate-pulse">_</span>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="text-emerald-600 hover:text-emerald-400 transition-colors font-mono text-lg"
-            >
-              [ESC]
-            </button>
+            <div className="flex items-center gap-3">
+              {onLogout && (
+                <button
+                  onClick={onLogout}
+                  className="px-3 py-1 bg-red-900/30 border border-red-800 rounded text-red-400 hover:bg-red-800/50 transition-colors font-mono text-sm"
+                >
+                  🚪 Logout
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="text-emerald-600 hover:text-emerald-400 transition-colors font-mono text-lg"
+              >
+                [ESC]
+              </button>
+            </div>
           </div>
 
           {/* Title */}
@@ -235,7 +247,6 @@ const UndergroundPanel: React.FC<UndergroundPanelProps> = ({
                 UNDERGROUND LAB
               </h1>
               <p className="text-emerald-700 text-xs font-mono">
-                {/* eslint-disable-next-line react/jsx-no-comment-textnodes */}
                 {'// Admin Recipe Management System v1.0'}
               </p>
             </div>

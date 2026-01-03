@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import LanguageSwitcher from './LanguageSwitcher';
 import {
@@ -23,17 +23,11 @@ import {
   DiscoveryBook,
   type GameStatus
 } from './game';
-import UndergroundPanel, { CustomRecipe, STORAGE_KEY_CUSTOM_RECIPES } from './UndergroundPanel';
-import PasswordModal from './PasswordModal';
+import { CustomRecipe, STORAGE_KEY_CUSTOM_RECIPES } from './UndergroundPanel';
 
 // Storage keys
 const STORAGE_KEY_INGREDIENTS = 'global_game_ingredients';
 const STORAGE_KEY_ACHIEVEMENTS = 'global_game_achievements';
-
-// Secret access config
-const SECRET_CLICK_COUNT = 6;
-const SECRET_CLICK_TIMEOUT = 2000; // ms
-const MASTER_KEY = '847291';
 
 // Storage management functions
 const saveToStorage = <T,>(key: string, value: T): void => {
@@ -99,15 +93,11 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
   const [contactEmail, setContactEmail] = useState('');
   const [contactMessage, setContactMessage] = useState('');
 
-  // Underground Lab (Secret Admin Panel) state
+  // Custom recipes (managed via /admin page)
   const [customRecipes, setCustomRecipes] = useState<CustomRecipe[]>(() => {
     if (typeof window === 'undefined') return [];
     return loadFromStorage<CustomRecipe[]>(STORAGE_KEY_CUSTOM_RECIPES, []);
   });
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [showUndergroundPanel, setShowUndergroundPanel] = useState(false);
-  const secretClickCountRef = useRef(0);
-  const secretClickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Computed values
   const discoveredIngredients = useMemo(() =>
@@ -190,72 +180,16 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
     }
   }, [ingredients, achievements]);
 
-  // Persist custom recipes
+  // Reload custom recipes when window gains focus (in case updated from /admin)
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    saveToStorage(STORAGE_KEY_CUSTOM_RECIPES, customRecipes);
-  }, [customRecipes]);
-
-  // ESC key to close panels
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (showUndergroundPanel) setShowUndergroundPanel(false);
-        else if (showPasswordModal) setShowPasswordModal(false);
-      }
+    const reloadCustomRecipes = () => {
+      const saved = loadFromStorage<CustomRecipe[]>(STORAGE_KEY_CUSTOM_RECIPES, []);
+      setCustomRecipes(saved);
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showUndergroundPanel, showPasswordModal]);
-
-  // Secret click handler for logo/title
-  const handleSecretClick = useCallback(() => {
-    secretClickCountRef.current += 1;
-
-    // Clear existing timeout
-    if (secretClickTimeoutRef.current) {
-      clearTimeout(secretClickTimeoutRef.current);
-    }
-
-    // Check if reached required clicks
-    if (secretClickCountRef.current >= SECRET_CLICK_COUNT) {
-      secretClickCountRef.current = 0;
-      setShowPasswordModal(true);
-    } else {
-      // Reset count after timeout
-      secretClickTimeoutRef.current = setTimeout(() => {
-        secretClickCountRef.current = 0;
-      }, SECRET_CLICK_TIMEOUT);
-    }
-  }, []);
-
-  // Custom recipe management functions
-  const handleAddCustomRecipe = useCallback((recipe: CustomRecipe) => {
-    setCustomRecipes(prev => [...prev, recipe]);
-  }, []);
-
-  const handleDeleteCustomRecipe = useCallback((id: string) => {
-    setCustomRecipes(prev => prev.filter(r => r.id !== id));
-  }, []);
-
-  const handleImportCustomRecipes = useCallback((recipes: CustomRecipe[]) => {
-    setCustomRecipes(prev => {
-      // Avoid duplicates by id
-      const existingIds = new Set(prev.map(r => r.id));
-      const newRecipes = recipes.filter(r => !existingIds.has(r.id));
-      return [...prev, ...newRecipes];
-    });
-  }, []);
-
-  const handleClearAllCustomRecipes = useCallback(() => {
-    setCustomRecipes([]);
-  }, []);
-
-  // Handle successful password entry
-  const handlePasswordSuccess = useCallback(() => {
-    setShowPasswordModal(false);
-    setShowUndergroundPanel(true);
+    // Reload when window gains focus
+    window.addEventListener('focus', reloadCustomRecipes);
+    return () => window.removeEventListener('focus', reloadCustomRecipes);
   }, []);
 
   // Handle ingredient drop
@@ -607,10 +541,7 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
       {/* Main Area - Synthesizer */}
       <div className="flex-1 relative flex flex-col items-center justify-center overflow-hidden px-4">
         <div className="z-10 text-center mb-8">
-          <h1
-            className="text-4xl font-light tracking-widest text-slate-100 uppercase cursor-default select-none"
-            onClick={handleSecretClick}
-          >
+          <h1 className="text-4xl font-light tracking-widest text-slate-100 uppercase">
             {t('app.title') || 'Infinite Meal'}
           </h1>
           <div className="h-14 mt-2 flex flex-col items-center justify-center">
@@ -762,26 +693,6 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
           </div>
         </div>
       )}
-
-      {/* Secret Password Modal */}
-      <PasswordModal
-        isOpen={showPasswordModal}
-        onClose={() => setShowPasswordModal(false)}
-        onSuccess={handlePasswordSuccess}
-        masterKey={MASTER_KEY}
-      />
-
-      {/* Underground Lab Panel */}
-      <UndergroundPanel
-        isOpen={showUndergroundPanel}
-        onClose={() => setShowUndergroundPanel(false)}
-        customRecipes={customRecipes}
-        onAddRecipe={handleAddCustomRecipe}
-        onDeleteRecipe={handleDeleteCustomRecipe}
-        onImportRecipes={handleImportCustomRecipes}
-        onClearAll={handleClearAllCustomRecipes}
-        availableIngredients={ingredients}
-      />
     </div>
   );
 };

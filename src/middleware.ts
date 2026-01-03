@@ -47,5 +47,6 @@ export const config = {
   // - files with extensions (e.g., static files)
   // - API routes
   // - _next system paths
-  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)']
+  // - admin page
+  matcher: ['/((?!api|_next|_vercel|admin|.*\\..*).*)']
 }; 
