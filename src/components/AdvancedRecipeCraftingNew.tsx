@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import LanguageSwitcher from './LanguageSwitcher';
 import {
@@ -23,10 +23,17 @@ import {
   DiscoveryBook,
   type GameStatus
 } from './game';
+import UndergroundPanel, { CustomRecipe, STORAGE_KEY_CUSTOM_RECIPES } from './UndergroundPanel';
+import PasswordModal from './PasswordModal';
 
 // Storage keys
 const STORAGE_KEY_INGREDIENTS = 'global_game_ingredients';
 const STORAGE_KEY_ACHIEVEMENTS = 'global_game_achievements';
+
+// Secret access config
+const SECRET_CLICK_COUNT = 6;
+const SECRET_CLICK_TIMEOUT = 2000; // ms
+const MASTER_KEY = '847291';
 
 // Storage management functions
 const saveToStorage = <T,>(key: string, value: T): void => {
@@ -73,8 +80,7 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
     }));
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [achievements, _setAchievements] = useState<Achievement[]>(() => {
+  const [achievements, setAchievements] = useState<Achievement[]>(() => {
     if (typeof window === 'undefined') return initialAchievements;
     return loadFromStorage<Achievement[]>(STORAGE_KEY_ACHIEVEMENTS, initialAchievements);
   });
@@ -92,6 +98,16 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
   const [compactView, setCompactView] = useState(false);
   const [contactEmail, setContactEmail] = useState('');
   const [contactMessage, setContactMessage] = useState('');
+
+  // Underground Lab (Secret Admin Panel) state
+  const [customRecipes, setCustomRecipes] = useState<CustomRecipe[]>(() => {
+    if (typeof window === 'undefined') return [];
+    return loadFromStorage<CustomRecipe[]>(STORAGE_KEY_CUSTOM_RECIPES, []);
+  });
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showUndergroundPanel, setShowUndergroundPanel] = useState(false);
+  const secretClickCountRef = useRef(0);
+  const secretClickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Computed values
   const discoveredIngredients = useMemo(() =>
@@ -121,6 +137,126 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
     if (typeof window === 'undefined') return;
     saveToStorage(STORAGE_KEY_ACHIEVEMENTS, achievements);
   }, [achievements]);
+
+  // Check and unlock achievements based on discoveries
+  useEffect(() => {
+    // Count non-basic discovered ingredients (difficulty > 1)
+    const discoveredCount = ingredients.filter(i => i.discovered && i.difficulty > 1).length;
+
+    console.log('[Achievement] Discovered count:', discoveredCount);
+
+    let updated = false;
+    let newAchievements = [...achievements];
+
+    // First Combo - create first new ingredient
+    if (discoveredCount >= 1 && !achievements.find(a => a.id === 'first_combo')?.achieved) {
+      console.log('[Achievement] Unlocking: First Combination');
+      newAchievements = newAchievements.map(a =>
+        a.id === 'first_combo' ? { ...a, achieved: true } : a
+      );
+      updated = true;
+    }
+
+    // Explorer - discover 5 ingredients
+    if (discoveredCount >= 5 && !achievements.find(a => a.id === 'explorer')?.achieved) {
+      console.log('[Achievement] Unlocking: Culinary Explorer');
+      newAchievements = newAchievements.map(a =>
+        a.id === 'explorer' ? { ...a, achieved: true } : a
+      );
+      updated = true;
+    }
+
+    // Novice Chef - discover 10 ingredients
+    if (discoveredCount >= 10 && !achievements.find(a => a.id === 'novice_chef')?.achieved) {
+      console.log('[Achievement] Unlocking: Novice Chef');
+      newAchievements = newAchievements.map(a =>
+        a.id === 'novice_chef' ? { ...a, achieved: true } : a
+      );
+      updated = true;
+    }
+
+    // Master Chef - create difficulty 4+ item
+    const highestDifficulty = Math.max(...ingredients.filter(i => i.discovered).map(i => i.difficulty || 1));
+    if (highestDifficulty >= 4 && !achievements.find(a => a.id === 'master_chef')?.achieved) {
+      console.log('[Achievement] Unlocking: Master Chef');
+      newAchievements = newAchievements.map(a =>
+        a.id === 'master_chef' ? { ...a, achieved: true } : a
+      );
+      updated = true;
+    }
+
+    if (updated) {
+      setAchievements(newAchievements);
+    }
+  }, [ingredients, achievements]);
+
+  // Persist custom recipes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    saveToStorage(STORAGE_KEY_CUSTOM_RECIPES, customRecipes);
+  }, [customRecipes]);
+
+  // ESC key to close panels
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showUndergroundPanel) setShowUndergroundPanel(false);
+        else if (showPasswordModal) setShowPasswordModal(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showUndergroundPanel, showPasswordModal]);
+
+  // Secret click handler for logo/title
+  const handleSecretClick = useCallback(() => {
+    secretClickCountRef.current += 1;
+
+    // Clear existing timeout
+    if (secretClickTimeoutRef.current) {
+      clearTimeout(secretClickTimeoutRef.current);
+    }
+
+    // Check if reached required clicks
+    if (secretClickCountRef.current >= SECRET_CLICK_COUNT) {
+      secretClickCountRef.current = 0;
+      setShowPasswordModal(true);
+    } else {
+      // Reset count after timeout
+      secretClickTimeoutRef.current = setTimeout(() => {
+        secretClickCountRef.current = 0;
+      }, SECRET_CLICK_TIMEOUT);
+    }
+  }, []);
+
+  // Custom recipe management functions
+  const handleAddCustomRecipe = useCallback((recipe: CustomRecipe) => {
+    setCustomRecipes(prev => [...prev, recipe]);
+  }, []);
+
+  const handleDeleteCustomRecipe = useCallback((id: string) => {
+    setCustomRecipes(prev => prev.filter(r => r.id !== id));
+  }, []);
+
+  const handleImportCustomRecipes = useCallback((recipes: CustomRecipe[]) => {
+    setCustomRecipes(prev => {
+      // Avoid duplicates by id
+      const existingIds = new Set(prev.map(r => r.id));
+      const newRecipes = recipes.filter(r => !existingIds.has(r.id));
+      return [...prev, ...newRecipes];
+    });
+  }, []);
+
+  const handleClearAllCustomRecipes = useCallback(() => {
+    setCustomRecipes([]);
+  }, []);
+
+  // Handle successful password entry
+  const handlePasswordSuccess = useCallback(() => {
+    setShowPasswordModal(false);
+    setShowUndergroundPanel(true);
+  }, []);
 
   // Handle ingredient drop
   const handleDrop = (ingredientId: string) => {
@@ -239,8 +375,58 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
             setCurrentMixingIds([]);
           }
         }, 800);
-      } else {
-        // No hardcoded recipe - try AI generation
+        return;
+      }
+
+      // Check custom recipes (Underground Lab) BEFORE AI generation
+      const matchedCustomRecipe = customRecipes.find(recipe => {
+        if (recipe.ingredients.length !== ids.length) return false;
+        const recipeIds = [...recipe.ingredients].sort();
+        return recipeIds.every((id, index) => id === ids[index]);
+      });
+
+      if (matchedCustomRecipe) {
+        setTimeout(() => {
+          const customResult = matchedCustomRecipe.result;
+          const existingResult = ingredients.find(i => i.id === customResult.id);
+          const isNew = !existingResult?.discovered;
+
+          const resultIngredient: Ingredient = existingResult || {
+            id: customResult.id,
+            name: customResult.name,
+            emoji: customResult.emoji,
+            category: customResult.category,
+            discovered: true,
+            difficulty: customResult.difficulty
+          };
+
+          // Add new ingredient to list or mark as discovered
+          if (isNew) {
+            setIngredients(prev => {
+              const exists = prev.find(i => i.id === customResult.id);
+              if (exists) {
+                return prev.map(i => i.id === customResult.id ? { ...i, discovered: true } : i);
+              }
+              return [...prev, { ...resultIngredient, discovered: true }];
+            });
+          }
+
+          setDiscoveryHistory(prev => [...prev, {
+            ingredients: itemsToMix.map(i => i.name),
+            method: 'custom',
+            result: resultIngredient,
+            isNewDiscovery: isNew
+          }]);
+
+          setLastDiscovery({ ingredient: resultIngredient, isNew });
+          setStatus('success');
+          setCurrentMixingIds([]);
+        }, 800);
+        return;
+      }
+
+      // No hardcoded or custom recipe - try AI generation
+      {
         try {
           const res = await fetch('/api/generate-recipe', {
             method: 'POST',
@@ -329,12 +515,20 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
 
   // Reset all progress
   const handleReset = () => {
+    console.log('[Reset] Clearing all progress...');
+
+    // Clear storage first
+    localStorage.removeItem(STORAGE_KEY_INGREDIENTS);
+    localStorage.removeItem(STORAGE_KEY_ACHIEVEMENTS);
+
+    // Reset state
     setIngredients(initialIngredients);
+    setAchievements(initialAchievements.map(a => ({ ...a, achieved: false })));
     setDiscoveryHistory([]);
     setCurrentMixingIds([]);
     setShowResetConfirm(false);
-    localStorage.removeItem(STORAGE_KEY_INGREDIENTS);
-    localStorage.removeItem(STORAGE_KEY_ACHIEVEMENTS);
+
+    console.log('[Reset] Complete');
   };
 
   return (
@@ -413,7 +607,10 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
       {/* Main Area - Synthesizer */}
       <div className="flex-1 relative flex flex-col items-center justify-center overflow-hidden px-4">
         <div className="z-10 text-center mb-8">
-          <h1 className="text-4xl font-light tracking-widest text-slate-100 uppercase">
+          <h1
+            className="text-4xl font-light tracking-widest text-slate-100 uppercase cursor-default select-none"
+            onClick={handleSecretClick}
+          >
             {t('app.title') || 'Infinite Meal'}
           </h1>
           <div className="h-14 mt-2 flex flex-col items-center justify-center">
@@ -565,6 +762,26 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
           </div>
         </div>
       )}
+
+      {/* Secret Password Modal */}
+      <PasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        onSuccess={handlePasswordSuccess}
+        masterKey={MASTER_KEY}
+      />
+
+      {/* Underground Lab Panel */}
+      <UndergroundPanel
+        isOpen={showUndergroundPanel}
+        onClose={() => setShowUndergroundPanel(false)}
+        customRecipes={customRecipes}
+        onAddRecipe={handleAddCustomRecipe}
+        onDeleteRecipe={handleDeleteCustomRecipe}
+        onImportRecipes={handleImportCustomRecipes}
+        onClearAll={handleClearAllCustomRecipes}
+        availableIngredients={ingredients}
+      />
     </div>
   );
 };
