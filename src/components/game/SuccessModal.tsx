@@ -3,6 +3,7 @@
 import React from 'react';
 import { Ingredient } from '@/types/RecipeTypes';
 import { useTranslations } from 'next-intl';
+import { safeTranslate } from '@/utils/translations';
 
 interface SuccessModalProps {
   discovery: Ingredient;
@@ -39,9 +40,9 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ discovery, isNew, onClose }
           )}
         </div>
 
-        <h2 className="text-3xl font-bold text-slate-100 mb-2">{discovery.name}</h2>
+        <h2 className="text-3xl font-bold text-slate-100 mb-2">{safeTranslate(t, `ingredients.${discovery.id}`, discovery.name)}</h2>
         <p className="text-slate-400 text-sm mb-8 leading-relaxed italic">
-          {t(`categories.${discovery.category}`) || discovery.category}
+          {safeTranslate(t, `categories.${discovery.category}`, discovery.category)}
         </p>
 
         <button

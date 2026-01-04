@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import LanguageSwitcher from './LanguageSwitcher';
 import {
   Ingredient,
@@ -23,11 +23,29 @@ import {
   DiscoveryBook,
   type GameStatus
 } from './game';
-import { CustomRecipe, STORAGE_KEY_CUSTOM_RECIPES } from './UndergroundPanel';
+import { CustomRecipe } from './UndergroundPanel';
+import { safeTranslate } from '@/utils/translations';
+import { addPendingRecipe, subscribeToCustomRecipes, FirestoreCustomRecipe } from '@/services/recipeFirestore';
 
 // Storage keys
 const STORAGE_KEY_INGREDIENTS = 'global_game_ingredients';
 const STORAGE_KEY_ACHIEVEMENTS = 'global_game_achievements';
+export const STORAGE_KEY_PENDING_AI_RECIPES = 'pending_ai_recipes';
+
+// Pending AI recipe type
+export interface PendingAIRecipe {
+  id: string;
+  ingredients: string[]; // ingredient IDs used
+  result: {
+    id: string;
+    name: string;
+    emoji: string;
+    category: string;
+    difficulty: number;
+  };
+  createdAt: string;
+  locale: string;
+}
 
 // Storage management functions
 const saveToStorage = <T,>(key: string, value: T): void => {
@@ -61,6 +79,7 @@ interface DiscoveryHistoryItem {
 
 const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
   const t = useTranslations();
+  const locale = useLocale();
 
   // Core game state
   const [ingredients, setIngredients] = useState<Ingredient[]>(() => {
@@ -93,11 +112,27 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
   const [contactEmail, setContactEmail] = useState('');
   const [contactMessage, setContactMessage] = useState('');
 
-  // Custom recipes (managed via /admin page)
-  const [customRecipes, setCustomRecipes] = useState<CustomRecipe[]>(() => {
-    if (typeof window === 'undefined') return [];
-    return loadFromStorage<CustomRecipe[]>(STORAGE_KEY_CUSTOM_RECIPES, []);
-  });
+  // Custom recipes from Firestore (managed via /admin page)
+  const [firestoreRecipes, setFirestoreRecipes] = useState<FirestoreCustomRecipe[]>([]);
+
+  // Subscribe to Firestore custom recipes
+  useEffect(() => {
+    const unsubscribe = subscribeToCustomRecipes((recipes) => {
+      setFirestoreRecipes(recipes);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Convert Firestore recipes to CustomRecipe format for matching
+  const customRecipes: CustomRecipe[] = useMemo(() =>
+    firestoreRecipes.map(r => ({
+      id: r.id || '',
+      ingredients: r.ingredients,
+      result: r.result,
+      createdAt: r.createdAt?.toMillis() || Date.now()
+    })),
+    [firestoreRecipes]
+  );
 
   // Computed values
   const discoveredIngredients = useMemo(() =>
@@ -180,17 +215,7 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
     }
   }, [ingredients, achievements]);
 
-  // Reload custom recipes when window gains focus (in case updated from /admin)
-  useEffect(() => {
-    const reloadCustomRecipes = () => {
-      const saved = loadFromStorage<CustomRecipe[]>(STORAGE_KEY_CUSTOM_RECIPES, []);
-      setCustomRecipes(saved);
-    };
-
-    // Reload when window gains focus
-    window.addEventListener('focus', reloadCustomRecipes);
-    return () => window.removeEventListener('focus', reloadCustomRecipes);
-  }, []);
+  // Note: Custom recipes are now synced via Firestore realtime subscription
 
   // Handle ingredient drop
   const handleDrop = (ingredientId: string) => {
@@ -247,8 +272,8 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
           }
 
           setDiscoveryHistory(prev => [...prev, {
-            ingredients: [ingredient.name],
-            method: selectedMethod.name,
+            ingredients: [safeTranslate(t, `ingredients.${ingredient.id}`, ingredient.name)],
+            method: safeTranslate(t, `cookingMethods.${selectedMethod.id}`, selectedMethod.name),
             result: resultIngredient,
             isNewDiscovery: isNew
           }]);
@@ -259,7 +284,7 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
         }, 800);
       } else {
         setTimeout(() => {
-          setError(t('game.noEffect') || `${selectedMethod.name} has no effect on ${ingredient.name}`);
+          setError(safeTranslate(t, 'game.noEffect', `${safeTranslate(t, `cookingMethods.${selectedMethod.id}`, selectedMethod.name)} has no effect on ${safeTranslate(t, `ingredients.${ingredient.id}`, ingredient.name)}`));
           setStatus('failure');
           setTimeout(() => {
             setStatus('idle');
@@ -298,8 +323,8 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
             }
 
             setDiscoveryHistory(prev => [...prev, {
-              ingredients: itemsToMix.map(i => i.name),
-              method: 'mix',
+              ingredients: itemsToMix.map(i => safeTranslate(t, `ingredients.${i.id}`, i.name)),
+              method: safeTranslate(t, 'cookingMethods.mix', 'mix'),
               result: resultIngredient,
               isNewDiscovery: isNew
             }]);
@@ -346,7 +371,7 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
           }
 
           setDiscoveryHistory(prev => [...prev, {
-            ingredients: itemsToMix.map(i => i.name),
+            ingredients: itemsToMix.map(i => safeTranslate(t, `ingredients.${i.id}`, i.name)),
             method: 'custom',
             result: resultIngredient,
             isNewDiscovery: isNew
@@ -367,7 +392,8 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               ingredients: itemsToMix.map(i => ({ name: i.name, emoji: i.emoji })),
-              cookingMethod: selectedMethod.id !== 'mix' ? selectedMethod.id : undefined
+              cookingMethod: selectedMethod.id !== 'mix' ? selectedMethod.id : undefined,
+              locale
             })
           });
 
@@ -387,6 +413,19 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
                 difficulty: 3
               };
 
+              // Save to pending AI recipes in Firestore for admin review
+              addPendingRecipe({
+                ingredients: idsToUse,
+                result: {
+                  id: aiId,
+                  name: aiResult.name,
+                  emoji: aiResult.emoji,
+                  category: aiResult.category || 'Dish',
+                  difficulty: 3
+                },
+                locale
+              }).catch(err => console.error('Failed to save pending recipe:', err));
+
               // Add to ingredients if not exists
               setIngredients(prev => {
                 const exists = prev.find(i => i.id === aiId);
@@ -397,7 +436,7 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
               });
 
               setDiscoveryHistory(prev => [...prev, {
-                ingredients: itemsToMix.map(i => i.name),
+                ingredients: itemsToMix.map(i => safeTranslate(t, `ingredients.${i.id}`, i.name)),
                 method: 'AI',
                 result: resultIngredient,
                 isNewDiscovery: true
@@ -415,8 +454,8 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
 
         // AI also failed - show error
         setTimeout(() => {
-          const names = itemsToMix.map(i => i.name).join(' + ');
-          setError(t('game.noRecipe') || `No recipe found for ${names}`);
+          const names = itemsToMix.map(i => safeTranslate(t, `ingredients.${i.id}`, i.name)).join(' + ');
+          setError(safeTranslate(t, 'game.noRecipe', `No recipe found for ${names}`));
           setStatus('failure');
           setTimeout(() => {
             setStatus('idle');

@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { CookingMethod } from '@/types/RecipeTypes';
+import { useTranslations } from 'next-intl';
+import { safeTranslate } from '@/utils/translations';
 
 interface MethodSelectorProps {
   methods: CookingMethod[];
@@ -11,6 +13,7 @@ interface MethodSelectorProps {
 }
 
 const MethodSelector: React.FC<MethodSelectorProps> = ({ methods, selected, onSelect, disabled }) => {
+  const t = useTranslations();
 
   return (
     <div className="flex flex-col items-center w-full">
@@ -34,7 +37,7 @@ const MethodSelector: React.FC<MethodSelectorProps> = ({ methods, selected, onSe
                 {method.emoji}
               </span>
               <span className={`text-[10px] font-bold uppercase tracking-wider ${isActive ? 'text-amber-500' : 'text-slate-600'}`}>
-                {method.name}
+                {safeTranslate(t, `cookingMethods.${method.id}`, method.name)}
               </span>
 
               {isActive && (

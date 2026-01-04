@@ -19,11 +19,13 @@ function createIngredientId(name: string): string {
 // Generate a recipe using Gemini AI via server-side API route
 export async function generateRecipeWithAI(
   ingredients: Ingredient[],
-  cookingMethod?: string
+  cookingMethod?: string,
+  locale: string = "en"
 ): Promise<Ingredient | null> {
   console.log("[GeminiService] generateRecipeWithAI called");
   console.log("[GeminiService] Ingredients:", ingredients);
   console.log("[GeminiService] Cooking method:", cookingMethod);
+  console.log("[GeminiService] Locale:", locale);
 
   try {
     const requestBody = {
@@ -32,6 +34,7 @@ export async function generateRecipeWithAI(
         emoji: i.emoji,
       })),
       cookingMethod,
+      locale,
     };
     console.log("[GeminiService] Request body:", requestBody);
 

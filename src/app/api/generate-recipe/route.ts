@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI, Type } from "@google/genai";
 
+// Language names for prompt
+const languageNames: Record<string, string> = {
+  en: "English",
+  es: "Spanish",
+  fr: "French",
+  de: "German",
+  it: "Italian",
+  nl: "Dutch",
+  tr: "Turkish",
+};
+
 // Response schema for structured JSON output
 const recipeResponseSchema = {
   type: Type.OBJECT,
@@ -49,9 +60,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { ingredients, cookingMethod } = body;
+    const { ingredients, cookingMethod, locale = "en" } = body;
     console.log("[API] Received ingredients:", ingredients);
     console.log("[API] Cooking method:", cookingMethod);
+    console.log("[API] Locale:", locale);
+
+    const language = languageNames[locale] || "English";
 
     if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
       console.error("[API] Invalid ingredients");
@@ -74,6 +88,8 @@ export async function POST(request: NextRequest) {
     const prompt = `You are a creative culinary expert. Given these ingredients: ${ingredientNames.join(", ")}, ${methodText}, what dish or food item would result?
 
 Consider real-world cuisine from around the globe. Be creative but realistic - the result should be something that makes culinary sense.
+
+IMPORTANT: Respond in ${language}. The dish name, description, and all text must be in ${language}.
 
 Respond with the most likely and interesting culinary result.`;
 

@@ -2,6 +2,22 @@ import { getRequestConfig } from 'next-intl/server';
 
 // Define the supported locales
 export const locales = ['en', 'es', 'it', 'fr', 'de', 'nl', 'tr'] as const;
+
+// Error handling for missing translations (e.g., AI-generated ingredients)
+export const onError = (error: Error) => {
+  // Silently ignore missing message errors for dynamic content
+  if (error.message.includes('MISSING_MESSAGE')) {
+    return;
+  }
+  console.error(error);
+};
+
+export const getMessageFallback = ({ key, namespace }: { key: string; namespace?: string }) => {
+  // Return the last part of the key as fallback (e.g., "ai_shepherd_s_pie" -> "ai_shepherd_s_pie")
+  const fullKey = namespace ? `${namespace}.${key}` : key;
+  const parts = fullKey.split('.');
+  return parts[parts.length - 1].replace(/_/g, ' ');
+};
 export type Locale = (typeof locales)[number];
 export const defaultLocale: Locale = 'en';
 

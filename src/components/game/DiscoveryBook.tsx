@@ -5,6 +5,7 @@ import { Ingredient, Achievement } from '@/types/RecipeTypes';
 import { useTranslations } from 'next-intl';
 import { BASIC_STARTER_INGREDIENTS } from '@/data/ingredients';
 import { recipes } from '@/data/recipes';
+import { safeTranslate } from '@/utils/translations';
 
 interface DiscoveryHistoryItem {
   ingredients: string[];
@@ -37,7 +38,8 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
     if (!recipe) return null;
     return recipe.ingredients.map(id => {
       const ing = ingredients.find(i => i.id === id);
-      return ing ? { id, name: ing.name, emoji: ing.emoji } : { id, name: id, emoji: '?' };
+      const translatedName = safeTranslate(t, `ingredients.${id}`, ing ? ing.name : id);
+      return ing ? { id, name: translatedName, emoji: ing.emoji } : { id, name: translatedName, emoji: '?' };
     });
   };
 
@@ -123,7 +125,7 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
                         <span className="text-2xl group-hover:scale-110 transition-transform">{discovery.result.emoji}</span>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold">{discovery.result.name}</p>
+                            <p className="text-sm font-semibold">{safeTranslate(t, `ingredients.${discovery.result.id}`, discovery.result.name)}</p>
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
                             <p className="text-[10px] text-slate-500">
@@ -173,7 +175,7 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
                       <div className="flex items-center gap-3">
                         <span className="text-2xl group-hover:scale-110 transition-transform">{ing.emoji}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-slate-200">{ing.name}</p>
+                          <p className="text-sm font-semibold text-slate-200">{safeTranslate(t, `ingredients.${ing.id}`, ing.name)}</p>
                           {recipe && (
                             <div className="flex items-center gap-1 mt-1 text-[10px] text-slate-500">
                               {recipe.map((item, idx) => (
@@ -201,7 +203,7 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
                         {ing.emoji}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-500 group-hover:text-slate-400">{ing.name}</p>
+                        <p className="text-sm font-semibold text-slate-500 group-hover:text-slate-400">{safeTranslate(t, `ingredients.${ing.id}`, ing.name)}</p>
                         <p className="text-[10px] text-slate-600 mt-0.5">???</p>
                       </div>
                       <span className="text-slate-600">🔒</span>
