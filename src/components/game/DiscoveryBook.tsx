@@ -26,6 +26,12 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
   const [showUndiscovered, setShowUndiscovered] = useState(false);
   const [activeView, setActiveView] = useState<'discoveries' | 'achievements'>('discoveries');
 
+  // Helper to get display name (direct name for AI/custom, translated for built-in)
+  const getDisplayName = (id: string, fallbackName: string) => {
+    const isCustomOrAI = id.startsWith('ai_') || id.startsWith('custom_');
+    return isCustomOrAI ? fallbackName : safeTranslate(t, `ingredients.${id}`, fallbackName);
+  };
+
   // Achievement stats
   const achievedCount = useMemo(() =>
     achievements.filter(a => a.achieved).length,
@@ -38,8 +44,8 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
     if (!recipe) return null;
     return recipe.ingredients.map(id => {
       const ing = ingredients.find(i => i.id === id);
-      const translatedName = safeTranslate(t, `ingredients.${id}`, ing ? ing.name : id);
-      return ing ? { id, name: translatedName, emoji: ing.emoji } : { id, name: translatedName, emoji: '?' };
+      const displayName = getDisplayName(id, ing ? ing.name : id);
+      return ing ? { id, name: displayName, emoji: ing.emoji } : { id, name: displayName, emoji: '?' };
     });
   };
 
@@ -125,7 +131,7 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
                         <span className="text-2xl group-hover:scale-110 transition-transform">{discovery.result.emoji}</span>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold">{safeTranslate(t, `ingredients.${discovery.result.id}`, discovery.result.name)}</p>
+                            <p className="text-sm font-semibold">{getDisplayName(discovery.result.id, discovery.result.name)}</p>
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
                             <p className="text-[10px] text-slate-500">
@@ -175,7 +181,7 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
                       <div className="flex items-center gap-3">
                         <span className="text-2xl group-hover:scale-110 transition-transform">{ing.emoji}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-slate-200">{safeTranslate(t, `ingredients.${ing.id}`, ing.name)}</p>
+                          <p className="text-sm font-semibold text-slate-200">{getDisplayName(ing.id, ing.name)}</p>
                           {recipe && (
                             <div className="flex items-center gap-1 mt-1 text-[10px] text-slate-500">
                               {recipe.map((item, idx) => (
@@ -203,7 +209,7 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
                         {ing.emoji}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-500 group-hover:text-slate-400">{safeTranslate(t, `ingredients.${ing.id}`, ing.name)}</p>
+                        <p className="text-sm font-semibold text-slate-500 group-hover:text-slate-400">{getDisplayName(ing.id, ing.name)}</p>
                         <p className="text-[10px] text-slate-600 mt-0.5">???</p>
                       </div>
                       <span className="text-slate-600">🔒</span>

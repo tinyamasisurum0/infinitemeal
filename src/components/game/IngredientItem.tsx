@@ -13,7 +13,12 @@ interface IngredientItemProps {
 
 const IngredientItem: React.FC<IngredientItemProps> = ({ ingredient, onClick, compact = false }) => {
   const t = useTranslations();
-  const ingredientName = safeTranslate(t, `ingredients.${ingredient.id}`, ingredient.name);
+
+  // For AI/custom recipes, use name directly. For built-in ingredients, use translation.
+  const isCustomOrAI = ingredient.id.startsWith('ai_') || ingredient.id.startsWith('custom_');
+  const ingredientName = isCustomOrAI
+    ? ingredient.name
+    : safeTranslate(t, `ingredients.${ingredient.id}`, ingredient.name);
   const onDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData('ingredientId', ingredient.id);
     e.dataTransfer.effectAllowed = 'move';

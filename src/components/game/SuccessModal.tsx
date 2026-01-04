@@ -14,6 +14,12 @@ interface SuccessModalProps {
 const SuccessModal: React.FC<SuccessModalProps> = ({ discovery, isNew, onClose }) => {
   const t = useTranslations();
 
+  // For AI/custom recipes, use name directly. For built-in ingredients, use translation.
+  const isCustomOrAI = discovery.id.startsWith('ai_') || discovery.id.startsWith('custom_');
+  const displayName = isCustomOrAI
+    ? discovery.name
+    : safeTranslate(t, `ingredients.${discovery.id}`, discovery.name);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
       {/* Radiance Aura Background */}
@@ -40,7 +46,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ discovery, isNew, onClose }
           )}
         </div>
 
-        <h2 className="text-3xl font-bold text-slate-100 mb-2">{safeTranslate(t, `ingredients.${discovery.id}`, discovery.name)}</h2>
+        <h2 className="text-3xl font-bold text-slate-100 mb-2">{displayName}</h2>
         <p className="text-slate-400 text-sm mb-8 leading-relaxed italic">
           {safeTranslate(t, `categories.${discovery.category}`, discovery.category)}
         </p>

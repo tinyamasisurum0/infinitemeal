@@ -225,7 +225,10 @@ export default function AdminPage() {
                     <div>
                       <p className="text-white font-medium">{pending.result.name}</p>
                       <p className="text-slate-500 text-sm">
-                        {pending.ingredients.join(' + ')} → {pending.result.category}
+                        {pending.ingredients.map(id => {
+                          const ing = ingredients.find(i => i.id === id);
+                          return ing ? ing.name : id;
+                        }).join(' + ')} → {pending.result.category}
                       </p>
                       <p className="text-slate-600 text-xs">
                         {pending.createdAt?.toDate().toLocaleString('tr-TR')} • {pending.locale?.toUpperCase()}
