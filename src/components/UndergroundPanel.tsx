@@ -22,6 +22,22 @@ export interface CustomRecipe {
 // Storage key for custom recipes
 export const STORAGE_KEY_CUSTOM_RECIPES = 'underground_custom_recipes';
 
+// Pending recipe type for AI-generated recipes awaiting approval
+export interface PendingRecipe {
+  id: string;
+  ingredients: string[];
+  result: {
+    id: string;
+    name: string;
+    emoji: string;
+    category: string;
+    difficulty: number;
+    description?: string;
+  };
+  createdAt: Date;
+  locale: string;
+}
+
 interface UndergroundPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -32,9 +48,13 @@ interface UndergroundPanelProps {
   onClearAll: () => void;
   availableIngredients: Ingredient[];
   onLogout?: () => void;
+  pendingRecipes?: PendingRecipe[];
+  onApprovePending?: (pending: PendingRecipe) => void;
+  onRejectPending?: (id: string) => void;
+  onClearAllPending?: () => void;
 }
 
-type TabType = 'ledger' | 'creator' | 'settings';
+type TabType = 'pending' | 'ledger' | 'creator' | 'settings';
 
 const UndergroundPanel: React.FC<UndergroundPanelProps> = ({
   isOpen,
@@ -45,10 +65,14 @@ const UndergroundPanel: React.FC<UndergroundPanelProps> = ({
   onImportRecipes,
   onClearAll,
   availableIngredients,
-  onLogout
+  onLogout,
+  pendingRecipes = [],
+  onApprovePending,
+  onRejectPending,
+  onClearAllPending
 }) => {
-  // Tab state
-  const [activeTab, setActiveTab] = useState<TabType>('ledger');
+  // Tab state - default to pending if there are pending recipes
+  const [activeTab, setActiveTab] = useState<TabType>(pendingRecipes.length > 0 ? 'pending' : 'ledger');
 
   // Search/Filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -255,6 +279,7 @@ const UndergroundPanel: React.FC<UndergroundPanelProps> = ({
           {/* Tabs */}
           <div className="flex gap-2 mt-4">
             {[
+              { id: 'pending', label: 'PENDING', icon: '🤖', badge: pendingRecipes.length },
               { id: 'ledger', label: 'LEDGER', icon: '📜' },
               { id: 'creator', label: 'CREATOR', icon: '⚗️' },
               { id: 'settings', label: 'SETTINGS', icon: '⚙️' }
@@ -262,13 +287,18 @@ const UndergroundPanel: React.FC<UndergroundPanelProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as TabType)}
-                className={`px-4 py-2 font-mono text-sm rounded transition-all ${
+                className={`px-4 py-2 font-mono text-sm rounded transition-all relative ${
                   activeTab === tab.id
                     ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-700/50'
                     : 'text-emerald-700 hover:text-emerald-500 border border-transparent'
                 }`}
               >
                 {tab.icon} {tab.label}
+                {'badge' in tab && tab.badge > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-amber-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px]">
+                    {tab.badge}
+                  </span>
+                )}
               </button>
             ))}
 
@@ -282,6 +312,80 @@ const UndergroundPanel: React.FC<UndergroundPanelProps> = ({
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-4">
+
+          {/* PENDING TAB */}
+          {activeTab === 'pending' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-emerald-400 font-mono text-lg">
+                  🤖 Bekleyen AI Tarifleri
+                </h2>
+                {pendingRecipes.length > 0 && onClearAllPending && (
+                  <button
+                    onClick={onClearAllPending}
+                    className="text-red-400 hover:text-red-300 text-sm font-mono"
+                  >
+                    Tümünü Sil
+                  </button>
+                )}
+              </div>
+
+              {pendingRecipes.length === 0 ? (
+                <div className="text-center py-12 text-emerald-700 font-mono">
+                  <p className="text-4xl mb-4">🤖</p>
+                  <p>Bekleyen AI tarifi yok</p>
+                  <p className="text-sm mt-2 text-emerald-800">AI tarifler oyunda üretildiğinde burada görünecek</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {pendingRecipes.map((pending) => (
+                    <div
+                      key={pending.id}
+                      className="bg-[#0d120d] border border-emerald-900/30 rounded-lg p-4 flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-4">
+                        <span className="text-4xl">{pending.result.emoji}</span>
+                        <div>
+                          <p className="text-white font-medium text-lg">{pending.result.name}</p>
+                          {pending.result.description && (
+                            <p className="text-emerald-600 text-sm italic mt-1">{pending.result.description}</p>
+                          )}
+                          <p className="text-emerald-700 text-sm mt-1">
+                            {pending.ingredients.map(id => {
+                              const info = getIngredientInfo(id);
+                              return `${info.emoji} ${info.name}`;
+                            }).join(' + ')} → {pending.result.category}
+                          </p>
+                          <p className="text-emerald-800 text-xs mt-1">
+                            {pending.createdAt.toLocaleString('tr-TR')} • {pending.locale?.toUpperCase()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {onRejectPending && (
+                          <button
+                            onClick={() => onRejectPending(pending.id)}
+                            className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Reddet"
+                          >
+                            ✕
+                          </button>
+                        )}
+                        {onApprovePending && (
+                          <button
+                            onClick={() => onApprovePending(pending)}
+                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors"
+                          >
+                            ✓ Onayla
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* LEDGER TAB */}
           {activeTab === 'ledger' && (

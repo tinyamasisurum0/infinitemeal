@@ -35,6 +35,7 @@ export interface FirestorePendingRecipe {
     emoji: string;
     category: string;
     difficulty: number;
+    description?: string;
   };
   createdAt: Timestamp;
   locale: string;
@@ -66,7 +67,10 @@ export function subscribeToCustomRecipes(
       id: doc.id,
       ...doc.data()
     } as FirestoreCustomRecipe));
+    console.log('[Firestore] Custom recipes:', recipes.length);
     callback(recipes);
+  }, (error) => {
+    console.error('[Firestore] Custom recipes subscription error:', error);
   });
 }
 
@@ -108,7 +112,10 @@ export function subscribeToPendingRecipes(
       id: doc.id,
       ...doc.data()
     } as FirestorePendingRecipe));
+    console.log('[Firestore] Pending recipes:', recipes.length);
     callback(recipes);
+  }, (error) => {
+    console.error('[Firestore] Pending recipes subscription error:', error);
   });
 }
 
@@ -137,7 +144,7 @@ export async function approvePendingRecipe(
     ingredients: pending.ingredients,
     result: {
       ...pending.result,
-      description: `AI generated: ${pending.ingredients.join(' + ')}`
+      description: pending.result.description || `${pending.ingredients.join(' + ')}`
     }
   });
 

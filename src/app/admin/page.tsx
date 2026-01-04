@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import UndergroundPanel, { CustomRecipe } from '@/components/UndergroundPanel';
+import UndergroundPanel, { CustomRecipe, PendingRecipe } from '@/components/UndergroundPanel';
 import AdminLoginModal from '@/components/AdminLoginModal';
 import { initialIngredients } from '@/data/ingredients';
 import { Ingredient } from '@/types/RecipeTypes';
@@ -167,6 +167,15 @@ export default function AdminPage() {
     createdAt: r.createdAt?.toMillis() || Date.now()
   }));
 
+  // Convert Firestore pending recipes to PendingRecipe format for UndergroundPanel
+  const pendingRecipesForPanel: PendingRecipe[] = pendingRecipes.map(r => ({
+    id: r.id || '',
+    ingredients: r.ingredients,
+    result: r.result,
+    createdAt: r.createdAt?.toDate() || new Date(),
+    locale: r.locale || 'en'
+  }));
+
   // Loading state
   if (isLoading) {
     return (
@@ -194,69 +203,6 @@ export default function AdminPage() {
   // Authenticated - show panel
   return (
     <div className="min-h-screen bg-[#0a0f0a]">
-      {/* Pending AI Recipes Section */}
-      {pendingRecipes.length > 0 && (
-        <div className="border-b border-emerald-900/50 bg-[#0a0f0a] p-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-emerald-400 font-mono text-lg flex items-center gap-2">
-                <span>🤖</span>
-                <span>Bekleyen AI Tarifleri</span>
-                <span className="bg-amber-500 text-black text-xs px-2 py-0.5 rounded-full font-bold">
-                  {pendingRecipes.length}
-                </span>
-              </h2>
-              <button
-                onClick={handleClearAllPending}
-                className="text-red-400 hover:text-red-300 text-sm font-mono"
-              >
-                Tümünü Sil
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              {pendingRecipes.map((pending) => (
-                <div
-                  key={pending.id}
-                  className="bg-slate-900/50 border border-emerald-900/30 rounded-lg p-4 flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="text-3xl">{pending.result.emoji}</span>
-                    <div>
-                      <p className="text-white font-medium">{pending.result.name}</p>
-                      <p className="text-slate-500 text-sm">
-                        {pending.ingredients.map(id => {
-                          const ing = ingredients.find(i => i.id === id);
-                          return ing ? ing.name : id;
-                        }).join(' + ')} → {pending.result.category}
-                      </p>
-                      <p className="text-slate-600 text-xs">
-                        {pending.createdAt?.toDate().toLocaleString('tr-TR')} • {pending.locale?.toUpperCase()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => pending.id && handleRejectPending(pending.id)}
-                      className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
-                      title="Reddet"
-                    >
-                      ✕
-                    </button>
-                    <button
-                      onClick={() => handleApprovePending(pending)}
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors"
-                    >
-                      ✓ Onayla
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       <UndergroundPanel
         isOpen={true}
         onClose={() => window.location.href = '/'}
@@ -267,6 +213,10 @@ export default function AdminPage() {
         onClearAll={handleClearAll}
         availableIngredients={ingredients}
         onLogout={handleLogout}
+        pendingRecipes={pendingRecipesForPanel}
+        onApprovePending={handleApprovePending}
+        onRejectPending={handleRejectPending}
+        onClearAllPending={handleClearAllPending}
       />
     </div>
   );

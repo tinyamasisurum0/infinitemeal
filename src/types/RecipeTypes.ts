@@ -7,6 +7,7 @@ export interface Ingredient {
   category: string;
   discovered: boolean;
   difficulty: number;
+  description?: string;
 }
 
 export interface Transformation {

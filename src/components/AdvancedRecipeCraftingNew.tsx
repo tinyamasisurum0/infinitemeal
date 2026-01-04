@@ -410,7 +410,8 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
                 emoji: aiResult.emoji,
                 category: aiResult.category || 'Dish',
                 discovered: true,
-                difficulty: 3
+                difficulty: 3,
+                description: aiResult.description
               };
 
               // Save to pending AI recipes in Firestore for admin review
@@ -421,7 +422,8 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
                   name: aiResult.name,
                   emoji: aiResult.emoji,
                   category: aiResult.category || 'Dish',
-                  difficulty: 3
+                  difficulty: 3,
+                  description: aiResult.description
                 },
                 locale
               }).catch(err => console.error('Failed to save pending recipe:', err));
