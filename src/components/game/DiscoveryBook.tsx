@@ -66,7 +66,7 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
   );
 
   return (
-    <div className="h-full bg-slate-900 border-l border-slate-800 flex flex-col">
+    <div className="h-full bg-slate-900 border-l-0 lg:border-l border-slate-800 flex flex-col">
       {/* Tab Header */}
       <div className="border-b border-slate-800">
         <div className="flex">

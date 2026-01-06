@@ -143,9 +143,13 @@ export default function AdminPage() {
   }, [customRecipes]);
 
   // Pending recipe handlers (Firestore)
-  const handleApprovePending = useCallback(async (pending: FirestorePendingRecipe) => {
-    await approvePendingRecipe(pending);
-  }, []);
+  const handleApprovePending = useCallback(async (pending: PendingRecipe) => {
+    // Find the original Firestore recipe to pass to approvePendingRecipe
+    const firestorePending = pendingRecipes.find(p => p.id === pending.id);
+    if (firestorePending) {
+      await approvePendingRecipe(firestorePending);
+    }
+  }, [pendingRecipes]);
 
   const handleRejectPending = useCallback(async (pendingId: string) => {
     await deletePendingRecipe(pendingId);

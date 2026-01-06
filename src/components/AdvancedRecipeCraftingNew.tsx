@@ -111,6 +111,7 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
   const [compactView, setCompactView] = useState(false);
   const [contactEmail, setContactEmail] = useState('');
   const [contactMessage, setContactMessage] = useState('');
+  const [mobileTab, setMobileTab] = useState<'ingredients' | 'game' | 'discoveries'>('game');
 
   // Custom recipes from Firestore (managed via /admin page)
   const [firestoreRecipes, setFirestoreRecipes] = useState<FirestoreCustomRecipe[]>([]);
@@ -507,10 +508,53 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
   };
 
   return (
-    <div className="flex h-screen w-full bg-[#0f172a] text-slate-100 overflow-hidden">
-            {/* Left Sidebar - Ingredient Shelf */}
-      <div className="w-80 flex flex-col border-r border-slate-800 bg-slate-900/50 backdrop-blur-md">
-        <div className="p-4 border-b border-slate-800">
+    <div className="flex flex-col lg:flex-row h-screen w-full bg-[#0f172a] text-slate-100 overflow-hidden">
+      {/* Mobile Bottom Navigation */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-slate-800 safe-area-inset-bottom">
+        <div className="flex justify-around items-center py-2">
+          <button
+            onClick={() => setMobileTab('ingredients')}
+            className={`flex flex-col items-center py-2 px-4 rounded-lg transition-all ${
+              mobileTab === 'ingredients'
+                ? 'text-amber-500 bg-amber-500/10'
+                : 'text-slate-500'
+            }`}
+          >
+            <span className="text-xl">🧂</span>
+            <span className="text-xs font-bold mt-1">{t('game.ingredients') || 'Ingredients'}</span>
+          </button>
+          <button
+            onClick={() => setMobileTab('game')}
+            className={`flex flex-col items-center py-2 px-4 rounded-lg transition-all ${
+              mobileTab === 'game'
+                ? 'text-amber-500 bg-amber-500/10'
+                : 'text-slate-500'
+            }`}
+          >
+            <span className="text-xl">🍳</span>
+            <span className="text-xs font-bold mt-1">{t('game.cook') || 'Cook'}</span>
+          </button>
+          <button
+            onClick={() => setMobileTab('discoveries')}
+            className={`flex flex-col items-center py-2 px-4 rounded-lg transition-all ${
+              mobileTab === 'discoveries'
+                ? 'text-amber-500 bg-amber-500/10'
+                : 'text-slate-500'
+            }`}
+          >
+            <span className="text-xl">📖</span>
+            <span className="text-xs font-bold mt-1">{t('game.almanac') || 'Almanac'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Left Sidebar - Ingredient Shelf (Desktop) / Full Screen (Mobile) */}
+      <div className={`
+        ${mobileTab === 'ingredients' ? 'flex' : 'hidden'} lg:flex
+        w-full lg:w-80 flex-col border-r border-slate-800 bg-slate-900/50 backdrop-blur-md
+        h-[calc(100vh-72px)] lg:h-screen
+      `}>
+        <div className="p-3 lg:p-4 border-b border-slate-800">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔍</span>
@@ -536,8 +580,8 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 scroll-smooth">
-          <div className={`grid gap-2 ${compactView ? 'grid-cols-4' : 'grid-cols-2 gap-3'}`}>
+        <div className="flex-1 overflow-y-auto p-3 lg:p-4 scroll-smooth">
+          <div className={`grid gap-2 ${compactView ? 'grid-cols-5 sm:grid-cols-6 lg:grid-cols-4' : 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-2 gap-3'}`}>
             {filteredIngredients.map((ing) => (
               <IngredientItem
                 key={ing.id}
@@ -549,7 +593,7 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
           </div>
         </div>
 
-        <div className="p-4 bg-slate-900 border-t border-slate-800">
+        <div className="p-3 lg:p-4 bg-slate-900 border-t border-slate-800">
           {/* Stats row */}
           <div className="flex justify-between items-center text-[10px] text-slate-500 mb-3">
             <div className="flex items-center gap-1">
@@ -580,26 +624,30 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
       </div>
 
       {/* Main Area - Synthesizer */}
-      <div className="flex-1 relative flex flex-col items-center justify-center overflow-hidden px-4">
-        <div className="z-10 text-center mb-8">
-          <h1 className="text-4xl font-light tracking-widest text-slate-100 uppercase">
+      <div className={`
+        ${mobileTab === 'game' ? 'flex' : 'hidden'} lg:flex
+        flex-1 relative flex-col items-center justify-center overflow-hidden px-4
+        h-[calc(100vh-72px)] lg:h-screen pb-4 lg:pb-0
+      `}>
+        <div className="z-10 text-center mb-4 lg:mb-8">
+          <h1 className="text-2xl lg:text-4xl font-light tracking-widest text-slate-100 uppercase">
             {t('app.title') || 'Infinite Meal'}
           </h1>
-          <div className="h-14 mt-2 flex flex-col items-center justify-center">
+          <div className="h-10 lg:h-14 mt-2 flex flex-col items-center justify-center">
             {error && (
               <div className="flex flex-col items-center animate-in slide-in-from-top duration-300">
-                <p className="text-red-400 font-medium text-sm mb-2">{error}</p>
+                <p className="text-red-400 font-medium text-xs lg:text-sm mb-2">{error}</p>
               </div>
             )}
             {!error && (
-              <p className="text-slate-500 text-xs italic tracking-widest opacity-60">
+              <p className="text-slate-500 text-xs lg:text-xs italic tracking-widest opacity-60 px-4">
                 {t('game.masterIngredients') || 'Master the ingredients, discover new recipes.'}
               </p>
             )}
           </div>
         </div>
 
-        <div className="z-10 flex flex-col items-center gap-12 w-full max-w-2xl">
+        <div className="z-10 flex flex-col items-center gap-6 lg:gap-12 w-full max-w-2xl">
           <MethodSelector
             methods={cookingMethods}
             selected={selectedMethod}
@@ -613,15 +661,16 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
               onDrop={handleDrop}
               status={status}
               onClear={handleClear}
+              onPlusClick={() => setMobileTab('ingredients')}
             />
             {/* Cook button for single ingredient + cooking method */}
             {mixingIngredients.length === 1 && status === 'idle' && selectedMethod.id !== 'mix' && (
               <button
                 onClick={handleApplyMethod}
-                className="absolute -right-20 top-1/2 -translate-y-1/2 bg-amber-500 text-slate-900 font-black p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all animate-bounce"
+                className="absolute -right-16 lg:-right-20 top-1/2 -translate-y-1/2 bg-amber-500 text-slate-900 font-black p-3 lg:p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all animate-bounce"
                 title={`Apply ${selectedMethod.name}`}
               >
-                <span className="text-2xl">⚡</span>
+                <span className="text-xl lg:text-2xl">⚡</span>
               </button>
             )}
           </div>
@@ -629,7 +678,11 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
       </div>
 
       {/* Right Sidebar - Discovery Book */}
-      <div className="w-80">
+      <div className={`
+        ${mobileTab === 'discoveries' ? 'block' : 'hidden'} lg:block
+        w-full lg:w-80
+        h-[calc(100vh-72px)] lg:h-screen
+      `}>
         <DiscoveryBook
           ingredients={ingredients}
           history={discoveryHistory}

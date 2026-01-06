@@ -27,38 +27,38 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ discovery, isNew, onClose }
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/10 rounded-full blur-3xl animate-pulse"></div>
       </div>
 
-      <div className={`bg-slate-900 border-2 w-full max-w-sm rounded-3xl p-8 text-center relative overflow-hidden shadow-2xl animate-in zoom-in duration-300 border-slate-700`}>
+      <div className={`bg-slate-900 border-2 w-full max-w-sm rounded-2xl sm:rounded-3xl p-5 sm:p-8 text-center relative overflow-hidden shadow-2xl animate-in zoom-in duration-300 border-slate-700`}>
 
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-500 to-transparent"></div>
 
-        <div className="flex flex-col items-center gap-3 mb-4">
+        <div className="flex flex-col items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
           {isNew && (
-            <span className="bg-amber-500 text-slate-900 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
+            <span className="bg-amber-500 text-slate-900 text-[9px] sm:text-[10px] font-black px-2.5 sm:px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
               {t('game.newDiscovery') || 'New Discovery'}
             </span>
           )}
         </div>
 
-        <div className="text-8xl mb-6 transform hover:scale-110 transition-transform cursor-default drop-shadow-2xl relative inline-block">
+        <div className="text-6xl sm:text-8xl mb-4 sm:mb-6 transform hover:scale-110 transition-transform cursor-default drop-shadow-2xl relative inline-block">
           {discovery.emoji}
           {isNew && (
             <div className="absolute -inset-4 bg-amber-500/20 blur-2xl rounded-full -z-10 animate-pulse"></div>
           )}
         </div>
 
-        <h2 className="text-3xl font-bold text-slate-100 mb-2">{displayName}</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-slate-100 mb-2">{displayName}</h2>
         {discovery.description && (
-          <p className="text-slate-300 text-sm mb-3 leading-relaxed">
+          <p className="text-slate-300 text-xs sm:text-sm mb-2 sm:mb-3 leading-relaxed">
             {discovery.description}
           </p>
         )}
-        <p className="text-slate-500 text-xs mb-8 leading-relaxed italic">
+        <p className="text-slate-500 text-[10px] sm:text-xs mb-5 sm:mb-8 leading-relaxed italic">
           {safeTranslate(t, `categories.${discovery.category}`, discovery.category)}
         </p>
 
         <button
           onClick={onClose}
-          className="w-full font-bold py-4 rounded-2xl transition-all duration-200 transform active:scale-95 shadow-lg bg-slate-800 hover:bg-slate-700 text-slate-200"
+          className="w-full font-bold py-3 sm:py-4 rounded-xl sm:rounded-2xl transition-all duration-200 transform active:scale-95 shadow-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm sm:text-base"
         >
           {t('game.addToCollection') || 'Add to Collection'}
         </button>

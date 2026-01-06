@@ -294,7 +294,7 @@ const UndergroundPanel: React.FC<UndergroundPanelProps> = ({
                 }`}
               >
                 {tab.icon} {tab.label}
-                {'badge' in tab && tab.badge > 0 && (
+                {'badge' in tab && typeof tab.badge === 'number' && tab.badge > 0 && (
                   <span className="absolute -top-1 -right-1 bg-amber-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px]">
                     {tab.badge}
                   </span>
