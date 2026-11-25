@@ -1,15 +1,16 @@
 import {
   collection,
-  doc,
   getDocs,
-  addDoc,
-  deleteDoc,
   query,
   orderBy,
   onSnapshot,
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+
+// Browser-side Firestore access is read-only: custom recipes are public.
+// All writes go through API routes (see src/app/api/*), and the admin panel
+// uses src/services/adminApi.ts.
 
 // Types
 export interface FirestoreCustomRecipe {
@@ -41,13 +42,10 @@ export interface FirestorePendingRecipe {
   locale: string;
 }
 
-// Collection references
 const customRecipesRef = collection(db, 'custom_recipes');
-const pendingRecipesRef = collection(db, 'pending_recipes');
 
-// ============ CUSTOM RECIPES ============
+// ============ CUSTOM RECIPES (public read) ============
 
-// Get all custom recipes
 export async function getCustomRecipes(): Promise<FirestoreCustomRecipe[]> {
   const q = query(customRecipesRef, orderBy('createdAt', 'desc'));
   const snapshot = await getDocs(q);
@@ -57,7 +55,6 @@ export async function getCustomRecipes(): Promise<FirestoreCustomRecipe[]> {
   } as FirestoreCustomRecipe));
 }
 
-// Subscribe to custom recipes (realtime)
 export function subscribeToCustomRecipes(
   callback: (recipes: FirestoreCustomRecipe[]) => void
 ): () => void {
@@ -67,91 +64,23 @@ export function subscribeToCustomRecipes(
       id: doc.id,
       ...doc.data()
     } as FirestoreCustomRecipe));
-    console.log('[Firestore] Custom recipes:', recipes.length);
     callback(recipes);
   }, (error) => {
     console.error('[Firestore] Custom recipes subscription error:', error);
   });
 }
 
-// Add custom recipe
-export async function addCustomRecipe(
-  recipe: Omit<FirestoreCustomRecipe, 'id' | 'createdAt'>
-): Promise<string> {
-  const docRef = await addDoc(customRecipesRef, {
-    ...recipe,
-    createdAt: Timestamp.now()
-  });
-  return docRef.id;
-}
+// ============ PENDING RECIPES (submit via API) ============
 
-// Delete custom recipe
-export async function deleteCustomRecipe(id: string): Promise<void> {
-  await deleteDoc(doc(db, 'custom_recipes', id));
-}
-
-// ============ PENDING RECIPES ============
-
-// Get all pending recipes
-export async function getPendingRecipes(): Promise<FirestorePendingRecipe[]> {
-  const q = query(pendingRecipesRef, orderBy('createdAt', 'desc'));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  } as FirestorePendingRecipe));
-}
-
-// Subscribe to pending recipes (realtime)
-export function subscribeToPendingRecipes(
-  callback: (recipes: FirestorePendingRecipe[]) => void
-): () => void {
-  const q = query(pendingRecipesRef, orderBy('createdAt', 'desc'));
-  return onSnapshot(q, (snapshot) => {
-    const recipes = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as FirestorePendingRecipe));
-    console.log('[Firestore] Pending recipes:', recipes.length);
-    callback(recipes);
-  }, (error) => {
-    console.error('[Firestore] Pending recipes subscription error:', error);
-  });
-}
-
-// Add pending recipe
 export async function addPendingRecipe(
   recipe: Omit<FirestorePendingRecipe, 'id' | 'createdAt'>
 ): Promise<string> {
-  const docRef = await addDoc(pendingRecipesRef, {
-    ...recipe,
-    createdAt: Timestamp.now()
+  const res = await fetch('/api/pending-recipes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(recipe),
   });
-  return docRef.id;
-}
-
-// Delete pending recipe
-export async function deletePendingRecipe(id: string): Promise<void> {
-  await deleteDoc(doc(db, 'pending_recipes', id));
-}
-
-// Approve pending recipe (move to custom)
-export async function approvePendingRecipe(
-  pending: FirestorePendingRecipe
-): Promise<string> {
-  // Add to custom recipes
-  const customRecipeId = await addCustomRecipe({
-    ingredients: pending.ingredients,
-    result: {
-      ...pending.result,
-      description: pending.result.description || `${pending.ingredients.join(' + ')}`
-    }
-  });
-
-  // Delete from pending
-  if (pending.id) {
-    await deletePendingRecipe(pending.id);
-  }
-
-  return customRecipeId;
+  if (!res.ok) throw new Error(`Pending recipe rejected (${res.status})`);
+  const data = await res.json();
+  return data.id as string;
 }

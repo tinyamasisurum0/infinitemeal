@@ -1,97 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
+import {
+  clearSessionCookie,
+  createSessionToken,
+  isAdminRequest,
+  safeEqual,
+  setSessionCookie,
+} from '@/lib/server/adminSession';
+import { checkLimits, clientIp, RULES } from '@/lib/server/rateLimit';
 
-// Generate a simple session token
-function generateToken(): string {
-  return crypto.randomBytes(32).toString('hex');
-}
-
-// In-memory session store (resets on server restart)
-// For production, use Redis or database
-const activeSessions = new Map<string, { expiresAt: number }>();
-
-// Session duration: 24 hours
-const SESSION_DURATION = 24 * 60 * 60 * 1000;
-
+// POST: log in. Sets a signed httpOnly cookie; nothing is kept in server memory.
 export async function POST(request: NextRequest) {
+  const adminUsername = process.env.ADMIN_USERNAME;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminUsername || !adminPassword) {
+    console.error('[Admin Login] ADMIN_USERNAME or ADMIN_PASSWORD not configured');
+    return NextResponse.json({ error: 'Admin access not configured' }, { status: 503 });
+  }
+
+  const limit = await checkLimits([{ rule: RULES.loginPer15Min(), id: clientIp(request) }]);
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: 'Too many attempts. Try again later.' },
+      { status: 429, headers: { 'Retry-After': String(limit.retryAfterSec) } }
+    );
+  }
+
+  let username: unknown;
+  let password: unknown;
   try {
-    const { username, password } = await request.json();
-
-    // Get credentials from environment variables
-    const adminUsername = process.env.ADMIN_USERNAME;
-    const adminPassword = process.env.ADMIN_PASSWORD;
-
-    // Check if credentials are configured
-    if (!adminUsername || !adminPassword) {
-      console.error('[Admin Login] ADMIN_USERNAME or ADMIN_PASSWORD not configured');
-      return NextResponse.json(
-        { error: 'Admin access not configured' },
-        { status: 503 }
-      );
-    }
-
-    // Validate credentials
-    if (username === adminUsername && password === adminPassword) {
-      // Generate session token
-      const token = generateToken();
-      const expiresAt = Date.now() + SESSION_DURATION;
-
-      // Store session
-      activeSessions.set(token, { expiresAt });
-
-      // Clean up expired sessions periodically
-      for (const [key, session] of activeSessions.entries()) {
-        if (session.expiresAt < Date.now()) {
-          activeSessions.delete(key);
-        }
-      }
-
-      return NextResponse.json({
-        success: true,
-        token,
-        expiresAt
-      });
-    }
-
-    // Invalid credentials
-    return NextResponse.json(
-      { error: 'Invalid credentials' },
-      { status: 401 }
-    );
-  } catch (error) {
-    console.error('[Admin Login] Error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    ({ username, password } = await request.json());
+  } catch {
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
+
+  const userOk = typeof username === 'string' && safeEqual(username, adminUsername);
+  const passOk = typeof password === 'string' && safeEqual(password, adminPassword);
+  if (!userOk || !passOk) {
+    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+  }
+
+  const session = createSessionToken();
+  if (!session) {
+    return NextResponse.json({ error: 'Admin access not configured' }, { status: 503 });
+  }
+  const res = NextResponse.json({ success: true, expiresAt: session.expiresAt });
+  setSessionCookie(res, session.token);
+  return res;
 }
 
-// Verify token endpoint
+// GET: is the current cookie a valid admin session?
 export async function GET(request: NextRequest) {
-  const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-
-  if (!token) {
-    return NextResponse.json({ valid: false }, { status: 401 });
-  }
-
-  const session = activeSessions.get(token);
-
-  if (!session || session.expiresAt < Date.now()) {
-    activeSessions.delete(token || '');
-    return NextResponse.json({ valid: false }, { status: 401 });
-  }
-
-  return NextResponse.json({ valid: true });
+  const valid = isAdminRequest(request);
+  return NextResponse.json({ valid }, { status: valid ? 200 : 401 });
 }
 
-// Logout endpoint
-export async function DELETE(request: NextRequest) {
-  const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-
-  if (token) {
-    activeSessions.delete(token);
-  }
-
-  return NextResponse.json({ success: true });
+// DELETE: log out.
+export async function DELETE() {
+  const res = NextResponse.json({ success: true });
+  clearSessionCookie(res);
+  return res;
 }

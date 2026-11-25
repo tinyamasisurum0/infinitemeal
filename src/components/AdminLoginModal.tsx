@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef } from 'react';
 interface AdminLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (token: string) => void;
+  onSuccess: () => void;
 }
 
 const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
@@ -56,7 +56,7 @@ const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       const data = await res.json();
 
       if (res.ok && data.success) {
-        onSuccess(data.token);
+        onSuccess();
       } else {
         setError(data.error || 'Authentication failed');
         setPassword('');

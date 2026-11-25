@@ -5,19 +5,10 @@ import UndergroundPanel, { CustomRecipe, PendingRecipe } from '@/components/Unde
 import AdminLoginModal from '@/components/AdminLoginModal';
 import { initialIngredients } from '@/data/ingredients';
 import { Ingredient } from '@/types/RecipeTypes';
-import {
-  FirestoreCustomRecipe,
-  FirestorePendingRecipe,
-  subscribeToCustomRecipes,
-  subscribeToPendingRecipes,
-  addCustomRecipe,
-  deleteCustomRecipe,
-  deletePendingRecipe,
-  approvePendingRecipe,
-} from '@/services/recipeFirestore';
+import { AdminAuthError, adminActions, fetchAdminRecipes } from '@/services/adminApi';
 
-const ADMIN_SESSION_KEY = 'admin_session_token';
 const STORAGE_KEY_INGREDIENTS = 'global_game_ingredients';
+const REFRESH_MS = 30_000;
 
 const loadFromStorage = <T,>(key: string, defaultValue: T): T => {
   if (typeof window === 'undefined') return defaultValue;
@@ -33,154 +24,92 @@ const loadFromStorage = <T,>(key: string, defaultValue: T): T => {
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [adminToken, setAdminToken] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Firestore state
-  const [customRecipes, setCustomRecipes] = useState<FirestoreCustomRecipe[]>([]);
-  const [pendingRecipes, setPendingRecipes] = useState<FirestorePendingRecipe[]>([]);
+  const [customRecipes, setCustomRecipes] = useState<CustomRecipe[]>([]);
+  const [pendingRecipes, setPendingRecipes] = useState<PendingRecipe[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>(initialIngredients);
 
-  // Subscribe to Firestore on mount
+  const refresh = useCallback(async () => {
+    try {
+      const data = await fetchAdminRecipes();
+      setCustomRecipes(data.customRecipes);
+      setPendingRecipes(data.pendingRecipes);
+      setError(null);
+    } catch (err) {
+      if (err instanceof AdminAuthError) {
+        setIsAuthenticated(false);
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load recipes');
+      }
+    }
+  }, []);
+
+  // Verify the session cookie on mount (also drop the old localStorage token).
   useEffect(() => {
     setIngredients(loadFromStorage<Ingredient[]>(STORAGE_KEY_INGREDIENTS, initialIngredients));
+    localStorage.removeItem('admin_session_token');
 
-    // Subscribe to realtime updates
-    const unsubCustom = subscribeToCustomRecipes((recipes) => {
-      setCustomRecipes(recipes);
-    });
-
-    const unsubPending = subscribeToPendingRecipes((recipes) => {
-      setPendingRecipes(recipes);
-    });
-
-    return () => {
-      unsubCustom();
-      unsubPending();
-    };
+    fetch('/api/admin/login', { method: 'GET', credentials: 'same-origin' })
+      .then((res) => setIsAuthenticated(res.ok))
+      .catch((err) => console.error('Session verification failed:', err))
+      .finally(() => setIsLoading(false));
   }, []);
 
-  // Verify session on mount
+  // Load data while authenticated, and poll for new pending recipes.
   useEffect(() => {
-    const verifySession = async () => {
-      const savedToken = localStorage.getItem(ADMIN_SESSION_KEY);
-      if (!savedToken) {
-        setIsLoading(false);
-        return;
-      }
+    if (!isAuthenticated) return;
+    refresh();
+    const timer = setInterval(refresh, REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [isAuthenticated, refresh]);
 
+  // Runs an admin action, then reloads the lists.
+  const run = useCallback(
+    (fn: () => Promise<unknown>) => async () => {
       try {
-        const res = await fetch('/api/admin/login', {
-          method: 'GET',
-          headers: { 'Authorization': `Bearer ${savedToken}` }
-        });
-
-        if (res.ok) {
-          setAdminToken(savedToken);
-          setIsAuthenticated(true);
-        } else {
-          localStorage.removeItem(ADMIN_SESSION_KEY);
+        await fn();
+      } catch (err) {
+        if (err instanceof AdminAuthError) {
+          setIsAuthenticated(false);
+          return;
         }
-      } catch (err) {
-        console.error('Session verification failed:', err);
+        setError(err instanceof Error ? err.message : 'Action failed');
       }
-      setIsLoading(false);
-    };
+      await refresh();
+    },
+    [refresh]
+  );
 
-    verifySession();
-  }, []);
+  const handleLogin = useCallback(() => setIsAuthenticated(true), []);
 
-  // Handle login
-  const handleLogin = useCallback((token: string) => {
-    setAdminToken(token);
-    localStorage.setItem(ADMIN_SESSION_KEY, token);
-    setIsAuthenticated(true);
-  }, []);
-
-  // Handle logout
   const handleLogout = useCallback(async () => {
-    if (adminToken) {
-      try {
-        await fetch('/api/admin/login', {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${adminToken}` }
-        });
-      } catch (err) {
-        console.error('Logout error:', err);
-      }
+    try {
+      await fetch('/api/admin/login', { method: 'DELETE', credentials: 'same-origin' });
+    } catch (err) {
+      console.error('Logout error:', err);
     }
-    setAdminToken(null);
-    localStorage.removeItem(ADMIN_SESSION_KEY);
     setIsAuthenticated(false);
-  }, [adminToken]);
-
-  // Custom recipe handlers (Firestore)
-  const handleAddRecipe = useCallback(async (recipe: CustomRecipe) => {
-    await addCustomRecipe({
-      ingredients: recipe.ingredients,
-      result: recipe.result
-    });
   }, []);
 
-  const handleDeleteRecipe = useCallback(async (id: string) => {
-    await deleteCustomRecipe(id);
-  }, []);
+  const handleAddRecipe = useCallback(
+    (recipe: CustomRecipe) => run(() => adminActions.add({ ingredients: recipe.ingredients, result: recipe.result }))(),
+    [run]
+  );
+  const handleDeleteRecipe = useCallback((id: string) => run(() => adminActions.delete(id))(), [run]);
+  const handleImportRecipes = useCallback(
+    (recipes: CustomRecipe[]) =>
+      run(() => adminActions.import(recipes.map((r) => ({ ingredients: r.ingredients, result: r.result }))))(),
+    [run]
+  );
+  const handleClearAll = useCallback(() => run(() => adminActions.clearAll())(), [run]);
+  const handleApprovePending = useCallback(
+    (pending: PendingRecipe) => run(() => adminActions.approve(pending.id))(),
+    [run]
+  );
+  const handleRejectPending = useCallback((id: string) => run(() => adminActions.reject(id))(), [run]);
+  const handleClearAllPending = useCallback(() => run(() => adminActions.clearPending())(), [run]);
 
-  const handleImportRecipes = useCallback(async (recipes: CustomRecipe[]) => {
-    for (const recipe of recipes) {
-      await addCustomRecipe({
-        ingredients: recipe.ingredients,
-        result: recipe.result
-      });
-    }
-  }, []);
-
-  const handleClearAll = useCallback(async () => {
-    for (const recipe of customRecipes) {
-      if (recipe.id) {
-        await deleteCustomRecipe(recipe.id);
-      }
-    }
-  }, [customRecipes]);
-
-  // Pending recipe handlers (Firestore)
-  const handleApprovePending = useCallback(async (pending: PendingRecipe) => {
-    // Find the original Firestore recipe to pass to approvePendingRecipe
-    const firestorePending = pendingRecipes.find(p => p.id === pending.id);
-    if (firestorePending) {
-      await approvePendingRecipe(firestorePending);
-    }
-  }, [pendingRecipes]);
-
-  const handleRejectPending = useCallback(async (pendingId: string) => {
-    await deletePendingRecipe(pendingId);
-  }, []);
-
-  const handleClearAllPending = useCallback(async () => {
-    for (const pending of pendingRecipes) {
-      if (pending.id) {
-        await deletePendingRecipe(pending.id);
-      }
-    }
-  }, [pendingRecipes]);
-
-  // Convert Firestore recipes to CustomRecipe format for UndergroundPanel
-  const customRecipesForPanel: CustomRecipe[] = customRecipes.map(r => ({
-    id: r.id || '',
-    ingredients: r.ingredients,
-    result: r.result,
-    createdAt: r.createdAt?.toMillis() || Date.now()
-  }));
-
-  // Convert Firestore pending recipes to PendingRecipe format for UndergroundPanel
-  const pendingRecipesForPanel: PendingRecipe[] = pendingRecipes.map(r => ({
-    id: r.id || '',
-    ingredients: r.ingredients,
-    result: r.result,
-    createdAt: r.createdAt?.toDate() || new Date(),
-    locale: r.locale || 'en'
-  }));
-
-  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0a0f0a] flex items-center justify-center">
@@ -191,7 +120,6 @@ export default function AdminPage() {
     );
   }
 
-  // Not authenticated - show login
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#0a0f0a]">
@@ -204,20 +132,24 @@ export default function AdminPage() {
     );
   }
 
-  // Authenticated - show panel
   return (
     <div className="min-h-screen bg-[#0a0f0a]">
+      {error && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[200] rounded bg-red-900/90 px-4 py-2 font-mono text-sm text-red-100">
+          {error}
+        </div>
+      )}
       <UndergroundPanel
         isOpen={true}
         onClose={() => window.location.href = '/'}
-        customRecipes={customRecipesForPanel}
+        customRecipes={customRecipes}
         onAddRecipe={handleAddRecipe}
         onDeleteRecipe={handleDeleteRecipe}
         onImportRecipes={handleImportRecipes}
         onClearAll={handleClearAll}
         availableIngredients={ingredients}
         onLogout={handleLogout}
-        pendingRecipes={pendingRecipesForPanel}
+        pendingRecipes={pendingRecipes}
         onApprovePending={handleApprovePending}
         onRejectPending={handleRejectPending}
         onClearAllPending={handleClearAllPending}
