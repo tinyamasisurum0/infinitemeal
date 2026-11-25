@@ -7,7 +7,7 @@ import { safeTranslate } from '@/utils/translations';
 
 interface IngredientItemProps {
   ingredient: Ingredient;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   compact?: boolean;
 }
 
@@ -26,37 +26,43 @@ const IngredientItem: React.FC<IngredientItemProps> = ({ ingredient, onClick, co
 
   if (compact) {
     return (
-      <div
+      <button
+        type="button"
         draggable
         onDragStart={onDragStart}
         onClick={onClick}
         title={ingredientName}
-        className="bg-slate-800 border border-slate-700 p-1 sm:p-1.5 rounded-lg shadow-md cursor-grab active:cursor-grabbing hover:bg-slate-700 transition-all duration-200 flex flex-col items-center justify-center group"
+        aria-label={ingredientName}
+        className="bg-surface border border-line p-1 sm:p-1.5 rounded-xl shadow-soft cursor-grab active:cursor-grabbing hover:border-cobalt/40 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 flex flex-col items-center justify-center group"
       >
         <span className="text-lg sm:text-xl group-hover:scale-110 transition-transform duration-200">
           {ingredient.emoji}
         </span>
-        <span className="text-[8px] sm:text-[9px] text-slate-400 truncate w-full text-center leading-tight mt-0.5">
+        <span className="text-[8px] sm:text-[9px] text-muted truncate w-full text-center leading-tight mt-0.5">
           {ingredientName}
         </span>
-      </div>
+      </button>
     );
   }
 
   return (
-    <div
+    <button
+      type="button"
       draggable
       onDragStart={onDragStart}
       onClick={onClick}
-      className="bg-slate-800 border border-slate-700 p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-md cursor-grab active:cursor-grabbing hover:bg-slate-700 transition-all duration-200 flex flex-col items-center justify-center min-w-[70px] h-[70px] sm:min-w-[85px] sm:h-[85px] lg:min-w-[100px] lg:h-[100px] group"
+      className="bg-surface border border-line p-2 sm:p-3 rounded-2xl shadow-soft cursor-grab active:cursor-grabbing hover:border-cobalt/40 hover:-translate-y-0.5 hover:shadow-lift active:scale-95 transition-all duration-200 flex flex-col items-center justify-center min-w-[70px] h-[76px] sm:min-w-[85px] sm:h-[88px] lg:min-w-[100px] lg:h-[100px] group"
     >
-      <span className="text-xl sm:text-2xl lg:text-3xl mb-0.5 sm:mb-1 group-hover:scale-125 transition-transform duration-200">
+      <span
+        aria-hidden="true"
+        className="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full bg-tint flex items-center justify-center text-xl sm:text-2xl lg:text-[26px] mb-1 group-hover:scale-110 transition-transform duration-200"
+      >
         {ingredient.emoji}
       </span>
-      <span className="text-[10px] sm:text-xs lg:text-sm font-semibold text-slate-200 truncate w-full text-center">
+      <span className="text-[11px] sm:text-xs lg:text-[13px] font-semibold text-ink truncate w-full text-center">
         {ingredientName}
       </span>
-    </div>
+    </button>
   );
 };
 
