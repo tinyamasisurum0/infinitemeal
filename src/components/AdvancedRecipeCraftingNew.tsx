@@ -25,6 +25,7 @@ import {
   DiscoveryBook,
   type GameStatus
 } from './game';
+import MethodIcon from './game/MethodIcon';
 import { CustomRecipe } from './UndergroundPanel';
 import { safeTranslate } from '@/utils/translations';
 import { addPendingRecipe, subscribeToCustomRecipes, FirestoreCustomRecipe } from '@/services/recipeFirestore';
@@ -728,7 +729,7 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
                 onClick={handleApplyMethod}
                 className="animate-in slide-in-from-bottom-2 inline-flex items-center gap-3 rounded-2xl bg-cta text-on-cta pl-5 pr-6 py-3 shadow-soft hover:brightness-110 active:scale-[0.985] transition-all"
               >
-                <span aria-hidden="true" className="text-xl">{selectedMethod.emoji}</span>
+                <MethodIcon id={selectedMethod.id} fallback={selectedMethod.emoji} className="w-6 h-6" />
                 <span className="font-display italic font-medium text-xl">
                   {safeTranslate(t, `cookingMethods.${selectedMethod.id}`, selectedMethod.name)}
                 </span>
