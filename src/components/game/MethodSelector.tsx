@@ -4,7 +4,6 @@ import React from 'react';
 import { CookingMethod } from '@/types/RecipeTypes';
 import { useTranslations } from 'next-intl';
 import { safeTranslate } from '@/utils/translations';
-import MethodIcon from './MethodIcon';
 
 interface MethodSelectorProps {
   methods: CookingMethod[];
@@ -40,7 +39,7 @@ const MethodSelector: React.FC<MethodSelectorProps> = ({ methods, selected, onSe
                   ? 'bg-cobalt border-cobalt text-on-cobalt shadow-soft'
                   : 'bg-surface border-line text-ink hover:border-cobalt/50'}`}
             >
-              <MethodIcon id={method.id} fallback={method.emoji} className="w-5 h-5 shrink-0" />
+              <span aria-hidden="true" className="text-base leading-none">{method.emoji}</span>
               {safeTranslate(t, `cookingMethods.${method.id}`, method.name)}
             </button>
           );

@@ -4,6 +4,7 @@ import React, { useEffect, useId, useState } from 'react';
 import { Ingredient } from '@/types/RecipeTypes';
 import { useTranslations } from 'next-intl';
 import { safeTranslate } from '@/utils/translations';
+import { getVessel } from './vessels';
 
 export type GameStatus = 'idle' | 'mixing' | 'success' | 'failure';
 
@@ -15,16 +16,20 @@ interface MixingBowlProps {
   onPlusClick?: () => void;
   /** The pot element, used as the landing point for emojis flying in. */
   potRef?: React.Ref<HTMLDivElement>;
+  /** Selected cooking method: picks the vessel (bowl, pan, oven…). */
+  methodId?: string;
 }
 
 const W = 240;
 const H = 170;
 
 /**
- * Enamel pot (ported from the mobile app). The lid sits ajar while idle and
- * closes when cooking: the flame lights, steam rises and the pot rattles.
+ * The cooking vessel, drawn in the enamel style ported from the mobile app.
+ * It changes with the selected method (bowl, pot, pan, oven, griddle, board,
+ * blender) and animates while cooking: lid closes, flames, steam, stirring,
+ * chopping or whirling, depending on the vessel.
  */
-const MixingBowl: React.FC<MixingBowlProps> = ({ onDrop, items, status, onClear, onPlusClick, potRef }) => {
+const MixingBowl: React.FC<MixingBowlProps> = ({ onDrop, items, status, onClear, onPlusClick, potRef, methodId = 'boil' }) => {
   const [isOver, setIsOver] = useState(false);
   const [bumpKey, setBumpKey] = useState(0);
   const t = useTranslations();
@@ -77,6 +82,7 @@ const MixingBowl: React.FC<MixingBowlProps> = ({ onDrop, items, status, onClear,
   );
 
   const layer = 'absolute inset-0 w-full h-full';
+  const vessel = getVessel(methodId, enamel);
 
   return (
     <div className="flex flex-col items-center">
@@ -96,6 +102,7 @@ const MixingBowl: React.FC<MixingBowlProps> = ({ onDrop, items, status, onClear,
         onDragLeave={() => setIsOver(false)}
         onDrop={handleDrop}
         data-cooking={cooking}
+        data-method={methodId}
         data-filled={count > 0}
         data-over={isOver}
         key={status === 'failure' ? 'fail' : 'ok'}
@@ -112,87 +119,128 @@ const MixingBowl: React.FC<MixingBowlProps> = ({ onDrop, items, status, onClear,
           style={{ background: 'radial-gradient(circle at 50% 60%, color-mix(in srgb, var(--im-pot-hi) 35%, transparent), transparent 65%)' }}
         />
 
-        {/* Steam */}
-        {[0.3, 0.48, 0.66].map((x, i) => (
-          <span
-            key={i}
-            aria-hidden="true"
-            className="pot-steam"
-            style={{ left: `${x * 100}%`, animationDelay: `${-(i / 3) * 1.1}s` }}
-          />
-        ))}
-
-        {/* Flames */}
-        <svg className={`${layer} pot-flames`} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
-          {defs}
-          <g fill={`url(#${flame})`}>
-            <path d="M84 168q-6-9 2-17 1 6 5 8 0-8 6-12-1 8 4 12 5 4 1 9z" />
-            <path d="M112 168q-7-10 2-20 1 7 6 9 0-9 7-14-1 9 5 14 5 5 0 11z" />
-            <path d="M144 168q-6-9 2-17 1 6 5 8 0-8 6-12-1 8 4 12 5 4 1 9z" />
-          </g>
-        </svg>
-
-        {/* Lid */}
-        <svg className={`${layer} pot-lid`} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
-          {defs}
-          <path d="M38 58Q120 20 202 58Z" fill={`url(#${enamel})`} />
-          <rect x={34} y={55} width={172} height={6} rx={3} style={{ fill: 'var(--im-tin)' }} />
-          <rect x={113} y={24} width={14} height={10} rx={3} style={{ fill: 'var(--im-brass)' }} />
-          <ellipse cx={120} cy={23} rx={12} ry={5} style={{ fill: 'var(--im-brass)' }} />
-        </svg>
-
-        {/* Emojis peeking over the rim */}
-        <div
-          key={bumpKey}
-          aria-hidden="true"
-          className={`absolute left-[18%] right-[18%] top-[10%] h-[25%] flex justify-center items-end pot-bump transition-opacity duration-300 ${
-            cooking ? 'opacity-0' : 'opacity-100'
-          }`}
-        >
-          {items.slice(-7).map((item, i) => (
-            <span key={`${item.id}-${i}`} className="text-2xl sm:text-3xl lg:text-[34px] -mx-0.5 drop-shadow-sm">
-              {item.emoji}
-            </span>
-          ))}
-        </div>
-
-        {/* Body */}
-        <svg className={`${layer} pot-body`} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
-          {defs}
-          <path d="M6 84q0-10 12-10h14v9H20q-4 0-4 4t4 4h12v9H18q-12 0-12-10z" style={{ fill: 'var(--im-brass)' }} />
-          <path d="M234 84q0-10-12-10h-14v9h12q4 0 4 4t-4 4h-12v9h14q12 0 12-10z" style={{ fill: 'var(--im-brass)' }} />
-          <path d="M30 62H210V112Q210 152 170 152H70Q30 152 30 112Z" fill={`url(#${enamel})`} />
-          <path d="M30 62H210V74Q120 84 30 74Z" style={{ fill: 'var(--im-pot-lo)' }} opacity={0.35} />
-          <rect x={52} y={78} width={10} height={52} rx={5} style={{ fill: 'var(--im-on-pot)' }} opacity={0.16} />
-          <rect x={24} y={56} width={192} height={11} rx={5.5} style={{ fill: 'var(--im-tin)' }} />
-        </svg>
-
-        {/* Bubbles on the enamel */}
-        <div aria-hidden="true" className="absolute left-[30%] right-[30%] top-[62%] h-[20%] pointer-events-none">
-          {[
-            { l: '8%', s: 6, d: 0 },
-            { l: '38%', s: 8, d: 0.8 },
-            { l: '64%', s: 5, d: 1.5 },
-            { l: '86%', s: 7, d: 0.4 },
-          ].map((b, i) => (
+        {/* Vessel for the selected method; swaps with a small pop */}
+        <div key={methodId} className="absolute inset-0 vessel-swap">
+          {/* Steam / heat */}
+          {vessel.steam?.xs.map((x, i) => (
             <span
               key={i}
-              className="pot-bubble"
-              style={{ left: b.l, width: b.s, height: b.s, animationDelay: `${b.d}s` }}
+              aria-hidden="true"
+              className="pot-steam"
+              style={{ left: `${x * 100}%`, top: vessel.steam!.top, animationDelay: `${-(i / 3) * 1.1}s` }}
             />
           ))}
-        </div>
 
-        {/* Live counter */}
-        <div aria-hidden="true" className="absolute inset-x-0 top-[50%] flex flex-col items-center pointer-events-none text-on-pot">
-          {count > 0 && (
-            <span key={bumpKey} className="font-display text-3xl lg:text-4xl leading-none pot-bump">
-              {count}
-            </span>
+          {/* Flames */}
+          {vessel.flames && (
+            <svg className={`${layer} pot-flames`} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+              {defs}
+              <g fill={`url(#${flame})`} transform={`translate(0 ${-vessel.flames.shift})`}>
+                <path d="M84 168q-6-9 2-17 1 6 5 8 0-8 6-12-1 8 4 12 5 4 1 9z" />
+                <path d="M112 168q-7-10 2-20 1 7 6 9 0-9 7-14-1 9 5 14 5 5 0 11z" />
+                <path d="M144 168q-6-9 2-17 1 6 5 8 0-8 6-12-1 8 4 12 5 4 1 9z" />
+              </g>
+            </svg>
           )}
-          <span className={`text-[10px] font-bold tracking-[0.16em] uppercase opacity-85 ${count > 0 ? 'mt-0.5' : 'mt-3'}`}>
-            {count > 0 ? ingredientsLabel : emptyLabel}
-          </span>
+
+          {vessel.back && (
+            <svg className={`${layer} pot-body`} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+              {defs}
+              {vessel.back}
+            </svg>
+          )}
+
+          {vessel.toolBack && (
+            <svg className={`${layer} ${vessel.toolBack.className}`} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+              {defs}
+              {vessel.toolBack.node}
+            </svg>
+          )}
+
+          {/* Ingredients in the vessel */}
+          <div
+            aria-hidden="true"
+            className={`absolute flex justify-center transition-opacity duration-300 ${
+              vessel.emojis.align === 'end' ? 'items-end' : 'items-center'
+            } ${cooking && vessel.emojis.hideWhenCooking ? 'opacity-0' : 'opacity-100'}`}
+            style={{ left: vessel.emojis.left, right: vessel.emojis.right, top: vessel.emojis.top, height: vessel.emojis.height }}
+          >
+            <div
+              key={bumpKey}
+              className={`flex items-end pot-bump ${cooking && vessel.emojis.cookingClass ? vessel.emojis.cookingClass : ''}`}
+            >
+              {items.slice(-7).map((item, i) => (
+                <span
+                  key={`${item.id}-${i}`}
+                  className="emoji-item text-2xl sm:text-3xl lg:text-[34px] -mx-0.5 drop-shadow-sm"
+                  style={{ animationDelay: `${i * 90}ms` }}
+                >
+                  {item.emoji}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {vessel.front && (
+            <svg className={`${layer} pot-body`} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+              {defs}
+              {vessel.front}
+            </svg>
+          )}
+
+          {vessel.toolFront && (
+            <svg className={`${layer} ${vessel.toolFront.className}`} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+              {defs}
+              {vessel.toolFront.node}
+            </svg>
+          )}
+
+          {/* Bubbles on the enamel */}
+          {vessel.bubbles && (
+            <div
+              aria-hidden="true"
+              className="absolute pointer-events-none"
+              style={{ left: vessel.bubbles.left, right: vessel.bubbles.right, top: vessel.bubbles.top, height: vessel.bubbles.height }}
+            >
+              {[
+                { l: '8%', s: 6, d: 0 },
+                { l: '38%', s: 8, d: 0.8 },
+                { l: '64%', s: 5, d: 1.5 },
+                { l: '86%', s: 7, d: 0.4 },
+              ].map((b, i) => (
+                <span
+                  key={i}
+                  className="pot-bubble"
+                  style={{ left: b.l, width: b.s, height: b.s, animationDelay: `${b.d}s` }}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Live counter */}
+          <div
+            aria-hidden="true"
+            className={`absolute flex items-center pointer-events-none -translate-x-1/2 whitespace-nowrap ${
+              vessel.label.ink ? 'text-[#14203A]' : 'text-on-pot'
+            } ${vessel.label.compact ? 'flex-row gap-1.5' : 'flex-col'}`}
+            style={{ top: vessel.label.top, left: vessel.label.center ?? '50%' }}
+          >
+            {count > 0 && (
+              <span
+                key={bumpKey}
+                className={`font-display leading-none pot-bump ${vessel.label.compact ? 'text-lg lg:text-xl' : 'text-3xl lg:text-4xl'}`}
+              >
+                {count}
+              </span>
+            )}
+            <span
+              className={`text-[10px] font-bold tracking-[0.16em] uppercase opacity-85 ${
+                vessel.label.compact ? '' : count > 0 ? 'mt-0.5' : 'mt-3'
+              }`}
+            >
+              {count > 0 ? ingredientsLabel : emptyLabel}
+            </span>
+          </div>
         </div>
       </div>
 

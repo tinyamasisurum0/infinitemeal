@@ -283,6 +283,69 @@ html, body {
 
 .pot[data-over="true"] .pot-body { transform: translateY(-4px); transition: transform 200ms ease; }
 
+/* ---------- Method-specific vessels ---------- */
+
+.vessel-swap { animation: vessel-swap 360ms cubic-bezier(0.3, 1.5, 0.5, 1) both; }
+@keyframes vessel-swap {
+  from { opacity: 0.2; transform: scale(0.9) translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Mixing bowl: spoon sways while stirring, ingredients tumble */
+.tool-spoon { transform-origin: 69% 8%; transition: transform 300ms ease; transform: rotate(4deg); }
+.pot[data-cooking="true"] .tool-spoon { animation: stir 0.32s ease-in-out infinite alternate; }
+@keyframes stir {
+  from { transform: rotate(-14deg); }
+  to { transform: rotate(12deg); }
+}
+.emoji-tumble .emoji-item { display: inline-block; animation: tumble 0.6s linear infinite; }
+@keyframes tumble {
+  from { transform: rotate(0deg) translateX(5px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(5px) rotate(-360deg); }
+}
+
+/* Pan and griddle: ingredients hop */
+.emoji-hop .emoji-item { display: inline-block; animation: hop 0.34s ease-in-out infinite alternate; }
+@keyframes hop {
+  from { transform: translateY(0) rotate(-6deg); }
+  to { transform: translateY(-14px) rotate(8deg); }
+}
+
+/* Oven: the window glows while baking */
+.oven-glow { opacity: 0.08; transition: opacity 400ms ease; }
+.pot[data-cooking="true"] .oven-glow { animation: oven-glow 0.6s ease-in-out infinite alternate; }
+@keyframes oven-glow {
+  from { opacity: 0.35; }
+  to { opacity: 0.7; }
+}
+
+/* Cutting board: the knife chops, ingredients squash on each cut */
+.tool-knife { transform-origin: 87% 26%; transform: rotate(-8deg); transition: transform 300ms ease; }
+.pot[data-cooking="true"] .tool-knife { animation: chop 0.3s ease-in infinite; }
+@keyframes chop {
+  0%, 100% { transform: rotate(-8deg); }
+  55% { transform: rotate(19deg); }
+}
+.emoji-chop .emoji-item { display: inline-block; transform-origin: 50% 100%; animation: squash 0.3s ease-in infinite; }
+@keyframes squash {
+  0%, 45%, 100% { transform: scale(1, 1); }
+  60% { transform: scale(1.15, 0.8); }
+}
+.pot[data-method="chop"][data-cooking="true"] .pot-body { animation: none; }
+
+/* Blender: contents whirl and the liquid sloshes */
+.emoji-whirl .emoji-item { display: inline-block; animation: whirl 0.4s linear infinite; }
+@keyframes whirl {
+  from { transform: rotate(0deg) translateX(7px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(7px) rotate(0deg); }
+}
+.blend-liquid { transform-box: fill-box; transform-origin: 50% 100%; }
+.pot[data-cooking="true"] .blend-liquid { animation: slosh 0.22s ease-in-out infinite alternate; }
+@keyframes slosh {
+  from { transform: scaleY(1); }
+  to { transform: scaleY(1.25) skewX(4deg); }
+}
+
 .shake { animation: shake 0.5s ease-in-out; }
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
