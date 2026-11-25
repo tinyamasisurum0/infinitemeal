@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Ingredient } from '@/types/RecipeTypes';
 import { useTranslations } from 'next-intl';
 import { safeTranslate } from '@/utils/translations';
@@ -11,56 +11,84 @@ interface SuccessModalProps {
   onClose: () => void;
 }
 
+/** Result card: a bottom sheet on phones, a centred card on larger screens. */
 const SuccessModal: React.FC<SuccessModalProps> = ({ discovery, isNew, onClose }) => {
   const t = useTranslations();
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // For AI/custom recipes, use name directly. For built-in ingredients, use translation.
   const isCustomOrAI = discovery.id.startsWith('ai_') || discovery.id.startsWith('custom_');
   const displayName = isCustomOrAI
     ? discovery.name
     : safeTranslate(t, `ingredients.${discovery.id}`, discovery.name);
 
+  useEffect(() => {
+    buttonRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      {/* Radiance Aura Background */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/10 rounded-full blur-3xl animate-pulse"></div>
-      </div>
+    <div
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-[#0C1322]/55 backdrop-blur-sm backdrop-in sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="discovery-title"
+        onClick={(e) => e.stopPropagation()}
+        className="sheet-up w-full sm:max-w-sm bg-surface text-ink rounded-t-[28px] sm:rounded-[28px] px-6 pt-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:p-8 text-center shadow-lift relative overflow-hidden"
+      >
+        {/* Grab handle (phones) */}
+        <div aria-hidden="true" className="sm:hidden mx-auto mb-5 h-1 w-10 rounded-full bg-line" />
 
-      <div className={`bg-slate-900 border-2 w-full max-w-sm rounded-2xl sm:rounded-3xl p-5 sm:p-8 text-center relative overflow-hidden shadow-2xl animate-in zoom-in duration-300 border-slate-700`}>
-
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-500 to-transparent"></div>
-
-        <div className="flex flex-col items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-          {isNew && (
-            <span className="bg-amber-500 text-slate-900 text-[9px] sm:text-[10px] font-black px-2.5 sm:px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
-              {t('game.newDiscovery') || 'New Discovery'}
+        <div className="flex justify-center mb-4 min-h-6">
+          {isNew ? (
+            <span className="rounded-full bg-have-soft text-have px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em]">
+              {safeTranslate(t, 'game.newDiscovery', 'New Discovery')}
+            </span>
+          ) : (
+            <span className="rounded-full bg-sunk text-muted px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em]">
+              {safeTranslate(t, `categories.${discovery.category}`, discovery.category)}
             </span>
           )}
         </div>
 
-        <div className="text-6xl sm:text-8xl mb-4 sm:mb-6 transform hover:scale-110 transition-transform cursor-default drop-shadow-2xl relative inline-block">
-          {discovery.emoji}
+        <div className="relative mx-auto mb-5 w-28 h-28 sm:w-32 sm:h-32">
           {isNew && (
-            <div className="absolute -inset-4 bg-amber-500/20 blur-2xl rounded-full -z-10 animate-pulse"></div>
+            <div
+              aria-hidden="true"
+              className="absolute -inset-6 rounded-full animate-pulse"
+              style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--im-brass) 30%, transparent), transparent 70%)' }}
+            />
           )}
+          <div className="relative w-full h-full rounded-full bg-tint flex items-center justify-center text-6xl sm:text-7xl animate-in zoom-in">
+            <span aria-hidden="true">{discovery.emoji}</span>
+          </div>
         </div>
 
-        <h2 className="text-2xl sm:text-3xl font-bold text-slate-100 mb-2">{displayName}</h2>
+        <h2 id="discovery-title" className="font-display font-medium text-3xl leading-tight mb-2">
+          {displayName}
+        </h2>
         {discovery.description && (
-          <p className="text-slate-300 text-xs sm:text-sm mb-2 sm:mb-3 leading-relaxed">
-            {discovery.description}
+          <p className="text-muted text-[15px] leading-relaxed mb-2">{discovery.description}</p>
+        )}
+        {isNew && (
+          <p className="text-muted text-xs mb-1">
+            {safeTranslate(t, `categories.${discovery.category}`, discovery.category)}
           </p>
         )}
-        <p className="text-slate-500 text-[10px] sm:text-xs mb-5 sm:mb-8 leading-relaxed italic">
-          {safeTranslate(t, `categories.${discovery.category}`, discovery.category)}
-        </p>
 
         <button
+          ref={buttonRef}
+          type="button"
           onClick={onClose}
-          className="w-full font-bold py-3 sm:py-4 rounded-xl sm:rounded-2xl transition-all duration-200 transform active:scale-95 shadow-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm sm:text-base"
+          className="mt-6 w-full rounded-2xl bg-cta text-on-cta py-3.5 px-5 shadow-soft font-display italic font-medium text-xl active:scale-[0.985] hover:brightness-110 transition-all"
         >
-          {t('game.addToCollection') || 'Add to Collection'}
+          {safeTranslate(t, 'game.addToCollection', 'Add to Collection')}
         </button>
       </div>
     </div>

@@ -18,7 +18,7 @@ interface DiscoveryBookProps {
   ingredients: Ingredient[];
   history: DiscoveryHistoryItem[];
   achievements: Achievement[];
-  onIngredientClick?: (ingredientId: string) => void;
+  onIngredientClick?: (ingredientId: string, e?: React.MouseEvent<HTMLElement>) => void;
 }
 
 const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, achievements, onIngredientClick }) => {
@@ -66,19 +66,19 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
   );
 
   return (
-    <div className="h-full bg-slate-900 border-l-0 lg:border-l border-slate-800 flex flex-col">
+    <div className="h-full bg-surface border-l-0 lg:border-l border-line flex flex-col">
       {/* Tab Header */}
-      <div className="border-b border-slate-800">
+      <div className="border-b border-line">
         <div className="flex">
           <button
             onClick={() => setActiveView('discoveries')}
             className={`flex-1 py-3 px-4 transition-all flex flex-col items-center gap-1 ${
               activeView === 'discoveries'
-                ? 'text-amber-500 border-b-2 border-amber-500 bg-slate-800/50'
-                : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30'
+                ? 'text-cobalt border-b-2 border-cobalt bg-sunk/60'
+                : 'text-muted hover:text-ink hover:bg-sunk/40'
             }`}
           >
-            <span className="text-2xl">📖</span>
+            <span aria-hidden="true" className="text-2xl">📖</span>
             <span className="text-[10px] font-bold uppercase tracking-wider">
               {t('game.almanac') || 'Almanac'}
             </span>
@@ -87,16 +87,16 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
             onClick={() => setActiveView('achievements')}
             className={`flex-1 py-3 px-4 transition-all flex flex-col items-center gap-1 relative ${
               activeView === 'achievements'
-                ? 'text-amber-500 border-b-2 border-amber-500 bg-slate-800/50'
-                : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30'
+                ? 'text-cobalt border-b-2 border-cobalt bg-sunk/60'
+                : 'text-muted hover:text-ink hover:bg-sunk/40'
             }`}
           >
-            <span className="text-2xl">🏆</span>
+            <span aria-hidden="true" className="text-2xl">🏆</span>
             <span className="text-[10px] font-bold uppercase tracking-wider">
               {t('achievements.title') || 'Achievements'}
             </span>
             {achievedCount > 0 && (
-              <span className="absolute top-2 right-2 text-[9px] bg-amber-500 text-slate-900 w-5 h-5 flex items-center justify-center rounded-full font-bold">
+              <span className="absolute top-2 right-2 text-[9px] bg-brass text-[#14203A] w-5 h-5 flex items-center justify-center rounded-full font-bold">
                 {achievedCount}
               </span>
             )}
@@ -109,11 +109,11 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
         {activeView === 'discoveries' && (
           <>
             <section>
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">
+              <h3 className="text-[11px] font-bold text-muted uppercase tracking-[0.14em] mb-4">
                 {t('game.latestBreakthroughs') || 'Latest Breakthroughs'}
               </h3>
               {history.length === 0 ? (
-                <p className="text-slate-600 text-sm italic">{t('game.noDiscoveries') || 'No discoveries yet. Start mixing!'}</p>
+                <p className="text-muted text-[15px] font-display italic">{t('game.noDiscoveries') || 'No discoveries yet. Start mixing!'}</p>
               ) : (
                 <div className="space-y-3">
                   {[...history].reverse().slice(0, 15).map((discovery, idx) => (
@@ -124,17 +124,17 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
                         e.dataTransfer.setData('ingredientId', discovery.result.id);
                         e.dataTransfer.effectAllowed = 'move';
                       }}
-                      onClick={() => onIngredientClick?.(discovery.result.id)}
-                      className="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50 flex flex-col gap-2 group transition-all cursor-grab active:cursor-grabbing hover:border-amber-500/50 hover:bg-slate-800"
+                      onClick={(e) => onIngredientClick?.(discovery.result.id, e)}
+                      className="bg-canvas p-3 rounded-2xl border border-line flex flex-col gap-2 group transition-all cursor-grab active:cursor-grabbing hover:border-cobalt/40 hover:shadow-soft animate-in slide-in-from-bottom-2"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl group-hover:scale-110 transition-transform">{discovery.result.emoji}</span>
+                        <span aria-hidden="true" className="w-10 h-10 shrink-0 rounded-full bg-tint flex items-center justify-center text-xl group-hover:scale-110 transition-transform">{discovery.result.emoji}</span>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold">{getDisplayName(discovery.result.id, discovery.result.name)}</p>
+                            <p className="font-display text-base leading-tight text-ink">{getDisplayName(discovery.result.id, discovery.result.name)}</p>
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <p className="text-[10px] text-slate-500">
+                            <p className="text-[11px] text-muted">
                               {discovery.ingredients.join(' + ')}
                             </p>
                           </div>
@@ -148,15 +148,15 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
 
             <section>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
+                <h3 className="text-[11px] font-bold text-muted uppercase tracking-[0.14em]">
                   {t('game.encyclopedia') || 'Encyclopedia'}
                 </h3>
                 <button
                   onClick={() => setShowUndiscovered(!showUndiscovered)}
-                  className={`text-[10px] px-2 py-1 rounded-full transition-all ${
+                  className={`text-[11px] font-semibold px-2.5 py-1 rounded-full transition-all ${
                     showUndiscovered
-                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50'
-                      : 'bg-slate-800 text-slate-500 border border-slate-700 hover:border-slate-600'
+                      ? 'bg-cobalt text-on-cobalt border border-cobalt'
+                      : 'bg-surface text-muted border border-line hover:border-cobalt/50'
                   }`}
                 >
                   {showUndiscovered ? '👁️' : '👁️‍🗨️'} {undiscoveredNonBaseIngredients.length}
@@ -175,19 +175,19 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
                         e.dataTransfer.setData('ingredientId', ing.id);
                         e.dataTransfer.effectAllowed = 'move';
                       }}
-                      onClick={() => onIngredientClick?.(ing.id)}
-                      className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:border-amber-500/50 hover:bg-slate-800 transition-all group cursor-grab active:cursor-grabbing"
+                      onClick={(e) => onIngredientClick?.(ing.id, e)}
+                      className="p-3 rounded-2xl bg-canvas border border-line hover:border-cobalt/40 hover:shadow-soft transition-all group cursor-grab active:cursor-grabbing"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl group-hover:scale-110 transition-transform">{ing.emoji}</span>
+                        <span aria-hidden="true" className="w-10 h-10 shrink-0 rounded-full bg-tint flex items-center justify-center text-xl group-hover:scale-110 transition-transform">{ing.emoji}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-slate-200">{getDisplayName(ing.id, ing.name)}</p>
+                          <p className="font-display text-base leading-tight text-ink">{getDisplayName(ing.id, ing.name)}</p>
                           {recipe && (
-                            <div className="flex items-center gap-1 mt-1 text-[10px] text-slate-500">
+                            <div className="flex items-center gap-1 mt-1 text-[11px] text-muted">
                               {recipe.map((item, idx) => (
                                 <span key={item.id} className="flex items-center">
                                   <span title={item.name}>{item.emoji}</span>
-                                  {idx < recipe.length - 1 && <span className="mx-1 text-slate-600">+</span>}
+                                  {idx < recipe.length - 1 && <span className="mx-1 text-muted">+</span>}
                                 </span>
                               ))}
                             </div>
@@ -202,34 +202,34 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
                 {showUndiscovered && undiscoveredNonBaseIngredients.map((ing) => (
                   <div
                     key={ing.id}
-                    className="p-3 rounded-lg bg-slate-800/20 border border-dashed border-slate-700/50 hover:border-amber-500/30 transition-all group opacity-60 hover:opacity-80"
+                    className="p-3 rounded-2xl bg-sunk/50 border border-dashed border-line transition-all group opacity-70 hover:opacity-90"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl grayscale opacity-40 group-hover:opacity-60 transition-opacity">
+                      <span aria-hidden="true" className="w-10 h-10 shrink-0 rounded-full bg-sunk flex items-center justify-center text-xl grayscale opacity-50 group-hover:opacity-70 transition-opacity">
                         {ing.emoji}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-500 group-hover:text-slate-400">{getDisplayName(ing.id, ing.name)}</p>
-                        <p className="text-[10px] text-slate-600 mt-0.5">???</p>
+                        <p className="font-display text-base leading-tight text-muted">{getDisplayName(ing.id, ing.name)}</p>
+                        <p className="text-[11px] text-muted mt-0.5">???</p>
                       </div>
-                      <span className="text-slate-600">🔒</span>
+                      <span aria-hidden="true" className="text-muted">🔒</span>
                     </div>
                   </div>
                 ))}
               </div>
 
               {discoveredNonBaseIngredients.length === 0 && !showUndiscovered && (
-                <p className="text-slate-600 text-sm italic mt-2">{t('game.noDiscoveries') || 'No discoveries yet. Start mixing!'}</p>
+                <p className="text-muted text-[15px] font-display italic mt-2">{t('game.noDiscoveries') || 'No discoveries yet. Start mixing!'}</p>
               )}
 
               {/* Progress indicator */}
               <div className="mt-4 text-center">
-                <p className="text-[10px] text-slate-600">
+                <p className="text-[11px] font-semibold text-muted tabular-nums">
                   {discoveredNonBaseIngredients.length} / {nonBaseIngredients.length}
                 </p>
-                <div className="w-full h-1 bg-slate-800 rounded-full mt-1 overflow-hidden">
+                <div className="w-full h-1.5 bg-sunk rounded-full mt-1.5 overflow-hidden">
                   <div
-                    className="h-full bg-amber-500 rounded-full transition-all duration-500"
+                    className="h-full bg-have rounded-full transition-all duration-500"
                     style={{ width: `${(discoveredNonBaseIngredients.length / nonBaseIngredients.length) * 100}%` }}
                   />
                 </div>
@@ -243,14 +243,14 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
           <>
             {/* Progress overview */}
             <section>
-              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+              <div className="bg-canvas rounded-2xl p-4 border border-line">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-bold text-slate-300">{t('achievements.progress') || 'Progress'}</span>
-                  <span className="text-amber-500 font-bold">{achievedCount} / {achievements.length}</span>
+                  <span className="text-sm font-bold text-ink">{t('achievements.progress') || 'Progress'}</span>
+                  <span className="font-display text-lg text-ink tabular-nums">{achievedCount} / {achievements.length}</span>
                 </div>
-                <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-sunk rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500"
+                    className="h-full bg-brass rounded-full transition-all duration-500"
                     style={{ width: `${(achievedCount / achievements.length) * 100}%` }}
                   />
                 </div>
@@ -262,27 +262,27 @@ const DiscoveryBook: React.FC<DiscoveryBookProps> = ({ ingredients, history, ach
               {achievements.map((achievement) => (
                 <div
                   key={achievement.id}
-                  className={`p-3 rounded-lg border transition-all ${
+                  className={`p-3 rounded-2xl border transition-all ${
                     achievement.achieved
-                      ? 'bg-amber-500/10 border-amber-500/30'
-                      : 'bg-slate-800/30 border-slate-700/50 opacity-60'
+                      ? 'bg-brass/10 border-brass/40'
+                      : 'bg-canvas border-line opacity-70'
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-lg ${
                       achievement.achieved
-                        ? 'bg-amber-500/20'
-                        : 'bg-slate-700/50'
+                        ? 'bg-brass/20'
+                        : 'bg-sunk'
                     }`}>
                       {achievement.achieved ? '🏆' : '🔒'}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-semibold ${
-                        achievement.achieved ? 'text-amber-400' : 'text-slate-400'
+                        achievement.achieved ? 'text-ink' : 'text-muted'
                       }`}>
                         {t(`achievements.${achievement.id}`) || achievement.name}
                       </p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
+                      <p className="text-xs text-muted mt-0.5">
                         {t(`achievements.descriptions.${achievement.id}`) || achievement.description}
                       </p>
                     </div>

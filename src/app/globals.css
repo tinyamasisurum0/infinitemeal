@@ -1,23 +1,127 @@
 @import "tailwindcss";
 
+/*
+ * Infinite Meal design tokens.
+ * Palette and type follow the React Native app: navy ink, cobalt accents,
+ * an emerald "pot" green with brass details, and tuned light/dark themes.
+ * Theme: follows the OS by default; <html data-theme="light|dark"> overrides it.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --im-canvas: #F3F5F9;
+  --im-surface: #FFFFFF;
+  --im-sunk: #E8ECF3;
+  --im-ink: #14203A;
+  --im-muted: #5F6C86;
+  --im-line: #D9DFEA;
+  --im-cobalt: #1F3F8F;
+  --im-on-cobalt: #F3F5F9;
+  --im-pot: #1E6A4E;
+  --im-pot-hi: #56A886;
+  --im-pot-lo: #0E3D2C;
+  --im-tin: #C6CDD6;
+  --im-brass: #C2933A;
+  --im-on-pot: #F4FBF7;
+  --im-cta: #1A6046;
+  --im-on-cta: #F3FBF7;
+  --im-tint: #E2EFE8;
+  --im-have: #0F7D79;
+  --im-have-soft: #DBF0EE;
+  --im-miss: #B03A3A;
+  --im-miss-soft: #F8E2E1;
+  --im-shadow: 0 4px 12px rgba(20, 32, 58, 0.08);
+  --im-shadow-lg: 0 12px 32px rgba(20, 32, 58, 0.14);
+
+  --background: var(--im-canvas);
+  --foreground: var(--im-ink);
   --font-size-base: 16px;
   --line-height-base: 1.5;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --im-canvas: #0C1322;
+  --im-surface: #161F35;
+  --im-sunk: #111A2D;
+  --im-ink: #E9EDF6;
+  --im-muted: #94A1BC;
+  --im-line: #26314B;
+  --im-cobalt: #9DB4F5;
+  --im-on-cobalt: #0C1322;
+  --im-pot: #2C8763;
+  --im-pot-hi: #74C9A4;
+  --im-pot-lo: #134C37;
+  --im-tin: #8A95A6;
+  --im-brass: #DDB15A;
+  --im-on-pot: #F4FBF7;
+  --im-cta: #70CFA7;
+  --im-on-cta: #062216;
+  --im-tint: #15302A;
+  --im-have: #62D0C7;
+  --im-have-soft: #123331;
+  --im-miss: #F2918D;
+  --im-miss-soft: #3C1F23;
+  --im-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  --im-shadow-lg: 0 14px 36px rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --im-canvas: #0C1322;
+    --im-surface: #161F35;
+    --im-sunk: #111A2D;
+    --im-ink: #E9EDF6;
+    --im-muted: #94A1BC;
+    --im-line: #26314B;
+    --im-cobalt: #9DB4F5;
+    --im-on-cobalt: #0C1322;
+    --im-pot: #2C8763;
+    --im-pot-hi: #74C9A4;
+    --im-pot-lo: #134C37;
+    --im-tin: #8A95A6;
+    --im-brass: #DDB15A;
+    --im-on-pot: #F4FBF7;
+    --im-cta: #70CFA7;
+    --im-on-cta: #062216;
+    --im-tint: #15302A;
+    --im-have: #62D0C7;
+    --im-have-soft: #123331;
+    --im-miss: #F2918D;
+    --im-miss-soft: #3C1F23;
+    --im-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    --im-shadow-lg: 0 14px 36px rgba(0, 0, 0, 0.45);
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-outfit);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-canvas: var(--im-canvas);
+  --color-surface: var(--im-surface);
+  --color-sunk: var(--im-sunk);
+  --color-ink: var(--im-ink);
+  --color-muted: var(--im-muted);
+  --color-line: var(--im-line);
+  --color-cobalt: var(--im-cobalt);
+  --color-on-cobalt: var(--im-on-cobalt);
+  --color-pot: var(--im-pot);
+  --color-pot-hi: var(--im-pot-hi);
+  --color-pot-lo: var(--im-pot-lo);
+  --color-tin: var(--im-tin);
+  --color-brass: var(--im-brass);
+  --color-on-pot: var(--im-on-pot);
+  --color-cta: var(--im-cta);
+  --color-on-cta: var(--im-on-cta);
+  --color-tint: var(--im-tint);
+  --color-have: var(--im-have);
+  --color-have-soft: var(--im-have-soft);
+  --color-miss: var(--im-miss);
+  --color-miss-soft: var(--im-miss-soft);
+  --font-sans: var(--font-dm-sans);
+  --font-display: var(--font-fraunces);
+  --shadow-soft: var(--im-shadow);
+  --shadow-lift: var(--im-shadow-lg);
 }
 
 html {
@@ -28,22 +132,11 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: var(--font-dm-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Add transition to all elements for smoother dark mode changes */
-*, *::before, *::after {
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Improve text readability */
-p, li, label, input, textarea, button {
-  font-size: 1rem;
-  line-height: 1.5;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -51,361 +144,216 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
 }
 
-/* Improve focus states for accessibility */
+.font-display {
+  font-family: var(--font-fraunces), Georgia, 'Times New Roman', serif;
+  font-optical-sizing: auto;
+}
+
 *:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--im-cobalt);
   outline-offset: 2px;
 }
 
-/* Improve mobile readability */
 @media (max-width: 640px) {
   :root {
     --font-size-base: 15px;
   }
 }
 
-/* Safe area for mobile devices (notch, home indicator) */
 .safe-area-inset-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Prevent pull-to-refresh and bounce on mobile */
 html, body {
   overscroll-behavior: none;
 }
 
-/* Shake animation for failed combinations */
+/* ---------- Generic enter animations ---------- */
+
+@keyframes animate-in-zoom {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes animate-in-slide-from-bottom {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes animate-in-slide-from-top {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes animate-in-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-in { animation-duration: 300ms; animation-fill-mode: both; }
+.zoom-in { animation-name: animate-in-zoom; }
+.slide-in-from-bottom-2 { animation-name: animate-in-slide-from-bottom; }
+.slide-in-from-top { animation-name: animate-in-slide-from-top; }
+.fade-in { animation-name: animate-in-fade; }
+
+/* Result sheet: slides up from the bottom on phones, rises softly on desktop */
+@keyframes sheet-up {
+  from { opacity: 0; transform: translateY(48px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.sheet-up { animation: sheet-up 420ms cubic-bezier(0.2, 0.9, 0.3, 1.15) both; }
+
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.backdrop-in { animation: backdrop-in 220ms ease-out both; }
+
+/* Toast */
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 16px) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+.toast-in { animation: toast-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+
+/* ---------- Pot ---------- */
+
+.pot-lid {
+  transform-origin: 84.2% 34.1%;
+  transform: translate(-1.7%, -11.8%) rotate(13deg);
+  transition: transform 420ms cubic-bezier(0.34, 1.6, 0.64, 1);
+}
+.pot[data-cooking="true"] .pot-lid { transform: none; }
+
+.pot-flames {
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+.pot[data-cooking="true"] .pot-flames {
+  opacity: 1;
+  animation: flame-flicker 0.35s ease-in-out infinite alternate;
+  transform-origin: 50% 100%;
+}
+@keyframes flame-flicker {
+  from { transform: scaleY(0.92); }
+  to { transform: scaleY(1.06); }
+}
+
+.pot[data-cooking="true"] .pot-body { animation: pot-rattle 0.22s linear infinite; }
+@keyframes pot-rattle {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(1.2px); }
+}
+
+.pot-steam {
+  position: absolute;
+  top: -2%;
+  width: 8px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--im-muted);
+  opacity: 0;
+  pointer-events: none;
+}
+.pot[data-cooking="true"] .pot-steam { animation: steam 1.1s linear infinite; }
+@keyframes steam {
+  0% { opacity: 0; transform: translateY(8px); }
+  40% { opacity: 0.3; }
+  100% { opacity: 0; transform: translateY(-34px); }
+}
+
+.pot-bump { animation: pot-bump 480ms cubic-bezier(0.3, 1.8, 0.5, 1) both; }
+@keyframes pot-bump {
+  from { transform: scale(1.18); }
+  to { transform: scale(1); }
+}
+
+/* Idle bubbles inside the pot once something is in it */
+.pot-bubble {
+  position: absolute;
+  bottom: 0;
+  border-radius: 9999px;
+  background: var(--im-on-pot);
+  opacity: 0;
+  pointer-events: none;
+}
+.pot[data-filled="true"] .pot-bubble { animation: bubble 2.4s ease-in infinite; }
+.pot[data-cooking="true"] .pot-bubble { animation-duration: 0.9s; }
+@keyframes bubble {
+  0% { opacity: 0; transform: translateY(0) scale(0.6); }
+  20% { opacity: 0.35; }
+  100% { opacity: 0; transform: translateY(-26px) scale(1); }
+}
+
+.pot[data-over="true"] .pot-body { transform: translateY(-4px); transition: transform 200ms ease; }
+
+/* ---------- Method-specific vessels ---------- */
+
+.vessel-swap { animation: vessel-swap 360ms cubic-bezier(0.3, 1.5, 0.5, 1) both; }
+@keyframes vessel-swap {
+  from { opacity: 0.2; transform: scale(0.9) translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Mixing bowl: spoon sways while stirring, ingredients tumble */
+.tool-spoon { transform-origin: 69% 8%; transition: transform 300ms ease; transform: rotate(4deg); }
+.pot[data-cooking="true"] .tool-spoon { animation: stir 0.32s ease-in-out infinite alternate; }
+@keyframes stir {
+  from { transform: rotate(-14deg); }
+  to { transform: rotate(12deg); }
+}
+.emoji-tumble .emoji-item { display: inline-block; animation: tumble 0.6s linear infinite; }
+@keyframes tumble {
+  from { transform: rotate(0deg) translateX(5px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(5px) rotate(-360deg); }
+}
+
+/* Pan and griddle: ingredients hop */
+.emoji-hop .emoji-item { display: inline-block; animation: hop 0.34s ease-in-out infinite alternate; }
+@keyframes hop {
+  from { transform: translateY(0) rotate(-6deg); }
+  to { transform: translateY(-14px) rotate(8deg); }
+}
+
+/* Oven: the window glows while baking */
+.oven-glow { opacity: 0.08; transition: opacity 400ms ease; }
+.pot[data-cooking="true"] .oven-glow { animation: oven-glow 0.6s ease-in-out infinite alternate; }
+@keyframes oven-glow {
+  from { opacity: 0.35; }
+  to { opacity: 0.7; }
+}
+
+/* Cutting board: the knife chops, ingredients squash on each cut */
+.tool-knife { transform-origin: 87% 26%; transform: rotate(-8deg); transition: transform 300ms ease; }
+.pot[data-cooking="true"] .tool-knife { animation: chop 0.3s ease-in infinite; }
+@keyframes chop {
+  0%, 100% { transform: rotate(-8deg); }
+  55% { transform: rotate(19deg); }
+}
+.emoji-chop .emoji-item { display: inline-block; transform-origin: 50% 100%; animation: squash 0.3s ease-in infinite; }
+@keyframes squash {
+  0%, 45%, 100% { transform: scale(1, 1); }
+  60% { transform: scale(1.15, 0.8); }
+}
+.pot[data-method="chop"][data-cooking="true"] .pot-body { animation: none; }
+
+/* Blender: contents whirl and the liquid sloshes */
+.emoji-whirl .emoji-item { display: inline-block; animation: whirl 0.4s linear infinite; }
+@keyframes whirl {
+  from { transform: rotate(0deg) translateX(7px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(7px) rotate(0deg); }
+}
+.blend-liquid { transform-box: fill-box; transform-origin: 50% 100%; }
+.pot[data-cooking="true"] .blend-liquid { animation: slosh 0.22s ease-in-out infinite alternate; }
+@keyframes slosh {
+  from { transform: scaleY(1); }
+  to { transform: scaleY(1.25) skewX(4deg); }
+}
+
+.shake { animation: shake 0.5s ease-in-out; }
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
   20%, 40%, 60%, 80% { transform: translateX(5px); }
 }
 
-.shake {
-  animation: shake 0.5s ease-in-out;
-}
-
-/* Ingredient hover animation */
-.ingredient-item {
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-}
-
-.ingredient-item:hover {
-  transform: scale(1.05) translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.ingredient-item:active {
-  transform: scale(0.98);
-}
-
-/* Discovery celebration animation */
-@keyframes celebrate {
-  0% { transform: scale(0.5); opacity: 0; }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
-  50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.8), 0 0 60px rgba(59, 130, 246, 0.4); }
-}
-
-@keyframes sparkle {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.2); }
-}
-
-.discovery-celebration {
-  animation: celebrate 0.5s ease-out, glow-pulse 1.5s ease-in-out infinite;
-}
-
-.discovery-emoji {
-  animation: sparkle 0.6s ease-in-out infinite;
-}
-
-/* Success animation */
-@keyframes success-bounce {
-  0%, 100% { transform: translateY(0); }
-  25% { transform: translateY(-10px); }
-  50% { transform: translateY(0); }
-  75% { transform: translateY(-5px); }
-}
-
-@keyframes success-glow {
-  0% { box-shadow: 0 0 0 rgba(34, 197, 94, 0); }
-  50% { box-shadow: 0 0 30px rgba(34, 197, 94, 0.6); }
-  100% { box-shadow: 0 0 0 rgba(34, 197, 94, 0); }
-}
-
-.success-animation {
-  animation: success-bounce 0.6s ease-out, success-glow 0.8s ease-out;
-}
-
-/* Card depth and shadows */
-.card-elevated {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
-}
-
-.card-elevated:hover {
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-}
-
-/* Gradient backgrounds */
-.gradient-blue {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-}
-
-.gradient-green {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-}
-
-.gradient-purple {
-  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
-}
-
-.gradient-orange {
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-}
-
-/* Mix area glow when active */
-@keyframes mix-ready {
-  0%, 100% { border-color: rgba(59, 130, 246, 0.5); }
-  50% { border-color: rgba(59, 130, 246, 1); }
-}
-
-.mix-area-ready {
-  animation: mix-ready 1.5s ease-in-out infinite;
-}
-
-/* Floating animation for workspace items */
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-.float-animation {
-  animation: float 2s ease-in-out infinite;
-}
-
-/* Tab transition */
-.tab-content {
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Button press effect */
-.btn-press {
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
-}
-
-.btn-press:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.btn-press:active {
-  transform: translateY(1px) scale(0.98);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-/* Dragging state */
-.dragging {
-  opacity: 0.7;
-  transform: scale(1.05) rotate(2deg);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  cursor: grabbing !important;
-  z-index: 100;
-}
-
-/* Drop zone highlight */
-.drop-zone-active {
-  border-color: #3b82f6 !important;
-  background-color: rgba(59, 130, 246, 0.1) !important;
-  box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.2);
-}
-
-@keyframes pulse-border {
-  0%, 100% { border-color: rgba(59, 130, 246, 0.5); }
-  50% { border-color: rgba(59, 130, 246, 1); }
-}
-
-.drop-zone-active {
-  animation: pulse-border 1s ease-in-out infinite;
-}
-
-/* Loading spinner */
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.spinner {
-  width: 24px;
-  height: 24px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-.spinner-dark {
-  border: 3px solid rgba(0, 0, 0, 0.1);
-  border-top-color: #3b82f6;
-}
-
-/* Toast notifications */
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideOutDown {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-}
-
-.toast {
-  animation: slideInUp 0.3s ease-out;
-}
-
-.toast-exit {
-  animation: slideOutDown 0.3s ease-out forwards;
-}
-
-/* Ripple effect for buttons */
-.ripple {
-  position: relative;
-  overflow: hidden;
-}
-
-.ripple::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: width 0.3s ease, height 0.3s ease;
-}
-
-.ripple:active::after {
-  width: 200px;
-  height: 200px;
-}
-
-/* Cooking method card hover */
-.method-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.method-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-}
-
-.method-card:active {
-  transform: translateY(0);
-}
-
-.method-card.selected {
-  border-width: 2px;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-}
-
-/* Animate-in utilities for new UI */
-@keyframes animate-in-zoom {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes animate-in-slide-from-bottom {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes animate-in-slide-from-top {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes animate-in-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.animate-in {
-  animation-duration: 300ms;
-  animation-fill-mode: both;
-}
-
-.zoom-in {
-  animation-name: animate-in-zoom;
-}
-
-.slide-in-from-bottom-2 {
-  animation-name: animate-in-slide-from-bottom;
-}
-
-.slide-in-from-top {
-  animation-name: animate-in-slide-from-top;
-}
-
-.fade-in {
-  animation-name: animate-in-fade;
-}
-
-.duration-300 {
-  animation-duration: 300ms;
-}
-
-.duration-200 {
-  animation-duration: 200ms;
-}
-
-/* Jiggle animation for mixing bowl */
+.jiggle { animation: jiggle 0.3s ease-in-out; }
 @keyframes jiggle {
   0%, 100% { transform: rotate(0deg); }
   25% { transform: rotate(-3deg); }
@@ -413,23 +361,28 @@ html, body {
   75% { transform: rotate(-3deg); }
 }
 
-.jiggle {
-  animation: jiggle 0.3s ease-in-out;
+/* Emoji that arcs from an ingredient into the pot (positioned by JS) */
+.flying-emoji {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 80;
+  pointer-events: none;
+  line-height: 1;
+  will-change: transform, opacity;
 }
 
-/* Radiance aura for success modal */
-@keyframes radiance {
-  0%, 100% {
-    opacity: 0.3;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.6;
-    transform: scale(1.1);
-  }
+/* Gentle pulse for the counter badge on the mobile Cook tab */
+@keyframes badge-pop {
+  from { transform: scale(1.5); }
+  to { transform: scale(1); }
 }
+.badge-pop { animation: badge-pop 360ms cubic-bezier(0.3, 1.8, 0.5, 1) both; }
 
-.radiance-aura {
-  background: radial-gradient(circle at center, rgba(245, 158, 11, 0.2) 0%, transparent 70%);
-  animation: radiance 2s ease-in-out infinite;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

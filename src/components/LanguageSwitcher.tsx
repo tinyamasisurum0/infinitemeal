@@ -36,25 +36,25 @@ function LanguageSwitcher() {
   return (
     <div className="relative">
       <button
-        className="p-2 rounded-lg shadow-lg transition-colors bg-slate-800 hover:bg-slate-700 text-white cursor-pointer"
+        className="w-10 h-10 rounded-full bg-surface border border-line shadow-soft text-ink flex items-center justify-center hover:-translate-y-0.5 active:scale-95 transition-transform cursor-pointer"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-haspopup="true"
         aria-label={t('language')}
       >
-        <span className="text-sm">🌐</span>
+        <span aria-hidden="true" className="text-sm">🌐</span>
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 bottom-full mb-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden">
+        <div className="absolute right-0 bottom-full mb-2 w-48 bg-surface border border-line rounded-2xl shadow-lift z-50 overflow-hidden animate-in slide-in-from-bottom-2">
           <div className="py-1" role="menu" aria-orientation="vertical">
             {locales.map((locale) => (
               <button
                 key={locale}
                 className={`w-full text-left px-4 py-2 text-sm ${
                   locale === currentLocale
-                    ? 'bg-amber-500/20 text-amber-400'
-                    : 'text-slate-300 hover:bg-slate-700'
+                    ? 'bg-cobalt/10 text-cobalt font-semibold'
+                    : 'text-ink hover:bg-sunk'
                 } flex items-center transition-colors`}
                 onClick={() => changeLanguage(locale)}
                 disabled={locale === currentLocale}

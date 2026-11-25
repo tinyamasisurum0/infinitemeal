@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import LanguageSwitcher from './LanguageSwitcher';
+import ThemeToggle from './ThemeToggle';
+import { flyEmoji } from '@/utils/flyEmoji';
 import {
   Ingredient,
   CookingMethod,
@@ -232,6 +234,22 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
     if (newMixingIds.length === 2) {
       setTimeout(() => handleMix(newMixingIds), 500);
     }
+  };
+
+  // Click/tap on an ingredient: toss its emoji into the pot (or onto the Cook
+  // tab on phones, where the pot is on another screen), then add it as usual.
+  const potRef = useRef<HTMLDivElement>(null);
+  const cookTabRef = useRef<HTMLButtonElement>(null);
+  const handlePick = (ingredientId: string, e?: React.MouseEvent<HTMLElement>) => {
+    const willAdd =
+      status !== 'mixing' && currentMixingIds.length < 3 && !currentMixingIds.includes(ingredientId);
+    if (willAdd && e) {
+      const ing = discoveredIngredients.find(i => i.id === ingredientId);
+      const pot = potRef.current;
+      const target = pot && pot.getBoundingClientRect().width > 0 ? pot : cookTabRef.current;
+      if (ing) flyEmoji(ing.emoji, e.currentTarget, target);
+    }
+    handleDrop(ingredientId);
   };
 
   // Handle mixing/cooking
@@ -507,147 +525,185 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
     console.log('[Reset] Complete');
   };
 
+  const navTabs: { id: 'ingredients' | 'game' | 'discoveries'; emoji: string; label: string }[] = [
+    { id: 'ingredients', emoji: '🧂', label: safeTranslate(t, 'cook.ingredients', 'Ingredients') },
+    { id: 'game', emoji: '🍲', label: safeTranslate(t, 'cook.cook', 'Cook') },
+    { id: 'discoveries', emoji: '📖', label: safeTranslate(t, 'game.almanac', 'Almanac') },
+  ];
+
+  const iconButton =
+    'w-10 h-10 rounded-full bg-surface border border-line shadow-soft text-ink flex items-center justify-center hover:-translate-y-0.5 active:scale-95 transition-transform';
+
   return (
-    <div className="flex flex-col lg:flex-row h-screen w-full bg-[#0f172a] text-slate-100 overflow-hidden">
+    <div className="flex flex-col lg:flex-row h-screen w-full bg-canvas text-ink overflow-hidden">
       {/* Mobile Bottom Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-slate-800 safe-area-inset-bottom">
+      <nav
+        aria-label={safeTranslate(t, 'app.title', 'Infinite Meal')}
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-md border-t border-line safe-area-inset-bottom"
+      >
         <div className="flex justify-around items-center py-2">
-          <button
-            onClick={() => setMobileTab('ingredients')}
-            className={`flex flex-col items-center py-2 px-4 rounded-lg transition-all ${
-              mobileTab === 'ingredients'
-                ? 'text-amber-500 bg-amber-500/10'
-                : 'text-slate-500'
-            }`}
-          >
-            <span className="text-xl">🧂</span>
-            <span className="text-xs font-bold mt-1">{t('game.ingredients') || 'Ingredients'}</span>
-          </button>
-          <button
-            onClick={() => setMobileTab('game')}
-            className={`flex flex-col items-center py-2 px-4 rounded-lg transition-all ${
-              mobileTab === 'game'
-                ? 'text-amber-500 bg-amber-500/10'
-                : 'text-slate-500'
-            }`}
-          >
-            <span className="text-xl">🍳</span>
-            <span className="text-xs font-bold mt-1">{t('game.cook') || 'Cook'}</span>
-          </button>
-          <button
-            onClick={() => setMobileTab('discoveries')}
-            className={`flex flex-col items-center py-2 px-4 rounded-lg transition-all ${
-              mobileTab === 'discoveries'
-                ? 'text-amber-500 bg-amber-500/10'
-                : 'text-slate-500'
-            }`}
-          >
-            <span className="text-xl">📖</span>
-            <span className="text-xs font-bold mt-1">{t('game.almanac') || 'Almanac'}</span>
-          </button>
+          {navTabs.map((tab) => {
+            const active = mobileTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                ref={tab.id === 'game' ? cookTabRef : undefined}
+                type="button"
+                onClick={() => setMobileTab(tab.id)}
+                aria-current={active ? 'page' : undefined}
+                className={`relative flex flex-col items-center py-1.5 px-4 rounded-2xl transition-colors min-w-[84px] ${
+                  active ? 'text-cobalt bg-cobalt/10' : 'text-muted'
+                }`}
+              >
+                <span aria-hidden="true" className="text-xl leading-none">{tab.emoji}</span>
+                <span className="text-[11px] font-semibold mt-1 max-w-[96px] truncate">{tab.label}</span>
+                {tab.id === 'game' && currentMixingIds.length > 0 && (
+                  <span
+                    key={currentMixingIds.length}
+                    aria-label={`${currentMixingIds.length}`}
+                    className="badge-pop absolute -top-0.5 right-3 min-w-5 h-5 px-1 rounded-full bg-pot text-on-pot text-[11px] font-bold flex items-center justify-center"
+                  >
+                    {currentMixingIds.length}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
-      </div>
+      </nav>
 
       {/* Left Sidebar - Ingredient Shelf (Desktop) / Full Screen (Mobile) */}
-      <div className={`
+      <aside className={`
         ${mobileTab === 'ingredients' ? 'flex' : 'hidden'} lg:flex
-        w-full lg:w-80 flex-col border-r border-slate-800 bg-slate-900/50 backdrop-blur-md
+        w-full lg:w-80 flex-col lg:border-r border-line bg-surface
         h-[calc(100vh-72px)] lg:h-screen
       `}>
-        <div className="p-3 lg:p-4 border-b border-slate-800">
+        <div className="px-4 pt-4 pb-3 border-b border-line">
+          <div className="flex items-baseline justify-between mb-3">
+            <h2 className="font-display font-medium text-2xl leading-none">
+              {safeTranslate(t, 'cook.ingredients', 'Ingredients')}
+            </h2>
+            <span className="text-xs font-semibold text-muted tabular-nums">
+              {discoveredIngredients.length} {safeTranslate(t, 'game.discovered', 'discovered')}
+            </span>
+          </div>
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔍</span>
+              <span aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm">🔍</span>
               <input
-                type="text"
-                placeholder={t('game.filterIngredients') || 'Filter ingredients...'}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                type="search"
+                aria-label={safeTranslate(t, 'game.filterIngredients', 'Filter ingredients...')}
+                placeholder={safeTranslate(t, 'game.filterIngredients', 'Filter ingredients...')}
+                className="w-full bg-sunk border border-transparent rounded-full py-2 pl-9 pr-4 text-sm text-ink placeholder:text-muted focus:outline-none focus:border-cobalt/50 focus:bg-surface"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <button
+              type="button"
               onClick={() => setCompactView(!compactView)}
-              className={`p-2 rounded-lg border transition-all ${
+              aria-pressed={compactView}
+              className={`w-9 h-9 rounded-full border transition-colors flex items-center justify-center ${
                 compactView
-                  ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
-                  : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
+                  ? 'bg-cobalt border-cobalt text-on-cobalt'
+                  : 'bg-surface border-line text-muted hover:text-ink'
               }`}
               title={compactView ? 'Normal view' : 'Compact view'}
+              aria-label={compactView ? 'Normal view' : 'Compact view'}
             >
               {compactView ? '⊞' : '⊟'}
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 lg:p-4 scroll-smooth">
-          <div className={`grid gap-2 ${compactView ? 'grid-cols-5 sm:grid-cols-6 lg:grid-cols-4' : 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-2 gap-3'}`}>
-            {filteredIngredients.map((ing) => (
-              <IngredientItem
-                key={ing.id}
-                ingredient={ing}
-                onClick={() => handleDrop(ing.id)}
-                compact={compactView}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="p-3 lg:p-4 bg-slate-900 border-t border-slate-800">
-          {/* Stats row */}
-          <div className="flex justify-between items-center text-[10px] text-slate-500 mb-3">
-            <div className="flex items-center gap-1">
-              <span className="text-amber-500">🔥</span>
-              <span className="font-bold text-slate-300">{discoveryHistory.length}</span>
+        <div className="flex-1 overflow-y-auto p-3 lg:p-4 scroll-smooth bg-canvas">
+          {filteredIngredients.length === 0 ? (
+            <div className="py-12 px-4 text-center">
+              <p className="font-display text-xl text-ink mb-1">
+                {safeTranslate(t, 'cook.noResultsFound', 'No ingredients found')}
+              </p>
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="mt-2 text-sm font-semibold text-cobalt hover:underline"
+                >
+                  {safeTranslate(t, 'cook.clearSearch', 'Clear search')}
+                </button>
+              )}
             </div>
-            <span>{discoveredIngredients.length} {t('game.discovered') || 'Discovered'}</span>
-          </div>
-          {/* Action buttons row */}
+          ) : (
+            <div className={`grid gap-2 ${compactView ? 'grid-cols-5 sm:grid-cols-6 lg:grid-cols-4' : 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-2 gap-3'}`}>
+              {filteredIngredients.map((ing) => (
+                <IngredientItem
+                  key={ing.id}
+                  ingredient={ing}
+                  onClick={(e) => handlePick(ing.id, e)}
+                  compact={compactView}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="px-4 py-3 bg-surface border-t border-line">
           <div className="flex items-center justify-between gap-2">
-            <LanguageSwitcher />
-            <button
-              onClick={() => setShowContactForm(true)}
-              className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg transition-all"
-              title={t('navigation.contact') || 'Contact'}
-            >
-              <span className="text-sm">✉️</span>
-            </button>
-            <button
-              onClick={() => setShowResetConfirm(true)}
-              className="p-2 bg-slate-800 hover:bg-red-900/50 text-slate-400 hover:text-red-400 rounded-lg transition-all"
-              title={t('navigation.reset') || 'Reset'}
-            >
-              <span className="text-sm">🗑️</span>
-            </button>
+            <div className="flex items-center gap-1.5 text-xs text-muted" title={safeTranslate(t, 'game.latestBreakthroughs', 'Latest Breakthroughs')}>
+              <span aria-hidden="true">🔥</span>
+              <span className="font-bold text-ink tabular-nums">{discoveryHistory.length}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher />
+              <button
+                type="button"
+                onClick={() => setShowContactForm(true)}
+                className={iconButton}
+                title={safeTranslate(t, 'navigation.contact', 'Contact')}
+                aria-label={safeTranslate(t, 'navigation.contact', 'Contact')}
+              >
+                <span aria-hidden="true" className="text-sm">✉️</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(true)}
+                className={`${iconButton} hover:text-miss hover:bg-miss-soft`}
+                title={safeTranslate(t, 'navigation.reset', 'Reset')}
+                aria-label={safeTranslate(t, 'navigation.reset', 'Reset')}
+              >
+                <span aria-hidden="true" className="text-sm">🗑️</span>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </aside>
 
-      {/* Main Area - Synthesizer */}
-      <div className={`
+      {/* Main Area - the pot */}
+      <section className={`
         ${mobileTab === 'game' ? 'flex' : 'hidden'} lg:flex
-        flex-1 relative flex-col items-center justify-center overflow-hidden px-4
+        flex-1 relative flex-col items-center justify-center overflow-y-auto overflow-x-hidden px-4
         h-[calc(100vh-72px)] lg:h-screen pb-4 lg:pb-0
       `}>
-        <div className="z-10 text-center mb-4 lg:mb-8">
-          <h1 className="text-2xl lg:text-4xl font-light tracking-widest text-slate-100 uppercase">
-            {t('app.title') || 'Infinite Meal'}
-          </h1>
-          <div className="h-10 lg:h-14 mt-2 flex flex-col items-center justify-center">
-            {error && (
-              <div className="flex flex-col items-center animate-in slide-in-from-top duration-300">
-                <p className="text-red-400 font-medium text-xs lg:text-sm mb-2">{error}</p>
-              </div>
-            )}
-            {!error && (
-              <p className="text-slate-500 text-xs lg:text-xs italic tracking-widest opacity-60 px-4">
-                {t('game.masterIngredients') || 'Master the ingredients, discover new recipes.'}
-              </p>
-            )}
-          </div>
+        {/* Soft kitchen-light backdrop */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{ background: 'radial-gradient(60% 45% at 50% 58%, color-mix(in srgb, var(--im-pot-hi) 14%, transparent), transparent 70%)' }}
+        />
+
+        <div className="absolute top-3 right-3 lg:top-5 lg:right-5 z-20">
+          <ThemeToggle />
         </div>
 
-        <div className="z-10 flex flex-col items-center gap-6 lg:gap-12 w-full max-w-2xl">
+        <header className="z-10 text-center mb-5 lg:mb-8">
+          <h1 className="font-display font-medium text-4xl lg:text-5xl tracking-tight text-ink">
+            {safeTranslate(t, 'app.title', 'Infinite Meal')}
+          </h1>
+          <p className="text-muted text-sm lg:text-[15px] mt-2 px-4">
+            {safeTranslate(t, 'game.masterIngredients', 'Master the ingredients, discover new recipes.')}
+          </p>
+        </header>
+
+        <div className="z-10 flex flex-col items-center gap-6 lg:gap-10 w-full max-w-2xl">
           <MethodSelector
             methods={cookingMethods}
             selected={selectedMethod}
@@ -655,27 +711,33 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
             disabled={status === 'mixing'}
           />
 
-          <div className="relative group">
-            <MixingBowl
-              items={mixingIngredients}
-              onDrop={handleDrop}
-              status={status}
-              onClear={handleClear}
-              onPlusClick={() => setMobileTab('ingredients')}
-            />
-            {/* Cook button for single ingredient + cooking method */}
+          <MixingBowl
+            potRef={potRef}
+            methodId={selectedMethod.id}
+            items={mixingIngredients}
+            onDrop={handleDrop}
+            status={status}
+            onClear={handleClear}
+            onPlusClick={() => setMobileTab('ingredients')}
+          />
+
+          {/* Cook button for single ingredient + cooking method */}
+          <div className="min-h-14 -mt-2 lg:-mt-4">
             {mixingIngredients.length === 1 && status === 'idle' && selectedMethod.id !== 'mix' && (
               <button
+                type="button"
                 onClick={handleApplyMethod}
-                className="absolute -right-16 lg:-right-20 top-1/2 -translate-y-1/2 bg-amber-500 text-slate-900 font-black p-3 lg:p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all animate-bounce"
-                title={`Apply ${selectedMethod.name}`}
+                className="animate-in slide-in-from-bottom-2 inline-flex items-center gap-3 rounded-2xl bg-cta text-on-cta pl-5 pr-6 py-3 shadow-soft hover:brightness-110 active:scale-[0.985] transition-all"
               >
-                <span className="text-xl lg:text-2xl">⚡</span>
+                <span aria-hidden="true" className="text-xl">{selectedMethod.emoji}</span>
+                <span className="font-display italic font-medium text-xl">
+                  {safeTranslate(t, `cookingMethods.${selectedMethod.id}`, selectedMethod.name)}
+                </span>
               </button>
             )}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Right Sidebar - Discovery Book */}
       <div className={`
@@ -687,9 +749,20 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
           ingredients={ingredients}
           history={discoveryHistory}
           achievements={achievements}
-          onIngredientClick={handleDrop}
+          onIngredientClick={handlePick}
         />
       </div>
+
+      {/* Toast for "no recipe" / "no effect" */}
+      {error && (
+        <div
+          role="status"
+          className="toast-in fixed left-1/2 bottom-24 lg:bottom-8 z-[70] max-w-[90vw] w-max flex items-center gap-2.5 rounded-2xl bg-ink text-canvas pl-4 pr-5 py-3 shadow-lift"
+        >
+          <span aria-hidden="true" className="text-lg">🤔</span>
+          <span className="text-sm font-semibold">{error}</span>
+        </div>
+      )}
 
       {/* Success Modal */}
       {lastDiscovery && (
@@ -702,23 +775,25 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
 
       {/* Reset Confirmation Modal */}
       {showResetConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 text-center">
-            <div className="text-5xl mb-4">⚠️</div>
-            <h2 className="text-xl font-bold text-red-400 mb-3">{t('reset.warning') || 'Warning: Progress Reset'}</h2>
-            <p className="text-slate-400 text-sm mb-6">
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-[#0C1322]/55 backdrop-blur-sm backdrop-in sm:p-4">
+          <div role="alertdialog" aria-modal="true" aria-labelledby="reset-title" className="sheet-up bg-surface text-ink w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:pb-6 text-center shadow-lift">
+            <div aria-hidden="true" className="mx-auto mb-4 w-16 h-16 rounded-full bg-miss-soft flex items-center justify-center text-3xl">⚠️</div>
+            <h2 id="reset-title" className="font-display font-medium text-2xl mb-2">{t('reset.warning') || 'Warning: Progress Reset'}</h2>
+            <p className="text-muted text-[15px] mb-6">
               {t('reset.message') || 'You are about to reset all your progress. This action cannot be undone.'}
             </p>
             <div className="flex gap-3 justify-center">
               <button
+                type="button"
                 onClick={() => setShowResetConfirm(false)}
-                className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-all"
+                className="flex-1 px-5 py-3 rounded-2xl bg-sunk text-ink font-semibold hover:brightness-95 transition-all"
               >
                 {t('reset.cancel') || 'Cancel'}
               </button>
               <button
+                type="button"
                 onClick={handleReset}
-                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all"
+                className="flex-1 px-5 py-3 rounded-2xl bg-miss text-white font-semibold hover:brightness-110 transition-all"
               >
                 {t('reset.confirm') || 'Reset Everything'}
               </button>
@@ -729,13 +804,15 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
 
       {/* Contact Form Modal */}
       {showContactForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-6">
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-[#0C1322]/55 backdrop-blur-sm backdrop-in sm:p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="contact-title" className="sheet-up bg-surface text-ink w-full sm:max-w-md rounded-t-[28px] sm:rounded-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:pb-6 shadow-lift">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-amber-500">{t('contact.title') || 'Feature Request'}</h2>
+              <h2 id="contact-title" className="font-display font-medium text-2xl">{t('contact.title') || 'Feature Request'}</h2>
               <button
+                type="button"
                 onClick={() => setShowContactForm(false)}
-                className="text-slate-500 hover:text-white text-xl"
+                aria-label={t('contact.cancel') || 'Cancel'}
+                className="w-9 h-9 rounded-full bg-sunk text-muted hover:text-ink text-xl flex items-center justify-center"
               >
                 ×
               </button>
@@ -748,22 +825,24 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
               setContactMessage('');
             }}>
               <div className="mb-4">
-                <label className="block text-sm text-slate-400 mb-1">{t('contact.email') || 'Your Email'}</label>
+                <label htmlFor="contact-email" className="block text-sm font-semibold text-muted mb-1">{t('contact.email') || 'Your Email'}</label>
                 <input
+                  id="contact-email"
                   type="email"
                   value={contactEmail}
                   onChange={(e) => setContactEmail(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                  className="w-full bg-sunk border border-transparent rounded-xl px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-cobalt/50 focus:bg-surface"
                   placeholder="your@email.com"
                   required
                 />
               </div>
-              <div className="mb-4">
-                <label className="block text-sm text-slate-400 mb-1">{t('contact.feature') || 'Feature Description'}</label>
+              <div className="mb-5">
+                <label htmlFor="contact-message" className="block text-sm font-semibold text-muted mb-1">{t('contact.feature') || 'Feature Description'}</label>
                 <textarea
+                  id="contact-message"
                   value={contactMessage}
                   onChange={(e) => setContactMessage(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                  className="w-full bg-sunk border border-transparent rounded-xl px-3 py-2.5 text-sm text-ink h-28 resize-none focus:outline-none focus:border-cobalt/50 focus:bg-surface"
                   placeholder="Describe the feature you'd like to see..."
                   required
                 />
@@ -772,13 +851,13 @@ const AdvancedRecipeCraftingNew: React.FC<AdvancedRecipeCraftingProps> = () => {
                 <button
                   type="button"
                   onClick={() => setShowContactForm(false)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-all"
+                  className="px-5 py-2.5 rounded-2xl bg-sunk text-ink font-semibold hover:brightness-95 transition-all"
                 >
                   {t('contact.cancel') || 'Cancel'}
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold rounded-lg transition-all"
+                  className="px-5 py-2.5 rounded-2xl bg-cta text-on-cta font-semibold hover:brightness-110 transition-all"
                 >
                   {t('contact.send') || 'Send Request'}
                 </button>
